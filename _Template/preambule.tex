@@ -1,0 +1,108 @@
+% =============================
+% --- ENCODAGE & TYPOGRAPHIE ---
+% =============================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{setspace}
+\usepackage{indentfirst}
+\usepackage{ragged2e}
+\usepackage{parskip}
+
+% Guillemets francais « » : commandes \og ... \fg sans charger babel
+% (babel-french doublerait les espaces des « ~: » deja presents dans le texte)
+\providecommand{\og}{\guillemotleft\,}
+\providecommand{\fg}{\,\guillemotright}
+
+\usepackage{siunitx}
+\sisetup{detect-all, output-decimal-marker={,}}
+
+% =============================
+% --- MISE EN PAGE ---
+% =============================
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{needspace}
+
+% =============================
+% --- COULEURS & GRAPHISME ---
+% =============================
+\usepackage[table]{xcolor}
+\usepackage{transparent}
+\usepackage{tikz}
+\usetikzlibrary{shadows}
+
+% =============================
+% --- IMAGES / PDF / WRAP ---
+% =============================
+\usepackage{graphicx}
+\usepackage{wrapfig}
+\usepackage{pdfpages}
+\usepackage[absolute,overlay]{textpos}
+
+% =============================
+% --- POLICE PAR DÉFAUT ---
+% =============================
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+
+% =============================
+% --- TABLEAUX ET LISTINGS ---
+% =============================
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{listings}
+\newcolumntype{C}{>{\centering\arraybackslash}X}
+\renewcommand{\arraystretch}{1.4}
+
+% =============================
+% --- HYPERREF & URL ---
+% =============================
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{xurl}
+
+% =============================
+% --- ALGORITHMES ---
+% =============================
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+% =============================
+% --- INFORMATIQUE ---
+% =============================
+\usepackage{minted}
+\usemintedstyle{lovelace}
+
+% =============================
+% --- MATH ---
+% =============================
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+
+% =============================
+% --- ANNEXES & CITATIONS ---
+% =============================
+\usepackage[toc]{appendix}
+\usepackage{csquotes}
+\usepackage{tcolorbox}
+
+% =============================
+% --- PIFONT (CHECKS ICONES) ---
+% =============================
+\usepackage{pifont}
+\newcommand{\good}{\ding{51}}
+\newcommand{\bad}{\ding{55}}
+
+% =============================
+% --- WARNINGS LaTeX ---
+% =============================
+\hfuzz=2pt
+\hbadness=10000
+
+% =============================
+\usepackage[framemethod=tikz]{mdframed}

@@ -1,0 +1,350 @@
+% --- ETUDE DE CAS ---
+\newpage
+
+\section*{AAV}
+\addcontentsline{toc}{section}{AAV}
+\begin{itemize}
+	\item [5] Appliquer les règles de création des composants
+	\item [6] Construire et manipuler des données en JSON
+	\item [2] Reconnaître les cycles de vie d'un composant
+	\item [3] Réaliser la modélisation d'une application Frontend
+	\item [5] Utiliser un framework Frontend
+	\item [5] Utiliser l’une des librairies de style (Bootstrap, Tailwind, etc.)
+\end{itemize}
+
+\newpage
+
+\section*{Étude de cas~: Front-end}
+\addcontentsline{toc}{section}{Étude de cas~: Front-end}
+
+\subsection*{Mots clés}
+\phantomsection
+\addcontentsline{toc}{subsection}{Mots clés}
+\begin{itemize}
+	\item Json
+	\item Composant
+	\item React
+	\item Front-end
+	\item Wireframe
+	\item Redux
+	\item Tailwind CSS
+	\item useEffect
+	\item Axios
+	\item DOM
+\end{itemize}
+
+\subsection*{Contexte}
+\phantomsection
+\addcontentsline{toc}{subsection}{Contexte}
+\noindent Yanis développe le front-end d'une application avec des composants modulaires via React et Tailwind CSS. Il rencontre des erreurs d'initialisation car les données JSON requises par son composant ne sont pas complètement chargées au moment du rendu de la page.
+
+\subsection*{Problématique}
+\phantomsection
+\addcontentsline{toc}{subsection}{Problématique}
+\noindent Comment gérer efficacement le cycle de vie des composants et le chargement asynchrone des données dans une application React pour éviter les erreurs d'affichage ?
+
+\subsection*{Contraintes}
+\phantomsection
+\addcontentsline{toc}{subsection}{Contraintes}
+\begin{itemize}
+	\item React
+	\item Tailwind CSS
+	\item JSON
+\end{itemize}
+
+\subsection*{Généralisation}
+\phantomsection
+\addcontentsline{toc}{subsection}{Généralisation}
+\begin{itemize}
+	\item Front-end
+	\item Composant
+\end{itemize}
+
+\subsection*{Livrables}
+\phantomsection
+\addcontentsline{toc}{subsection}{Livrables}
+\begin{itemize}
+	\item Diagramme séquence
+	\item Code source de l'application Front-end
+\end{itemize}
+
+\newpage
+
+\subsection*{Pistes de solutions}
+\phantomsection
+\addcontentsline{toc}{subsection}{Pistes de solutions}
+\begin{itemize}
+	\item Se renseigner sur le cycle de vie des composants React et les hooks useEffect
+	\item Se renseigner sur Redux
+	\item Concevoir des composants indépendants et réutilisables
+\end{itemize}
+
+\subsection*{Plan d'actions}
+\phantomsection
+\addcontentsline{toc}{subsection}{Plan d'actions}
+\begin{itemize}
+	\item DMC
+	\item ER
+	\item Étudier le fonctionnement de React (composants, hooks, états)
+	\item Voir l'architecture de l'application via des wireframes.
+	\item Initialiser un projet React/Next.js.
+	\item Créer les premiers composants
+	\item Installer et configurer Axios 
+	\item Implémenter les hooks (useState, useEffect) pour gérer correctement les données et le cycle de vie des composants.
+	\item Gérer la navigation et le routage entre les différentes pages de l'appli
+\end{itemize}
+
+\newpage
+
+\section*{Définition~: Mots clés}
+\phantomsection
+\addcontentsline{toc}{section}{Définition~: Mots clés}
+
+\subsubsection*{JSON}
+\phantomsection
+\addcontentsline{toc}{subsection}{JSON}
+
+\noindent \textbf{JSON} (\textit{JavaScript Object Notation}) est un \textbf{format d'échange de données} léger, textuel et lisible par l'humain, devenu le standard de la communication entre un front-end et une API. Il repose sur deux structures~: des \textbf{objets} (ensembles de paires \texttt{"clé": valeur} entre accolades) et des \textbf{tableaux} (listes ordonnées entre crochets). Exemple de réponse d'API~:
+\begin{center}
+\texttt{\{ "id": 42, "auteur": "Alice", "tags": ["BD","manga"], "publie": true \}}
+\end{center}
+\noindent En JavaScript, on \textbf{manipule} le JSON avec deux fonctions clés~: \texttt{JSON.parse()} convertit une chaîne JSON reçue en objet JavaScript exploitable, et \texttt{JSON.stringify()} fait l'inverse pour l'envoyer au serveur. C'est l'objet de l'AAV \og{}Construire et manipuler des données en JSON\fg{}~: les données reçues via Axios sont du JSON, transformées en objets puis affichées dans les composants.
+
+\subsubsection*{Composant}
+\phantomsection
+\addcontentsline{toc}{subsection}{Composant}
+
+\noindent Un \textbf{composant} est la \textbf{brique de base, autonome et réutilisable}, d'une interface React. Concrètement, c'est une fonction JavaScript qui reçoit des données en entrée (les \textbf{props}) et retourne un morceau d'interface décrit en \textbf{JSX} (syntaxe mêlant HTML et JS). Une page se construit en \textbf{assemblant} des composants imbriqués, comme des LEGO.
+\begin{center}
+\begin{tikzpicture}[font=\small]
+	\draw[fill=blue!15, rounded corners] (4.0,3.2) rectangle (6.2,3.9) node[midway]{\texttt{<App/>}};
+	\draw[fill=green!12, rounded corners] (1.0,1.8) rectangle (3.2,2.5) node[midway]{\texttt{<Header/>}};
+	\draw[fill=green!12, rounded corners] (4.0,1.8) rectangle (6.2,2.5) node[midway]{\texttt{<PostList/>}};
+	\draw[fill=green!12, rounded corners] (7.0,1.8) rectangle (9.2,2.5) node[midway]{\texttt{<Footer/>}};
+	\draw[fill=orange!12, rounded corners] (3.0,0.4) rectangle (5.1,1.1) node[midway]{\texttt{<PostItem/>}};
+	\draw[fill=orange!12, rounded corners] (5.3,0.4) rectangle (7.4,1.1) node[midway]{\texttt{<PostItem/>}};
+	\draw (5.1,3.2) -- (2.1,2.5); \draw (5.1,3.2) -- (5.1,2.5); \draw (5.1,3.2) -- (8.1,2.5);
+	\draw (5.1,1.8) -- (4.05,1.1); \draw (5.1,1.8) -- (6.35,1.1);
+\end{tikzpicture}
+\end{center}
+\noindent\textit{Figure~: arbre de composants — une UI React est une hiérarchie de composants réutilisables.}
+
+\noindent \textbf{Règles de création} (AAV \og{}Appliquer les règles de création des composants\fg{})~: nom en \textbf{PascalCase} (\texttt{PostItem}), \textbf{responsabilité unique}, fonction \textbf{pure} (mêmes props → même rendu), \textbf{props en lecture seule} (jamais modifiées), retour d'un \textbf{seul élément racine}, et conception \textbf{réutilisable et indépendante}.
+
+\subsubsection*{React}
+\phantomsection
+\addcontentsline{toc}{subsection}{React}
+
+\noindent \textbf{React} est une \textbf{bibliothèque JavaScript} front-end (créée par Facebook/Meta) servant à construire des interfaces utilisateur à base de \textbf{composants}. C'est le \textbf{framework Frontend} retenu pour le projet (AAV \og{}Utiliser un framework Frontend\fg{}). Ses principes fondateurs~:
+\begin{itemize}
+	\item \textbf{Déclaratif}~: on décrit l'interface en fonction de l'état~; React se charge de mettre à jour l'affichage.
+	\item \textbf{Composants}~: l'UI est découpée en briques réutilisables.
+	\item \textbf{Virtual DOM}~: React maintient une copie virtuelle du DOM et ne met à jour que ce qui change réellement, pour de bonnes \textbf{performances}.
+	\item \textbf{Flux de données unidirectionnel}~: les données descendent du parent vers l'enfant via les props.
+	\item \textbf{Hooks}~: fonctions (\texttt{useState}, \texttt{useEffect}…) qui ajoutent état et cycle de vie aux composants.
+\end{itemize}
+
+\subsubsection*{Front-end}
+\phantomsection
+\addcontentsline{toc}{subsection}{Front-end}
+
+\noindent Le \textbf{front-end} désigne la \textbf{partie cliente} d'une application~: tout ce qui s'exécute dans le \textbf{navigateur} de l'utilisateur et avec quoi il interagit directement (l'interface, l'affichage, l'expérience utilisateur). Il est construit avec \textbf{HTML} (structure), \textbf{CSS} (style) et \textbf{JavaScript} (interactivité), ici via React et Tailwind. Il s'oppose au \textbf{back-end} (côté serveur~: logique métier, base de données, API) avec lequel il dialogue en échangeant du \textbf{JSON} via des requêtes HTTP.
+\begin{center}
+\begin{tikzpicture}[font=\small]
+	\draw[thick, fill=blue!10, rounded corners] (0,0.4) rectangle (3.2,2) node[midway, align=center]{\textbf{Front-end}\\(navigateur)\\HTML/CSS/JS};
+	\draw[thick, fill=orange!12, rounded corners] (8.3,0.4) rectangle (11.5,2) node[midway, align=center]{\textbf{Back-end}\\(serveur)\\API + BD};
+	\draw[->, very thick] (3.3,1.5) -- (8.2,1.5); \node at (5.75,1.8) {\footnotesize Requête HTTP};
+	\draw[<-, very thick] (3.3,0.9) -- (8.2,0.9); \node at (5.75,0.6) {\footnotesize Réponse JSON};
+\end{tikzpicture}
+\end{center}
+\noindent\textit{Figure~: le front-end (client) dialogue avec le back-end (serveur) via HTTP/JSON.}
+
+\subsubsection*{Wireframe}
+\phantomsection
+\addcontentsline{toc}{subsection}{Wireframe}
+
+\noindent Un \textbf{wireframe} (\og{}maquette filaire\fg{}) est un \textbf{schéma simplifié, en basse fidélité}, de la structure d'une page ou d'un écran. Sans couleurs ni graphismes définitifs, il sert à positionner les \textbf{zones fonctionnelles} (en-tête, navigation, contenu, pied de page) et à valider l'\textbf{agencement} avant de coder. C'est un outil central de la \textbf{modélisation d'une application Frontend} (AAV) et un préalable au découpage en composants.
+\begin{center}
+\begin{tikzpicture}[font=\footnotesize]
+	\draw[thick] (0,0) rectangle (5,4);
+	\draw[fill=gray!25] (0.15,3.4) rectangle (4.85,3.85) node[midway]{En-tête / Logo + Menu};
+	\draw[fill=gray!12] (0.15,0.8) rectangle (1.4,3.25) node[midway, align=center]{Nav\\latérale};
+	\draw[fill=gray!8] (1.55,2.3) rectangle (4.85,3.25) node[midway]{Carte / Post};
+	\draw[fill=gray!8] (1.55,1.25) rectangle (4.85,2.2) node[midway]{Carte / Post};
+	\draw[fill=gray!8] (1.55,0.8) rectangle (4.85,1.15) node[midway]{...};
+	\draw[fill=gray!25] (0.15,0.15) rectangle (4.85,0.65) node[midway]{Pied de page};
+\end{tikzpicture}
+\end{center}
+\noindent\textit{Figure~: wireframe d'une page — la structure est définie avant le style et le code.}
+
+\subsubsection*{Redux}
+\phantomsection
+\addcontentsline{toc}{subsection}{Redux}
+
+\noindent \textbf{Redux} est une bibliothèque de \textbf{gestion d'état global} pour les applications JavaScript (souvent associée à React). Quand un état doit être \textbf{partagé entre de nombreux composants} éloignés (utilisateur connecté, panier, liste de posts), le faire \og{}remonter\fg{} via les props devient ingérable. Redux centralise cet état dans un \textbf{store unique} et impose un \textbf{flux de données unidirectionnel et prévisible}~:
+\begin{itemize}
+	\item \textbf{Store}~: source de vérité unique contenant tout l'état.
+	\item \textbf{Action}~: objet décrivant \og{}ce qui s'est passé\fg{} (ex.~: \texttt{\{ type: 'ADD\_POST' \}}).
+	\item \textbf{Reducer}~: fonction pure qui calcule le \textbf{nouvel état} à partir de l'état courant et de l'action.
+	\item \textbf{Dispatch}~: déclenche une action depuis l'interface.
+\end{itemize}
+\begin{center}
+\begin{tikzpicture}[font=\footnotesize]
+	\draw[fill=blue!12, rounded corners] (0,1.4) rectangle (2.2,2.4) node[midway, align=center]{\textbf{UI}\\(Composants)};
+	\draw[fill=orange!14, rounded corners] (3.2,1.4) rectangle (5.4,2.4) node[midway, align=center]{\textbf{Action}\\(dispatch)};
+	\draw[fill=green!14, rounded corners] (6.4,1.4) rectangle (8.6,2.4) node[midway, align=center]{\textbf{Reducer}\\(état suivant)};
+	\draw[fill=green!22, rounded corners] (9.6,1.4) rectangle (11.6,2.4) node[midway, align=center]{\textbf{Store}\\(état global)};
+	\draw[->, very thick] (2.3,1.9) -- (3.1,1.9);
+	\draw[->, very thick] (5.5,1.9) -- (6.3,1.9);
+	\draw[->, very thick] (8.7,1.9) -- (9.5,1.9);
+	\draw[->, very thick] (10.6,1.4) -- (10.6,0.5) -- (1.1,0.5) -- (1.1,1.4);
+	\node at (5.8,0.25) {\footnotesize le store met à jour l'UI (re-rendu)};
+\end{tikzpicture}
+\end{center}
+\noindent\textit{Figure~: flux unidirectionnel de Redux — UI → action → reducer → store → UI.}
+
+\subsubsection*{Tailwind CSS}
+\phantomsection
+\addcontentsline{toc}{subsection}{Tailwind CSS}
+
+\noindent \textbf{Tailwind CSS} est un framework CSS dit \textbf{\og{}utility-first\fg{}}~: au lieu de fournir des composants pré-stylés (comme Bootstrap), il offre une multitude de \textbf{classes utilitaires} atomiques que l'on compose directement dans le HTML/JSX pour styliser élément par élément. Exemple~:
+\begin{center}
+\texttt{<button class="bg-blue-600 text-white px-4 py-2 rounded">Envoyer</button>}
+\end{center}
+\noindent Ici \texttt{bg-blue-600} (fond bleu), \texttt{text-white} (texte blanc), \texttt{px-4 py-2} (marges internes), \texttt{rounded} (coins arrondis). \textbf{Avantages}~: rapidité, cohérence visuelle, design \textbf{responsive} simple (\texttt{md:}, \texttt{lg:}), pas de feuilles CSS séparées à maintenir. C'est la \textbf{librairie de style} retenue (AAV \og{}Utiliser l'une des librairies de style\fg{}). \textbf{Différence avec Bootstrap}~: Bootstrap impose des composants tout faits (look reconnaissable), Tailwind laisse une liberté totale de design.
+
+\subsubsection*{useEffect}
+\phantomsection
+\addcontentsline{toc}{subsection}{useEffect}
+
+\noindent \texttt{useEffect} est le \textbf{hook} React qui permet d'exécuter des \textbf{effets de bord} (actions extérieures au rendu)~: appels à une API, abonnements, minuteurs, manipulation directe du DOM. Il est \textbf{central pour gérer le cycle de vie} d'un composant (AAV \og{}Reconnaître les cycles de vie d'un composant\fg{}) et répond directement à la \textbf{problématique du projet} (chargement asynchrone des données). Son comportement dépend du \textbf{tableau de dépendances}~:
+\begin{itemize}
+	\item \texttt{useEffect(fn, [])}~: s'exécute \textbf{une seule fois au montage} — idéal pour charger les données initiales.
+	\item \texttt{useEffect(fn, [x])}~: se ré-exécute à chaque changement de \texttt{x} (mise à jour).
+	\item \textbf{Fonction de nettoyage} (\textit{return})~: exécutée au démontage, pour annuler abonnements/requêtes et éviter les fuites.
+\end{itemize}
+\begin{center}
+\begin{tikzpicture}[font=\footnotesize]
+	\draw[fill=green!16, rounded corners] (0,0.8) rectangle (2.6,1.8) node[midway, align=center]{\textbf{Montage}\\\texttt{[]}};
+	\draw[fill=blue!14, rounded corners] (3.6,0.8) rectangle (6.2,1.8) node[midway, align=center]{\textbf{Mise à jour}\\\texttt{[deps]}};
+	\draw[fill=red!12, rounded corners] (7.2,0.8) rectangle (9.8,1.8) node[midway, align=center]{\textbf{Démontage}\\(nettoyage)};
+	\draw[->, very thick] (2.7,1.3) -- (3.5,1.3);
+	\draw[->, very thick] (6.3,1.3) -- (7.1,1.3);
+	\draw[->, very thick] (4.9,0.8) .. controls (4.9,0.2) and (4.9,0.2) .. (4.9,0.8);
+	\node at (4.9,0.45) {\footnotesize $\circlearrowright$ à chaque changement};
+\end{tikzpicture}
+\end{center}
+\noindent\textit{Figure~: les trois phases du cycle de vie pilotées par \texttt{useEffect}.} Dans le projet, on charge les données dans un \texttt{useEffect([])} et on affiche un état de chargement tant que le JSON n'est pas arrivé — ce qui élimine les erreurs d'initialisation décrites dans le contexte.
+
+\subsubsection*{Axios}
+\phantomsection
+\addcontentsline{toc}{subsection}{Axios}
+
+\noindent \textbf{Axios} est une bibliothèque cliente \textbf{HTTP basée sur les promesses} (\textit{Promise}) permettant au front-end d'effectuer des \textbf{requêtes asynchrones} vers une API REST (GET, POST, PUT, DELETE) et d'en récupérer les données. Atouts par rapport au \texttt{fetch} natif~: conversion \textbf{automatique en JSON}, gestion simplifiée des erreurs, en-têtes et intercepteurs, délais d'attente. Couplé à \texttt{useEffect}, il constitue le mécanisme de \textbf{chargement asynchrone} des données~:
+\begin{center}
+\begin{tikzpicture}[font=\footnotesize]
+	\draw[fill=blue!12, rounded corners] (0,0.6) rectangle (2.6,1.6) node[midway, align=center]{Composant\\React};
+	\draw[fill=orange!14, rounded corners] (3.8,0.6) rectangle (6.0,1.6) node[midway]{Axios};
+	\draw[fill=green!14, rounded corners] (7.6,0.6) rectangle (10.2,1.6) node[midway, align=center]{API REST\\(serveur)};
+	\draw[->, very thick] (2.7,1.25) -- (3.7,1.25); \node at (3.2,1.55){\tiny GET};
+	\draw[->, very thick] (6.1,1.25) -- (7.5,1.25); \node at (6.8,1.55){\tiny HTTP};
+	\draw[<-, very thick] (6.1,0.9) -- (7.5,0.9); \node at (6.8,0.6){\tiny JSON};
+	\draw[<-, very thick] (2.7,0.9) -- (3.7,0.9); \node at (3.2,0.6){\tiny données};
+\end{tikzpicture}
+\end{center}
+\noindent\textit{Figure~: Axios fait le pont asynchrone entre le composant React et l'API REST.}
+
+\subsubsection*{DOM}
+\phantomsection
+\addcontentsline{toc}{subsection}{DOM}
+
+\noindent Le \textbf{DOM} (\textit{Document Object Model}) est la \textbf{représentation en mémoire, sous forme d'arbre}, de la page HTML telle qu'interprétée par le navigateur. Chaque balise HTML y devient un \textbf{n\oe ud} manipulable par JavaScript (créer, modifier, supprimer des éléments, réagir aux événements). C'est via le DOM que l'interface est réellement affichée et mise à jour.
+\begin{center}
+\begin{tikzpicture}[font=\footnotesize]
+	\draw[fill=blue!14, rounded corners] (4.2,3.2) rectangle (5.8,3.8) node[midway]{\texttt{html}};
+	\draw[fill=green!12, rounded corners] (1.5,2.0) rectangle (3.1,2.6) node[midway]{\texttt{head}};
+	\draw[fill=green!12, rounded corners] (6.9,2.0) rectangle (8.5,2.6) node[midway]{\texttt{body}};
+	\draw[fill=orange!12, rounded corners] (5.4,0.8) rectangle (7.0,1.4) node[midway]{\texttt{div}};
+	\draw[fill=orange!12, rounded corners] (8.4,0.8) rectangle (10.0,1.4) node[midway]{\texttt{h1}};
+	\draw (5.0,3.2) -- (2.3,2.6); \draw (5.0,3.2) -- (7.7,2.6);
+	\draw (7.7,2.0) -- (6.2,1.4); \draw (7.7,2.0) -- (9.2,1.4);
+\end{tikzpicture}
+\end{center}
+\noindent\textit{Figure~: le DOM, arbre des n\oe uds de la page.} React n'agit pas directement sur ce DOM réel (coûteux)~: il passe par un \textbf{Virtual DOM}, en calcule les différences, et ne met à jour que les n\oe uds modifiés — d'où ses bonnes \textbf{performances}.
+
+\newpage
+
+\section*{Analyse et résolution : Front-end}
+\addcontentsline{toc}{section}{Analyse et résolution : Front-end}
+
+
+\newpage
+
+\subsection*{Conclusion}
+\phantomsection
+\addcontentsline{toc}{subsection}{Conclusion}
+
+\noindent \textbf{En réponse à la problématique}, gérer efficacement le cycle de vie des composants et le chargement asynchrone des données dans une application React repose sur une combinaison cohérente de bonnes pratiques. L'interface est découpée en \textbf{composants modulaires, indépendants et réutilisables} (règles de création~: PascalCase, responsabilité unique, props en lecture seule), dont la conception est préparée en amont par des \textbf{wireframes} qui modélisent la structure de l'application avant le codage.
+
+\vspace{0.2cm}
+
+\noindent Le c\oe ur de la solution réside dans la maîtrise du \textbf{cycle de vie} via le hook \texttt{useEffect}~: les données sont chargées de façon \textbf{asynchrone} à l'aide d'\textbf{Axios} dans un effet déclenché au montage du composant (\texttt{[]}), et l'on affiche un \textbf{état de chargement} tant que le \textbf{JSON} n'est pas arrivé. Cette approche supprime les \textbf{erreurs d'initialisation} décrites dans le contexte (rendu déclenché avant la disponibilité des données). Une \textbf{fonction de nettoyage} au démontage évite par ailleurs les fuites mémoire et les mises à jour sur composant démonté.
+
+\vspace{0.2cm}
+
+\noindent Pour l'état partagé entre de nombreux composants, \textbf{Redux} centralise les données dans un store unique au flux unidirectionnel et prévisible, tandis que \textbf{Tailwind CSS} assure un style cohérent et responsive. Au final, la stack \textbf{React + Axios + Redux + Tailwind} satisfait l'ensemble des AAV visés (création de composants, manipulation de JSON, cycle de vie, modélisation, framework et librairie de style) et constitue un \textbf{modèle reproductible} pour le développement front-end des futures applications de l'entreprise.
+
+\newpage
+
+\section*{Capitalisation}
+\addcontentsline{toc}{section}{Capitalisation}
+
+\begin{center}
+\setlength{\tabcolsep}{10pt}
+
+\begin{tabular}{|p{0.30\textwidth}|p{0.45\textwidth}|m{0.08\textwidth}|}
+\hline
+\textbf{AAV} & \textbf{Commentaire} & \textbf{Statut} \\ \hline
+
+Appliquer les règles de création des composants &
+Règles détaillées (PascalCase, responsabilité unique, fonction pure, props en lecture seule, racine unique, réutilisabilité) et illustrées par un arbre de composants. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Construire et manipuler des données en JSON &
+Structure du JSON (objets/tableaux) expliquée~; manipulation via \texttt{JSON.parse}/\texttt{JSON.stringify} et exploitation des réponses d'API. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Reconnaître les cycles de vie d'un composant &
+Phases montage / mise à jour / démontage schématisées et pilotées par \texttt{useEffect} (tableau de dépendances, nettoyage). &
+{\color{green!60!black}Acquis} \\ \hline
+
+Réaliser la modélisation d'une application Frontend &
+Modélisation par wireframes (structure des écrans) et découpage en arbre de composants présentés et schématisés. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Utiliser un framework Frontend &
+React expliqué (composants, déclaratif, Virtual DOM, flux unidirectionnel, hooks) et retenu comme framework du projet. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Utiliser l'une des librairies de style (Bootstrap, Tailwind, etc.) &
+Tailwind CSS (utility-first) présenté avec exemple de classes, design responsive et comparaison avec Bootstrap. &
+{\color{green!60!black}Acquis} \\ \hline
+
+\end{tabular}
+\end{center}
+
+\newpage
+
+\section*{Ressources}
+\addcontentsline{toc}{section}{Ressources}
+
+\begin{itemize}
+	\item \textbf{Documentation React} : \url{https://react.dev/}
+	\item \textbf{Hook useEffect (cycle de vie)} : \url{https://react.dev/reference/react/useEffect}
+	\item \textbf{Documentation Tailwind CSS} : \url{https://tailwindcss.com/docs}
+	\item \textbf{Documentation Redux / Redux Toolkit} : \url{https://redux.js.org/}
+	\item \textbf{Documentation Axios} : \url{https://axios-http.com/fr/docs/intro}
+	\item \textbf{JSON (MDN)} : \url{https://developer.mozilla.org/fr/docs/Web/JavaScript/Reference/Global_Objects/JSON}
+	\item \textbf{DOM (MDN)} : \url{https://developer.mozilla.org/fr/docs/Web/API/Document_Object_Model}
+	\item \textbf{Next.js (framework React)} : \url{https://nextjs.org/docs}
+\end{itemize}

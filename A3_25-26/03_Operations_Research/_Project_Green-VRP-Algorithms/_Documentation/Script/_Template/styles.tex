@@ -1,0 +1,88 @@
+% --- STYLES ---
+
+% ========================
+%       INDENTATION
+% ========================
+\setlength{\parindent}{1.5em}      % Automatic paragraph indentation
+
+% ========================
+%         COLORS
+% ========================
+\definecolor{sectionTitle}{RGB}{32, 94, 153} % Dark blue (section titles)
+\definecolor{subsectionTitle}{RGB}{75, 147, 215} % Light blue (subsection titles)
+\definecolor{footer}{RGB}{75, 147, 215} % Light blue (footer text)
+\definecolor{confidentialC2}{RGB}{255, 165, 0} % Orange (C2 - Confidential)
+
+% ========================
+%   TITLE FORMATTING
+% ========================
+\titleformat{\section}
+  {\color{sectionTitle}\normalfont\Large\bfseries\fontfamily{cmss}}
+  {\color{sectionTitle}\thesection}{1em}
+  {\MakeUppercase}
+  [\noindent\color{black}\rule{\textwidth}{0.5pt}]
+
+\titleformat{\subsection}
+  {\color{subsectionTitle}\normalfont\large\bfseries\fontfamily{cmss}}
+  {\color{subsectionTitle}\thesubsection}{1em}
+  {\MakeUppercase}
+  [\noindent\color{black}\rule{\textwidth}{0.4pt}]
+
+% ========================
+%   LIST CUSTOMIZATION
+% ========================
+\renewcommand{\contentsname}{Table of Contents}
+\renewcommand{\listfigurename}{List of Figures}
+\renewcommand{\appendixname}{Appendix}
+
+% ========================
+%    PAGE STYLE
+% ========================
+\pagestyle{empty} % No header or footer by default
+
+% ========================
+% TEXTBLOCK POSITIONING
+% ========================
+\setlength{\TPHorizModule}{1cm}
+\setlength{\TPVertModule}{1cm}
+
+% ========================
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    urlcolor=blue,
+    citecolor=blue
+}
+
+
+% ========================
+% ALGORITHME FORMAT
+% ========================
+
+\lstset{
+    frame=single,
+    numbers=left,
+    breaklines=true,
+    captionpos=t,
+    float=hbt,
+    basicstyle=\small\ttfamily,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{purple},
+    backgroundcolor=\color{white},
+  literate=
+  {á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+  {Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1
+  {à}{{\`a}}1 {è}{{\`e}}1 {ì}{{\`i}}1 {ò}{{\`o}}1 {ù}{{\`u}}1
+  {À}{{\`A}}1 {È}{{\'E}}1 {Ì}{{\`I}}1 {Ò}{{\`O}}1 {Ù}{{\`U}}1
+  {ä}{{\"a}}1 {ë}{{\"e}}1 {ï}{{\"i}}1 {ö}{{\"o}}1 {ü}{{\"u}}1
+  {Ä}{{\"A}}1 {Ë}{{\"E}}1 {Ï}{{\"I}}1 {Ö}{{\"O}}1 {Ü}{{\"U}}1
+  {â}{{\^a}}1 {ê}{{\^e}}1 {î}{{\^i}}1 {ô}{{\^o}}1 {û}{{\^u}}1
+  {Â}{{\^A}}1 {Ê}{{\^E}}1 {Î}{{\^I}}1 {Ô}{{\^O}}1 {Û}{{\^U}}1
+  {œ}{{\oe}}1 {Œ}{{\OE}}1 {æ}{{\ae}}1 {Æ}{{\AE}}1 {ß}{{\ss}}1
+  {ű}{{\H{u}}}1 {Ű}{{\H{U}}}1 {ő}{{\H{o}}}1 {Ő}{{\H{O}}}1
+  {ç}{{\c c}}1 {Ç}{{\c C}}1 {ø}{{\o}}1 {å}{{\r a}}1 {Å}{{\r A}}1
+  {€}{{\EUR}}1 {£}{{\pounds}}1
+}
+
+

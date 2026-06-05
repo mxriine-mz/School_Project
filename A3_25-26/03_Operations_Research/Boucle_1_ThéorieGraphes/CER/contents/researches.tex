@@ -1,0 +1,208 @@
+% --- ETUDE DE CAS ---
+\newpage
+\section*{Étude de cas~: Théorie des graphes}
+\addcontentsline{toc}{section}{Étude de cas~: Théorie des graphes}
+
+\section*{AAV}
+\addcontentsline{toc}{section}{AAV}
+\begin{itemize}
+	\item [1] Identifier les concepts et usages de la théorie des graphes
+	\item [3] Modéliser un problème concret à l’aide d’un graphe
+	\item [3] Résoudre un problème concret à l’aide d’un graphe
+	\item [4] Analyser la complexité asymptotique d'un algorithme
+\end{itemize}
+
+\newpage
+
+\subsection*{Mots clés}
+\phantomsection
+\addcontentsline{toc}{subsection}{Mots clés}
+\begin{itemize}
+	\item Théorie des Graphes
+	\item Arbre Couvrant Minimal
+	\item Cycle et Chaîne Eulériens
+	\item Cycle et Chaîne Hamiltoniens
+	\item Algorithmique
+	\item Optimisation
+	\item Smart City
+\end{itemize}
+
+\subsection*{Contexte}
+\phantomsection
+\addcontentsline{toc}{subsection}{Contexte}
+\noindent Dans le cadre d'un projet de "Smart City" financé par la région Grand Est, le cabinet CesiCDP doit aider les équipes techniques à optimiser l'installation de dispositifs connectés sur les lampadaires urbains. L'objectif est de passer d'un itinéraire "à l'expérience" (empirique) à un itinéraire calculé mathématiquement pour réduire les coûts de carburant et le temps d'intervention.
+
+\subsection*{Problématique}
+\phantomsection
+\addcontentsline{toc}{subsection}{Problématique}
+\noindent Comment modéliser un réseau urbain et concevoir un algorithme capable de déterminer l'itinéraire optimal passant par toutes les rues (arêtes) d'une zone, tout en évaluant sa viabilité technique (complexité) face à l'augmentation de la taille des données (villes plus grandes) ?
+
+\subsection*{Contraintes}
+\phantomsection
+\addcontentsline{toc}{subsection}{Contraintes}
+\begin{itemize}
+	\item Topologiques : Passer une et une seule fois par chaque rue (contrainte d'Euler).
+	\item Temporelles : Le programme doit fournir une solution rapidement (ne pas attendre deux semaines).
+	\item Matérielles : Mesurer précisément l'occupation CPU en millisecondes.
+	\item Scalabilité : L'algorithme doit rester efficace même si le nombre d'intersections ou de rues augmente drastiquement.
+	\item Universalité : Doit fonctionner pour différentes configurations de villes (rues en carré, rue centrale, etc.).
+\end{itemize}
+
+\subsection*{Généralisation}
+\phantomsection
+\addcontentsline{toc}{subsection}{Généralisation}
+\begin{itemize}
+	\item Le problème posé par Agathe fait référence au célèbre problème des Sept ponts de Königsberg.
+	\item Distinction entre les problèmes de type "Euler" (arêtes) et "Hamilton" (sommets).
+	\item Étude de la complexité algorithmique : passage d'un cas particulier à un cas général (théorie de la complexité P vs NP).
+\end{itemize}
+
+\subsection*{Livrables}
+\phantomsection
+\addcontentsline{toc}{subsection}{Livrables}
+\begin{itemize}
+	\item Un programme informatique calculant l'itinéraire.
+	\item Un rapport d'analyse de la complexité théorique de l'algorithme choisi.
+	\item Un relevé des mesures de performance (temps d'exécution CPU).
+	\item Une étude de cas sur la faisabilité selon la topologie de la ville.
+\end{itemize}
+
+\subsection*{Pistes de solutions}
+\phantomsection
+\addcontentsline{toc}{subsection}{Pistes de solutions}
+\begin{itemize}
+	\item Théorème d'Euler : Vérifier si tous les sommets sont de degré pair pour savoir si un cycle eulérien existe.
+	\item Algorithme de Fleury ou de Hierholzer : Pour construire le chemin eulérien s'il existe.
+	\item Problème du Postier Chinois : Si le graphe n'est pas eulérien, trouver le chemin le plus court qui passe au moins une fois par chaque arête (en doublant certaines arêtes de manière optimale).
+	\item Arbre Couvrant Minimal (ACM) : Utiliser Kruskal ou Prim, bien que le texte suggère une confusion possible avec le problème de parcours total des arêtes.
+\end{itemize}
+
+\subsection*{Plan d'actions}
+\phantomsection
+\addcontentsline{toc}{subsection}{Plan d'actions}
+\begin{itemize}
+	\item Analyse Mathématique. Étudier les propriétés des graphes eulériens et identifier pourquoi le problème d'Agathe semble "impossible".
+	\item Modélisation. Traduire le plan de la ville en structure de données (liste ou matrice d'adjacence).
+	\item Développement. Implémenter un algorithme de recherche de chemin (priorité au parcours d'arêtes).
+	\item Tests et Benchmark. Tester sur de petits jeux de données, puis simuler des villes plus grandes pour mesurer le temps CPU.
+	\item Analyse de Complexité. Déterminer si l'algorithme est en O(n), O(n2) ou exponentiel par rapport au nombre de rues/intersections.
+\end{itemize}
+
+\newpage
+\section*{Démarche~: Théorie des graphes}
+\addcontentsline{toc}{section}{Démarche~: Théorie des graphes}
+
+\subsection*{Définition~: Mots clés}
+\phantomsection
+\addcontentsline{toc}{subsection}{Définition: Mots clés}
+
+\noindent \textbf{Théorie des Graphes}: Étude des structures composées de sommets (nœuds) et d'arêtes (liens) qui les relient. Permet de modéliser des réseaux complexes (routiers, sociaux, informatiques) et d'analyser leurs propriétés (connectivité, cycles, chemins optimaux).
+
+\vspace{0.5cm}
+
+\noindent \textbf{Arbre Couvrant Minimal}: Un arbre couvrant d'un graphe est un sous-graphe qui inclut tous les sommets du graphe original et est un arbre (sans cycles). Un arbre couvrant minimal est celui qui a le poids total des arêtes le plus faible. Les algorithmes de Kruskal et Prim sont couramment utilisés pour trouver un ACM.
+
+\vspace{0.5cm}
+
+\noindent \textbf{Cycle Eulérien}: Un cycle qui passe exactement une fois par chaque arête d'un graphe. Un graphe possède un cycle eulérien si et seulement si tous ses sommets ont un degré pair.
+
+\noindent \textbf{Chaine Eulérien}: Un chemin qui passe exactement une fois par chaque arête d'un graphe. Un graphe possède une chaîne eulérienne s'il a exactement deux sommets de degré impair (les points de départ et d'arrivée).
+
+\vspace{0.5cm}
+
+\noindent \textbf{Cycle Hamiltoniens}: Un cycle qui passe exactement une fois par chaque sommet d'un graphe. Un graphe possède un cycle hamiltonien si et seulement si tous ses sommets ont un degré pair.
+
+\noindent \textbf{Chaine Hamiltoniens}: Un chemin qui passe exactement une fois par chaque sommet d'un graphe. Un graphe possède une chaîne hamiltonienne s'il a exactement deux sommets de degré impair (les points de départ et d'arrivée).
+
+\vspace{0.5cm}
+
+\noindent \textbf{Algorithmique}: Étude des algorithmes, c'est-à-dire des procédures systématiques pour résoudre des problèmes. En théorie des graphes, cela inclut des algorithmes pour trouver des chemins, cycles, arbres couvrants, etc.
+
+\vspace{0.5cm}
+
+\noindent \textbf{Optimisation}: Processus de trouver la meilleure solution possible à un problème donné, souvent sous des contraintes spécifiques. En théorie des graphes, cela peut impliquer de minimiser la longueur d'un chemin ou le coût d'une solution.
+
+\vspace{0.5cm}
+
+\noindent \textbf{Smart City}: Concept de ville intelligente utilisant les technologies de l'information et de la communication pour améliorer la qualité de vie des citoyens, optimiser les ressources et réduire les coûts. Les applications incluent la gestion du trafic, l'éclairage public, la collecte de données environnementales, etc.
+
+\newpage
+
+\section*{Analyse et résolution : Théorie des graphes}
+\addcontentsline{toc}{section}{Analyse et résolution : Théorie des graphes}
+
+\noindent 
+*
+\newpage
+
+\subsection*{Conclusion}
+\phantomsection
+\addcontentsline{toc}{subsection}{Conclusion}
+
+\noindent 
+
+\newpage
+
+\section*{Capitalisation}
+\addcontentsline{toc}{section}{Capitalisation}
+
+\begin{center}
+\setlength{\tabcolsep}{10pt}
+
+\begin{tabular}{|p{0.30\textwidth}|p{0.45\textwidth}|m{0.08\textwidth}|}
+\hline
+\textbf{AAV} & \textbf{Commentaire} & \textbf{Statut} \\ \hline
+
+Décrire .NET Core et .NET Framework et leur rôle dans .Net &
+Les différences, rôles et évolutions sont expliqués, avec schéma et exemples. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Décrire les architectures .NET &
+L'architecture interne (CLR, CoreCLR, composants) est détaillée, distinctions claires. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Expliquer les évolutions entre .NET Core et .NET Framework &
+Les ruptures (performance, modularité, open source) sont bien identifiées et justifiées. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Expliquer les notions de CoreCLR et CLR &
+Explications précises sur le CLR/CoreCLR, compilation, JIT, Garbage Collector. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Expliquer les notions d'assemblage pour .NET Core et .NET Framework &
+Assemblages, GAC, déploiement autonome bien expliqués, différences mises en avant. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Connaître les principaux outils supportant la chaine d'intégration continue &
+Outils CI (Azure DevOps, GitHub Actions, GitLab CI, SonarQube) listés et expliqués. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Connaître les principes généraux de la conteneurisation et ses avantages &
+Principe de conteneurisation, avantages et outils (Docker, Dockerfile) présentés clairement. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Connaître les environnements et outils Docker &
+Docker Desktop, Docker Hub, fichiers Dockerfile mentionnés et contextualisés. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Pratiquer l'installation et la configuration de Git &
+Procédure d'installation, configuration utilisateur, commandes de base détaillées. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Relier Visual Studio à un dépôt Git &
+Lien entre Visual Studio et Git expliqué, utilisation de l'onglet "Git Changes" abordée. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Illustrer les principes généraux de gestion de versions pour un fichier et Appliquer les commandes Git associées &
+Principes de versionning, commandes Git (init, add, commit, push, pull, merge, etc.) illustrés par des exemples pratiques. &
+{\color{green!60!black}Acquis} \\ \hline
+
+\end{tabular}
+\end{center}
+
+\section*{Ressources}
+\addcontentsline{toc}{section}{Ressources}
+
+\begin{itemize}
+	\item 
+\end{itemize}

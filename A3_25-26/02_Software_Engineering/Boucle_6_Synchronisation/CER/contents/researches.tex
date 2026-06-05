@@ -1,0 +1,559 @@
+% --- ETUDE DE CAS ---
+\newpage
+\section*{Étude de cas~: Burnout}
+\addcontentsline{toc}{section}{Étude de cas~: Burnout}
+
+\section*{AAV}
+\addcontentsline{toc}{section}{AAV}
+\begin{itemize}
+	\item [1] Définir Thread, Multi-threading, Mécanismes d'IPC, Ressource critique / Section critique, inter-blocage
+	\item [1] Citer, Décrire et expliquer les principaux problèmes liés à la section critique
+	\item [1] Citer, Décrire et expliquer les principaux mécanismes d'IPC et les organiser en catégories
+	\item [3] Implémenter les mécanismes de synchronisation en C\#
+\end{itemize}
+
+\newpage
+
+\subsection*{Mots clés}
+\phantomsection
+\addcontentsline{toc}{subsection}{Mots clés}
+\begin{itemize}
+	\item Synchronisation
+	\item Cœurs logiques
+	\item Séquentiellement
+	\item Multi serveur
+\end{itemize}
+
+\subsection*{Contexte}
+\phantomsection
+\addcontentsline{toc}{subsection}{Contexte}
+\noindent Le client du big data utilise une chaine de traitement de données réparti sur 3 serveurs avec des processeurs différents. Certaines données ne sont jamais traitées et l’intégrité n’est pas garantie.
+
+\subsection*{Problématique}
+\phantomsection
+\addcontentsline{toc}{subsection}{Problématique}
+\noindent Comment garantir l’intégrité des données en mettant en place une synchronisation inter-serveur?
+
+\subsection*{Contraintes}
+\phantomsection
+\addcontentsline{toc}{subsection}{Contraintes}
+\begin{itemize}
+	\item Architecture des serveurs
+	\item Délaie : 2 jours
+	\item Intégrité des données
+\end{itemize}
+
+\subsection*{Généralisation}
+\phantomsection
+\addcontentsline{toc}{subsection}{Généralisation}
+\begin{itemize}
+	\item Multiserveurs
+	\item Synchronisation
+\end{itemize}
+
+\subsection*{Livrables}
+\phantomsection
+\addcontentsline{toc}{subsection}{Livrables}
+\begin{itemize}
+	\item Plan de synchronisation
+	\item Diagrammes et code
+	\item Rapport
+\end{itemize}
+
+\subsection*{Pistes de solutions}
+\phantomsection
+\addcontentsline{toc}{subsection}{Pistes de solutions}
+\begin{itemize}
+	\item Étudier les différents types de synchronisation
+	\item Multitasking
+\end{itemize}
+
+\subsection*{Plan d'actions}
+\phantomsection
+\addcontentsline{toc}{subsection}{Plan d'actions}
+\begin{itemize}
+	\item Workshops
+	\item Diagrammes
+	\item Faire le code
+\end{itemize}
+
+\newpage
+\section*{Démarche~: Burnout}
+\addcontentsline{toc}{section}{Démarche~: Burnout}
+
+
+\subsection*{Définition~: Mots clés}
+\phantomsection
+\addcontentsline{toc}{subsection}{Définition: Mots clés}
+
+\noindent \textbf{Synchronisation}:
+\noindent La synchronisation se présente comme un processus qui permet de faire correspondre, c'est-à-dire conserver à l'identique, les contenus de deux ou plusieurs emplacements de stockage.
+
+\noindent \textbf{Synchronisation unidirectionnelle et bidirectionnelle}:
+
+\noindent En informatique, la synchronisation peut être unidirectionnelle ou bidirectionnelle. La différence réside dans le sens où la duplication des données se fait.
+
+\noindent Lors d’une \textbf{synchronisation unidirectionnelle}, la duplication des mises à jour effectuées se fait dans un sens unique.
+
+\noindent C’est-à-dire les modifications réalisées sur l’endroit A sont transcrites à l’endroit B mais celles effectuées à l’endroit B n’affectent pas les données enregistrées à l’endroit A.
+
+\noindent Par contre, lors \textbf{d’une synchronisation bidirectionnelle}, la transcription des modifications se fait dans les deux sens.
+
+\noindent C’est-à-dire peu importe l’endroit ou la modification est effectuée, elle sera toujours reproduite vers l’autre endroit.
+
+\begin{center}
+\rule{5cm}{0.4pt}
+\end{center}
+
+\vspace{0.5cm}
+
+\noindent \textbf{Cœurs logiques}:
+\noindent  Les « threads » ou « cœurs logiques » (par opposition aux cœurs physiques) sont une file d'attente de commandes qui permet d'effectuer des opérations sur les cœurs physiques. Vous aurez au moins un thread par cœur, même si dans les processeurs modernes, il est désormais courant d'en avoir deux.
+
+\noindent Un \textbf{cœur de processeur} comporte plusieurs zones de calcul différentes, telles que l'ALU et le FPU, qui sont techniquement indépendantes mais font toujours partie de ce cœur. Les instructions (pensez au calcul) sont exécutées de manière linéaire car une instruction future peut dépendre du résultat d'une instruction passée. Cela signifie que l'ALU peut être pleinement utilisée et le FPU inutilisé en attendant les résultats. Ici, nous ajoutons une deuxième file d'attente de commandes via le noyau qui peut utiliser ces zones de calcul inutilisées pour effectuer davantage de travail. Autrement dit, nous disposons désormais de deux « threads » d'instructions via un seul noyau physique.
+
+\noindent Du côté logiciel, nous avons un autre concept similaire également appelé « threads », qui consiste simplement en plusieurs processus distincts fonctionnant sous un seul processus. Le processus principal gère les données entre les threads. Chaque thread ne peut être exécuté que sous un seul cœur ou un seul cœur logique, donc un processus créant de nombreux threads logiciels est un moyen pour lui de fonctionner simultanément sur plusieurs cœurs logiques.
+
+\newpage
+
+\noindent \textbf{Séquentiellement}:
+\noindent De manière séquentielle signifie que les tâches ou les opérations sont exécutées les unes après les autres, dans un ordre spécifique. 
+
+\begin{center}
+\rule{5cm}{0.4pt}
+\end{center}
+
+\vspace{0.5cm}
+
+\noindent \textbf{Multi serveur}:
+\noindent Le multiserveur, terme informatique, désigne une configuration qui implique l'utilisation de plusieurs serveurs d'information pour offrir des services et gérer les données. Cette solution est généralement adoptée pour améliorer la performance, la sécurité et la disponibilité des ressources en ligne. Dans un système multiserveur, chaque serveur peut avoir un rôle spécifique ou être réparti en fonction des besoins de l'application. 
+
+\noindent \textbf{Avantages du multiserveur} :
+
+\noindent Cette approche permet de réduire la charge sur un seul serveur, optimisant ainsi les performances globales du système et assurant une meilleure répartition des tâches entre les différents serveurs. En outre, le multiserveur offre une plus grande résilience face aux pannes matérielles ou logicielles, car il est possible de basculer rapidement vers un autre serveur en cas de problème.
+
+\begin{center}
+\rule{5cm}{0.4pt}
+\end{center}
+
+\vspace{0.5cm}
+
+\noindent \textbf{Interblocage}:
+
+\noindent Un interblocage, ou deadlock en anglais, est une situation dans laquelle deux ou plusieurs processus ou threads sont bloqués de manière permanente, chacun attendant que l'autre libère une ressource dont il a besoin pour continuer son exécution.
+
+\noindent \textbf{Comment résoudre ?}
+
+\noindent Pour résoudre un interblocage, il existe plusieurs approches, notamment :
+\begin{itemize}
+    \item \textbf{Prévention} : Concevoir le système de manière à éviter les conditions d'inter-blocage, par exemple en imposant un ordre strict d'acquisition des ressources.
+    \item \textbf{Détection} : Mettre en place des mécanismes pour détecter les interblocages lorsqu'ils se produisent, puis prendre des mesures pour les résoudre, comme tuer un processus ou libérer des ressources.
+    \item \textbf{Évitement} : Utiliser des algorithmes d'évitement d'interblocage, tels que l'algo-rithme du banquier, qui permet de déterminer si une demande de ressource peut être satisfaite sans entraîner un interblocage.
+    \item \textbf{Récupération} : Si un interblocage est détecté, prendre des mesures pour récupérer le système, comme redémarrer les processus impliqués ou libérer manuellement les ressources.
+    \item \textbf{Utilisation de timeout} : Imposer des délais d'attente pour les processus qui attendent des ressources, afin de détecter et de résoudre les interblocages plus rapidement.
+\end{itemize}
+
+\newpage
+
+\noindent \textbf{Famine}:
+
+\noindent La famine, dans le contexte de l'informatique, fait référence à une situation où un processus ou un thread ne parvient pas à accéder à une ressource partagée pendant une période prolongée, en raison de la concurrence avec d'autres processus ou threads.
+
+\noindent \textbf{Comment résoudre ?}
+
+\noindent Pour résoudre la famine, plusieurs stratégies peuvent être mises en place, notamment :
+\begin{itemize}
+    \item \textbf{Priorisation équitable} : Mettre en place un système de priorisation qui garantit que tous les processus ou threads ont une chance équitable d'accéder aux ressources partagées, en évitant que certains ne soient constamment favorisés au détriment des autres.
+    \item \textbf{Rotation des priorités} : Utiliser une approche de rotation des priorités, où les processus ou threads qui ont été ignorés pendant un certain temps voient leur priorité augmenter temporairement pour leur permettre d'accéder aux ressources.
+    \item \textbf{Limitation du temps d'attente} : Imposer des limites de temps d'attente pour les processus ou threads qui attendent des ressources, afin de garantir qu'ils ne restent pas bloqués indéfiniment.
+    \item \textbf{Utilisation de sémaphores ou de mutex} : Mettre en place des mécanismes de synchronisation tels que des sémaphores ou des mutex pour contrôler l'accès aux ressources partagées et éviter que certains processus ou threads ne soient constamment bloqués.
+    \item \textbf{Surveillance et ajustement} : Mettre en place des outils de surveillance pour détecter les situations de famine et ajuster les politiques de gestion des ressources en conséquence, afin d'assurer une répartition plus équitable.
+\end{itemize}
+
+\begin{center}
+\rule{5cm}{0.4pt}
+\end{center}
+
+\vspace{0.5cm}
+
+\noindent \textbf{Section critique}:
+
+\noindent Une section critique est une partie d'un programme où l'accès à une ressource partagée doit être contrôlé pour éviter les conflits entre plusieurs processus ou threads. C'est comme une salle de réunion où seules certaines personnes peuvent entrer à la fois pour discuter d'un sujet important, afin d'éviter les interruptions et les malentendus.
+
+\begin{center}
+\rule{5cm}{0.4pt}
+\end{center}
+
+\vspace{0.5cm}
+
+\noindent \textbf{Flag}:
+
+\noindent Un flag, ou drapeau en français, est une variable utilisée pour indiquer l'état ou la condition d'un processus ou d'une opération. C'est comme un signal lumineux qui peut être allumé ou éteint pour indiquer si une certaine condition est vraie ou fausse.
+
+\newpage
+
+\noindent \textbf{Sémaphore}:
+
+\noindent Un sémaphore est un mécanisme de synchronisation utilisé pour contrôler l'accès à une ressource partagée dans un environnement multi-thread ou multi-processus. C'est comme un gardien qui permet à un certain nombre de personnes d'entrer dans une pièce, mais qui bloque l'accès lorsque la capacité maximale est atteinte.
+
+\noindent Contrairement à un lock (ou Monitor) qui n'autorise qu'un seul thread à la fois (exclusivité totale), un sémaphore autorise l'accès à N threads simultanément.
+
+\vspace{0.5cm}
+
+\noindent Il est crucial de distinguer les deux classes disponibles dans l'espace de noms System.Threading :
+
+\vspace{0.5cm}
+
+\begin{center}
+\begin{tabular}{|p{0.22\textwidth}|p{0.33\textwidth}|p{0.33\textwidth}|}
+\hline
+\textbf{Caractéristique} & \textbf{SemaphoreSlim (Recommandé)} & \textbf{Semaphore (Classique)} \\ \hline
+Portée & Local au processus (votre application). & Peut être global au système (inter-processus). \\ \hline
+Poids & Léger (Lightweight). Utilise moins de ressources. & Lourd. C'est un ``wrapper'' autour d'un objet noyau Windows (Win32). \\ \hline
+Async & Supporte \texttt{WaitAsync()} (parfait pour async/await). & Ne supporte pas l'async nativement. \\ \hline
+Usage & 99\% des cas modernes. & Communication entre deux applications distinctes. \\ \hline
+\end{tabular}
+\end{center}
+
+\vspace{0.5cm}
+
+\noindent \textbf{Cas d'utilisation typiques}
+
+\begin{itemize}
+    \item \textbf{Limitation de débit (Throttling) :} Empêcher votre API de spammer une API tierce qui impose des limites (ex: max 10 requêtes/seconde).
+    \item \textbf{Gestion de pool de ressources :} Limiter le nombre de connexions ouvertes vers une base de données SQL ou un service externe.
+    \item \textbf{Téléchargements parallèles :} Vous avez une liste de 100 fichiers à télécharger, mais vous ne voulez en télécharger que 5 à la fois pour ne pas saturer la bande passante.
+\end{itemize}
+
+\begin{center}
+\rule{5cm}{0.4pt}
+\end{center}
+
+\vspace{0.5cm}
+
+\noindent \textbf{Mutex}:
+
+\noindent Mutex est l'abréviation de "Mutual Exclusion" (Exclusion Mutuelle). C'est une primitive de synchronisation qui garantit qu'un seul thread à la fois peut accéder à une ressource ou exécuter un bloc de code.
+
+\newpage
+
+\noindent \textbf{Binaire de comptage}:
+
+\noindent Un binaire de comptage est un type de sémaphore qui utilise une variable entière pour compter le nombre de ressources disponibles. C'est comme un compteur qui indique combien de places sont encore disponibles dans une salle, et qui se décrémente chaque fois qu'une personne entre.
+
+\begin{center}
+\rule{5cm}{0.4pt}
+\end{center}
+
+\vspace{0.5cm}
+
+\noindent \textbf{Exclusion mutuelle}:
+
+\noindent L'exclusion mutuelle est un principe de synchronisation qui garantit que lorsqu'un processus ou un thread accède à une ressource partagée, aucun autre processus ou thread ne peut y accéder en même temps.
+
+\begin{center}
+\rule{5cm}{0.4pt}
+\end{center}
+
+\vspace{0.5cm}
+
+\noindent \textbf{Djikstra}:
+
+\noindent Edsger W. Dijkstra était un informaticien néerlandais, célèbre pour ses contributions fondamentales à la science informatique, notamment dans les domaines de la programmation, des algorithmes et de la théorie des graphes. Il est notamment connu pour l'algorithme de Dijkstra, qui permet de trouver le chemin le plus court dans un graphe pondéré.
+
+\begin{center}
+\rule{5cm}{0.4pt}
+\end{center}
+
+\vspace{0.5cm}
+
+\noindent \textbf{Concurrence vs Parallélisme}:
+
+\noindent Le Parallélisme consiste à gérer plusieurs tâches à la fois, tandis que la Concurrence consiste à exécuter plusieurs tâches à la fois.
+
+\noindent \textbf{Le Parallélisme (Architecture)}
+\begin{itemize}
+    \item \textbf{Concept} : Plusieurs tâches (A, B) sont découpées en parties (Ra, Rb) qui peuvent s'exécuter dans le désordre, mais pas forcément en même temps. Par exemple, A $\rightarrow$ Ra, B $\rightarrow$ Rb, puis Ra et Rb peuvent être alternés sur un même cœur.
+    \item \textbf{Sur un CPU simple cœur} : Le système d'exploitation utilise le "Time Slicing". Il donne 10ms au Thread A, puis met le Thread A en pause pour donner 10ms au Thread B. Cela va si vite qu'on a l'illusion de la simultanéité.
+    \item \textbf{But} : Maximiser l'utilisation du CPU (ne pas rester inactif quand on attend une réponse réseau, par exemple) et la réactivité.
+\end{itemize}
+
+\noindent \textbf{La Concurrence (Exécution)}
+\begin{itemize}
+    \item \textbf{Concept} : Plusieurs tâches (Pa, Pb) s'exécutent réellement en même temps sur plusieurs cœurs ou machines. Par exemple, Pa et Pb $\rightarrow$ Ra, c'est-à-dire que les calculs sont faits simultanément.
+    \item \textbf{Sur un CPU multi-cœurs} : Chaque cœur peut exécuter une tâche différente en parallèle.
+    \item \textbf{But} : Aller plus vite (Performance pure) en divisant un gros problème de calcul en sous-problèmes traités par chaque cœur.
+\end{itemize}
+
+\newpage
+
+\noindent \textbf{Priority Inversion}:
+
+\noindent L'inversion de priorité est un bug de planification (scheduling) où une tâche de haute priorité est forcée d'attendre indéfiniment qu'une tâche de basse priorité finisse son travail, souvent à cause de l'interférence d'une tâche de priorité moyenne.
+
+\noindent C'est un paradoxe : le thread le plus important du système est bloqué par le moins important, violant ainsi les règles de priorité.
+
+\begin{center}
+\rule{5cm}{0.4pt}
+\end{center}
+
+\vspace{0.5cm}
+
+\noindent \textbf{Communication inter-processus (IPC)}:
+
+\noindent La communication inter-processus (inter-process communication, IPC, en anglais) regroupe un ensemble de mécanismes permettant à des processus concurrents de communiquer. Ces mécanismes peuvent être classés en trois catégories :
+\begin{itemize}
+    \item les mécanismes permettant l'échange de données entre les processus ;
+    \item les mécanismes permettant la synchronisation entre les processus (notamment pour gérer le principe de section critique) ;
+    \item les mécanismes permettant l'échange de données et la synchronisation entre les processus.
+\end{itemize}
+    
+\newpage
+
+\section*{Corbeille check}
+\addcontentsline{toc}{section}{Corbeille check}
+
+\noindent \textbf{Question}: Thread - Compléter le code:
+
+\begin{minted}{csharp}
+using System; using System.Collections.Generic;
+using System.Linq; using System.Text;
+
+namespace WS_THREAD
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+
+            System.Threading.Thread t =
+            new System.Threading.Thread(
+            new System.Threading.ThreadStart(
+            () =>
+            {
+                for (int i = 0; i < 10; i++)
+                {
+                    Console.WriteLine("Work...{0}", i);
+                    System.Threading.Thread.Sleep(1000);
+                }
+            }
+            )
+            );
+
+            t.Start();
+            Console.Read();
+
+        }
+    }
+}
+\end{minted}
+
+\vspace{0.5cm}
+
+\noindent La classe Thread se trouve dans l'espace de noms System.Threading. Pour simplifier, un objet de la classe Thread symbolise une tâche.
+\newpage
+
+\noindent \textbf{Question}: Pool Thread - compléter le code :
+
+\begin{minted}{csharp}
+using System; using System.Collections.Generic;
+using System.Linq; using System.Text; using System.Threading;
+
+namespace WS_THREAD
+{
+    // Déclaration du délégué
+    public delegate void DELG(object o);
+
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            System.Threading.Thread t1;
+
+            DELG d = (o) =>
+            {
+                short i = 10;
+                string msg = (string)o;
+
+                while (i > 0)
+                {
+                    Console.WriteLine("Work - > {0}::{1}", msg, i);
+                    System.Threading.Thread.Sleep(1000);
+                    i--;
+                }
+            };
+
+            t1 = new System.Threading.Thread(
+                new ParameterizedThreadStart(d.Invoke)
+            );
+
+            System.Threading.ThreadPool.QueueUserWorkItem(
+                (state) =>
+                {
+                    t1.Start("T1");
+                }
+            );
+
+            Console.Read();
+        }
+    }
+}
+\end{minted}
+
+\newpage
+
+\noindent \textbf{Question}: Synchronisation - compléter le code :
+
+\begin{minted}{csharp}
+using System; using System.Collections.Generic;
+using System.Linq; using System.Text; using System.Threading;
+
+namespace WS_THREAD
+{
+    class Program
+    {
+        private delegate void DELG(object state);
+
+        private static int var = 0;
+        private static object _lock;
+
+        static void Main(string[] args)
+        {
+            _lock = new object();
+
+            DELG d = (state) =>
+            {
+                lock (_lock)
+                {
+                    string name_thread = (string)state;
+                    ++var;
+                    Console.WriteLine("Thread -> {0} ({1})", var, name_thread);
+                }
+            };
+
+            System.Threading.Thread t1 =
+                new System.Threading.Thread(new ParameterizedThreadStart(d.Invoke));
+
+            System.Threading.Thread t2 =
+                new System.Threading.Thread(new ParameterizedThreadStart(d.Invoke));
+
+            t1.Start("T1");
+            t2.Start("T2");
+
+            Console.Read();
+        }
+    }
+}
+\end{minted}
+
+\newpage
+
+\noindent \textbf{Question}: Synchronisation - compléter le code :
+
+\begin{minted}{csharp}
+using System; using System.Collections.Generic;
+using System.Linq; using System.Text; using System.Threading;
+
+namespace WS_THREAD
+{
+    class Program
+    {
+        private delegate void DELG(object state);
+
+        private static string simu_cnx_db = "Utilisation de la base de données";
+        private static System.Threading.Semaphore semaphore;
+
+        static void Main(string[] args)
+        {
+            semaphore = new System.Threading.Semaphore(2, 2);
+
+            DELG d = (state) =>
+            {
+                semaphore.WaitOne();
+
+                for (int i = 0; i < 3; i++)
+                {
+                    string name_thread = (string)state;
+
+                    Console.WriteLine(
+                        "Thread -> {0} -- Etat -> {1}",
+                        name_thread,
+                        simu_cnx_db.ToString()
+                    );
+
+                    System.Threading.Thread.Sleep(2000);
+                }
+
+                semaphore.Release();
+            };
+
+            System.Threading.Thread t1 =
+                new System.Threading.Thread(new ParameterizedThreadStart(d.Invoke));
+
+            System.Threading.Thread t2 =
+                new System.Threading.Thread(new ParameterizedThreadStart(d.Invoke));
+
+            System.Threading.Thread t3 =
+                new System.Threading.Thread(new ParameterizedThreadStart(d.Invoke));
+
+            t1.Start("T1");
+            t2.Start("T2");
+            t3.Start("T3");
+
+            Console.Read();
+        }
+    }
+}
+\end{minted}
+
+\section*{Workshop}
+\addcontentsline{toc}{section}{Workshop}
+
+\newpage
+
+\section*{Analyse et résolution : Burnout}
+\addcontentsline{toc}{section}{Analyse et résolution : Burnout}
+
+\subsection*{Conclusion}
+\phantomsection
+\addcontentsline{toc}{subsection}{Conclusion}
+
+\newpage
+
+\section*{Capitalisation}
+\addcontentsline{toc}{section}{Capitalisation}
+
+\begin{center}
+\setlength{\tabcolsep}{10pt}
+
+\begin{tabular}{|p{0.30\textwidth}|p{0.45\textwidth}|m{0.08\textwidth}|}
+\hline
+\textbf{AAV} & \textbf{Commentaire} & \textbf{Statut} \\ \hline
+
+Définir Thread, Multi-threading, Mécanismes d'IPC, Ressource critique / Section critique, inter-blocage &
+Les définitions de Thread, Multi-threading, IPC, Ressource critique, Section critique et inter-blocage sont fournies avec des exemples et explications claires. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Citer, Décrire et expliquer les principaux problèmes liés à la section critique &
+Les problèmes comme l'interblocage, la famine, l'inversion de priorité sont identifiés, expliqués et illustrés avec des solutions proposées. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Citer, Décrire et expliquer les principaux mécanismes d'IPC et les organiser en catégories &
+Les mécanismes d'IPC (sémaphores, mutex, etc.) sont présentés, catégorisés et expliqués avec des cas d'utilisation. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Implémenter les mécanismes de synchronisation en C\# &
+Des exemples de code C\# illustrent l'utilisation de Thread, ThreadPool, lock, Semaphore, Mutex pour la synchronisation. &
+{\color{green!60!black}Acquis} \\ \hline
+
+\end{tabular}
+\end{center}
+
+\newpage
+
+\section*{Ressources}
+\addcontentsline{toc}{section}{Ressources}
+
+\begin{itemize}
+	\item 
+\end{itemize}

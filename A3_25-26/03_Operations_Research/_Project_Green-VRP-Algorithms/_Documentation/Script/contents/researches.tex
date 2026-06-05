@@ -1,0 +1,227 @@
+\section*{Introdution}
+\addcontentsline{toc}{section}{Introdution}
+
+Face aux défis climatiques actuels, la transition écologique impose de repenser en profondeur nos modes de fonctionnement industriels et logistiques. C'est dans cette dynamique que l'ADEME (Agence de l'Environnement et de la Maîtrise de l'Énergie) a lancé un appel à manifestation d'intérêt visant à promouvoir le développement de nouvelles solutions de mobilité intelligente. 
+
+\noindent Le laboratoire \textbf{CesiCDP}, fort de son expertise en logistique multimodale, se positionne sur cet appel à projets avec un objectif clair : concevoir un outil algorithmique capable d'optimiser les tournées de livraison de marchandises. En minimisant les distances parcourues et en maximisant l'efficacité des flottes de véhicules, ce projet ambitionne de réduire significativement l'empreinte carbone et les coûts opérationnels liés au transport.
+
+\noindent Ce document constitue le premier livrable de notre étude. Il a pour but de poser les fondations théoriques de notre solution en formalisant le problème logistique rencontré, en définissant les contraintes de terrain, et en démontrant la complexité mathématique inhérente à sa résolution.
+
+\newpage
+
+\section*{Chapter 1 - Modélisation}
+\addcontentsline{toc}{section}{Chapter 1 - Modélisation}
+
+\subsection*{Présentation du problème et de son contexte}
+\phantomsection
+\addcontentsline{toc}{subsection}{Présentation du problème et de son contexte}
+
+\subsubsection*{Contexte}
+\phantomsection
+\addcontentsline{toc}{subsubsection}{Contexte}
+
+Dans le cadre de l'appel à manifestation d'intérêt lancé par l'ADEME, le laboratoire CesiCDP se positionne pour concevoir de nouvelles solutions de mobilité multimodale intelligente. Face aux défis climatiques et à l'augmentation des flux de marchandises, l'enjeu est d'optimiser la logistique du transport (distribution, livraison, ramassage).
+
+\noindent L'objectif environnemental est direct : limiter les déplacements inutiles et optimiser la gestion des ressources pour réduire drastiquement la consommation de carburant et les émissions polluantes.
+
+\subsubsection*{Problématique}
+\phantomsection
+\addcontentsline{toc}{subsubsection}{Problématique}
+
+Le défi algorithmique central consiste à calculer une tournée sur un réseau routier permettant de relier un sous-ensemble défini de villes, puis de revenir au point de départ.
+
+\noindent L’objectif est de minimiser la distance totale ou la durée globale des trajets effectués par une flotte de véhicules pour desservir un ensemble de clients. Bien que ce défi relève du Problème de \textbf{Tournées de Véhicules (VRP)}, un enjeu central de la logistique moderne, la réalité du terrain impose des défis supplémentaires.
+\subsubsection*{Contraintes choisies}
+\phantomsection
+\addcontentsline{toc}{subsubsection}{Contraintes choisies}
+
+Pour garantir un démonstrateur réaliste et applicable à l'industrie, nous intégrons les contraintes suivantes, transformant le problème en un Problème de Tournées de Véhicules avec Capacités (CVRP) :
+\begin{itemize}
+    \item \textbf{Utilisation de plusieurs véhicules :} Il peut y avoir plusieurs sous-tournées plutôt qu'une seule grande tournée.
+    \item \textbf{Capacité des véhicules :} Si la contrainte précédente a été choisie, chaque véhicule a une capacité limite pour transporter des marchandises ou des passagers.
+\end{itemize}
+
+\newpage
+
+\subsection*{Représentation formelle}
+\phantomsection
+\addcontentsline{toc}{subsection}{Représentation formelle}
+
+Pour traiter ce problème algorithmiquement, nous le traduisons mathématiquement à l'aide de la théorie des graphes.
+
+\subsubsection*{Les Données (Le Réseau)}
+\phantomsection
+\addcontentsline{toc}{subsubsection}{Les Données (Le Réseau)}
+
+Le réseau routier est modélisé par un graphe complet orienté et pondéré $G = (V, E)$.
+\begin{itemize}
+    \item \textbf{Sommets :} $V = \{v_0, v_1, \dots, v_n\}$ où $v_0$ représente le dépôt central et $V \setminus \{v_0\}$ l'ensemble des villes.
+    \item \textbf{Arêtes :} $E$ représente l'ensemble des routes reliant les villes.
+    \item \textbf{Coûts :} Chaque arête $(v_i, v_j)$ a un coût de trajet $c_{ij}$.
+    \item \textbf{Demandes :} Chaque ville $v_i$ nécessite une quantité $q_i$. Le total des gens/colis à transporter est $Q_{total}$.
+    \item \textbf{Véhicules :} Une flotte de $K$ véhicules (indexés par $k$), ayant chacun une capacité maximale $Q_{max}$.
+\end{itemize}
+
+\subsubsection*{Variables de Décision}
+\phantomsection
+\addcontentsline{toc}{subsubsection}{Variables de Décision}
+
+Nous définissons une variable binaire $x_{ijk}$ pour décider si une route est utilisée :
+$$x_{ijk} \in \{0, 1\} \quad \forall i,j \in \{0, \dots, n\}, \forall k \in \{1, \dots, K\}$$
+\begin{itemize}
+    \item $x_{ijk} = 1$ si le véhicule $k$ effectue le trajet de la ville $i$ vers la ville $j$.
+    \item $x_{ijk} = 0$ sinon.
+\end{itemize}
+
+\subsubsection*{Fonction Objectif}
+\phantomsection
+\addcontentsline{toc}{subsubsection}{Fonction Objectif}
+
+L'objectif est de minimiser le coût total des trajets effectués par l'ensemble de la flotte :
+$$\text{Min } Z = \sum_{k=1}^{K} \sum_{i=0}^{n} \sum_{j=0}^{n} c_{ij} x_{ijk}$$
+
+\subsubsection*{Contraintes (SC)}
+\phantomsection
+\addcontentsline{toc}{subsubsection}{Contraintes (SC)}
+
+\begin{enumerate}
+    \item \textbf{Unicité de visite :} Chaque ville doit être visitée exactement une fois par un seul véhicule.
+    $$\sum_{k=1}^{K} \sum_{i=0}^{n} x_{ijk} = 1 \quad \forall j \in \{1, \dots, n\}$$
+
+    \item \textbf{Conservation du flux (Retour au dépôt) :} Tout véhicule arrivant à une ville (ou au dépôt) doit en repartir.
+    $$\sum_{i=0}^{n} x_{i0k} - \sum_{j=0}^{n} x_{0jk} = 0 \quad \forall k \in \{1, \dots, K\}$$
+
+    \item \textbf{Transport total :} La somme des capacités mobilisées doit couvrir le besoin total.
+    $$\sum_{k=1}^{K} q_k = Q_{total}$$
+
+    \item \textbf{Capacité des véhicules :} Les colis/personnes transportés par le véhicule $k$ ne doivent pas excéder sa charge maximale $Q_{max}$.
+    $$\sum_{i=0}^{n} \sum_{j=0}^{n} q_k x_{ijk} \leq Q_{max} \quad \forall k \in \{1, \dots, K\}$$
+
+    \item \textbf{Activation des véhicules :} S'assurer que tous les véhicules partent au plus une fois du dépôt.
+    $$\sum_{j=1}^{n} x_{0jk} \leq 1 \quad \forall k \in \{1, \dots, K\}$$
+\end{enumerate}
+
+\subsection*{Étude et Démonstration de la Complexité Théorique}
+\phantomsection
+\addcontentsline{toc}{subsection}{Étude et Démonstration de la Complexité Théorique}
+
+L'étude des propriétés théoriques de notre modèle (le CVRP) révèle qu'il s'agit d'un problème combinatoire complexe combinant deux dimensions difficiles : l'ordre de visite (Parcours) et la répartition des charges dans une flotte limitée (Bin Packing).
+
+\subsubsection*{Version décisionnelle}
+\phantomsection
+\addcontentsline{toc}{subsubsection}{Version décisionnelle}
+
+Pour évaluer la complexité, nous définissons le problème de décision associé : \\
+\textit{Existe-t-il un ensemble de tournées valides (commençant au dépôt, visitant chaque ville une fois sans dépasser la capacité $Q$) dont le coût total est $\leq L$ ?}
+
+\subsubsection*{Appartenance à la classe NP}
+\phantomsection
+\addcontentsline{toc}{subsubsection}{Appartenance à la classe NP}
+
+Un problème est dans la classe NP si la validité d'une solution candidate (certificat) peut être vérifiée en temps polynomial par rapport à la taille de l'entrée $n$.
+Pour un ensemble de parcours donné, nous pouvons :
+\begin{enumerate}
+    \item Vérifier que chaque ville est visitée exactement une fois (Temps $\mathcal{O}(n)$).
+    \item Sommer les demandes $q_i$ par véhicule pour vérifier que le total est $\leq Q$ (Temps $\mathcal{O}(n)$).
+    \item Additionner les coûts $c_{ij}$ pour vérifier que la somme est $\leq L$ (Temps $\mathcal{O}(n)$).
+\end{enumerate}
+
+
+\begin{minipage}{\linewidth }
+\begin{lstlisting}[caption={Algorithme de vérification de solution}]
+Variables:
+    Liste sommetsVisites
+    Réel tempsTotal <- 0
+    Entier n <- taille(solution)
+
+Début:
+    # 1. Vérification de la complétude
+    Si n != G.nombreSommets():
+        Renvoyer Faux
+    Fin Si
+
+    Pour i allant de 0 à n - 1:
+        Sommet actuel <- solution[i]
+
+        # 2. Vérifier si le sommet existe dans le graphe et n'est pas un doublon
+        Si NON G.existeSommet(actuel) OU actuel appartient à sommetsVisites:
+            Renvoyer Faux
+        Fin Si
+        sommetsVisites.ajouter(actuel)
+
+        # 3. Calcul du temps et continuité du chemin
+        Sommet suivant <- solution[i + 1]
+        Arrete arc <- G.trouverArrete(actuel, suivant)
+
+        Si estVide(arc):
+            Renvoyer Faux
+        Sinon:
+            tempsTotal <- tempsTotal + arc.poids
+        Fin Si
+    Fin Pour
+
+    # 4. Vérification de la contrainte de temps
+    Si tempsTotal > tempsMax:
+        Renvoyer Faux
+    Fin Si
+
+    Renvoyer Vrai
+Fin
+\end{lstlisting}
+\end{minipage}
+Les vérifications s'effectuant en temps polynomial, le problème appartient bien à NP.
+
+\subsubsection*{Démonstration de la NP-difficulté (par restriction)}
+\phantomsection
+\addcontentsline{toc}{subsubsection}{Démonstration de la NP-difficulté (par restriction)}
+
+Pour prouver formellement la NP-difficulté, nous démontrons par restriction que notre problème contient un cas particulier déjà connu comme NP-difficile : le Problème du Voyageur de Commerce (TSP).
+\begin{enumerate}
+    \item \textbf{Problème source :} Le TSP est prouvé NP-difficile.
+    \item \textbf{Réduction :} Fixons les paramètres de notre problème avec $K = 1$ véhicule, et une capacité $Q$ suffisamment grande pour couvrir la somme de toutes les demandes ($\sum q_i \leq Q$).
+    \item \textbf{Équivalence :} Dans ce cas de figure, la contrainte de capacité $Q$ disparaît de fait. Le problème se réduit exactement à trouver le cycle hamiltonien de coût minimal traversant toutes les villes, ce qui est la définition stricte du TSP.
+    \item \textbf{Conclusion :} Puisque notre modèle peut se réduire au TSP, il est au moins aussi difficile à résoudre. Il est donc NP-difficile.
+\end{enumerate}
+
+\newpage
+
+\subsubsection*{Conclusion sur la complexité}
+\phantomsection
+\addcontentsline{toc}{subsubsection}{Conclusion sur la complexité}
+
+Étant simultanément dans NP et NP-difficile, notre problème d'optimisation de tournées avec capacités est \textbf{NP-Complet}. Il est donc hautement improbable qu'un algorithme exact puisse le résoudre en temps polynomial pour de grandes instances de réseaux routiers, justifiant l'utilisation future de méthodes heuristiques ou méta-heuristiques.
+
+\newpage
+
+\section*{Chapter 2 - Implémentation et exploitation}
+\addcontentsline{toc}{section}{Chapter 2 - Implémentation et exploitation}
+
+\subsection*{Chapter 2 - SubSection 1}
+\phantomsection
+\addcontentsline{toc}{subsection}{Chapter 2 - SubSection 1}
+
+\subsection*{Chapter 2 - SubSection 2}
+\phantomsection
+\addcontentsline{toc}{subsection}{Chapter 2 - SubSection 2}
+
+\newpage
+
+\section*{Conclusion}
+\addcontentsline{toc}{section}{Conclusion}
+
+\newpage
+
+\section*{Appendices}
+\addcontentsline{toc}{section}{Appendices}
+
+\newpage
+
+\section*{Bibliographiques}
+\addcontentsline{toc}{section}{Bibliographiques}
+\begin{itemize}
+    \item \textbf{Dantzig, G. B., \& Ramser, J. H. (1959).} \textit{The Truck Dispatching Problem}. Management Science, 6(1), 80-91.
+    \item \textbf{Garey, M. R., \& Johnson, D. S. (1979).} \textit{Computers and Intractability: A Guide to the Theory of NP-Completeness}. W. H. Freeman \& Co.
+    \item \textbf{Toth, P., \& Vigo, D. (2014).} \textit{Vehicle Routing: Problems, Methods, and Applications}. Society for Industrial and Applied Mathematics (SIAM).
+    \item \textbf{AIMMS. (s. d.).} \textit{CVRP Formulation}. AIMMS Optimization Education Series. \url{https://how-to.aimms.com/Articles/332/332-Formulation-CVRP.html} 
+    \item \textbf{Google Developers. (2024).} \textit{Le problème de tournée de véhicules avec capacités (CVRP)}. Google OR-Tools. \url{https://developers.google.com/optimization/routing/cvrp?hl=fr}
+\end{itemize}

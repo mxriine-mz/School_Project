@@ -1,0 +1,47 @@
+% --- FOOTER ---
+\newpage 
+\pagestyle{fancy}
+\setlength{\headheight}{16pt}
+\fancyhf{}  % Effacer tout d'abord
+
+% En-tête (ne pas effacer avec fancyhf)
+\fancyhead[C]{%
+    \transparent{0.5}%
+    \textcolor{safranOrange}{\textbf{C2 - Confidential}}
+}
+
+% Pied de page
+\fancyfoot[L]{%
+	\transparent{0.5}%
+	\textcolor{footer}{\fontsize{16}{18}\selectfont \textbf{\thepage}}%
+}
+
+\fancyfoot[R]{%
+	\raisebox{-0.7cm}{%
+		\transparent{0.5}%
+		\includegraphics[height=1cm]{../_Template/assets/img/safran_logo.png}%
+	}%
+}
+
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% Appliquer le même style aux pages "plain"
+\fancypagestyle{plain}{%
+    \fancyhead[C]{%
+        \transparent{0.5}%
+        \textcolor{safranOrange}{\textbf{C2 - Confidential}}
+    }%
+    \fancyfoot[L]{%
+        \transparent{0.5}%
+        \textcolor{footer}{\fontsize{16}{18}\selectfont \textbf{\thepage}}%
+    }%
+    \fancyfoot[R]{%
+        \raisebox{-0.7cm}{%
+            \transparent{0.5}%
+            \includegraphics[height=1cm]{../_Template/assets/img/safran_logo.png}%
+        }%
+    }%
+    \renewcommand{\headrulewidth}{0pt}%
+    \renewcommand{\footrulewidth}{0pt}%
+}
