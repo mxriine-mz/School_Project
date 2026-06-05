@@ -18,7 +18,7 @@ School_Project/
 
 | Année | Période | Statut | Contenu |
 | :--- | :--- | :--- | :--- |
-| A2 | 2024 – 2025 | Archive | — |
+| [A2](./A2_24-25/) | 2024 – 2025 | Archive | 4 modules, 1 projet |
 | [A3](./A3_25-26/) | 2025 – 2026 | En cours | 4 modules, 5 projets, 3 rapports |
 | A4 | 2026 – 2027 | À venir | — |
 | A5 | 2027 – 2028 | À venir | — |
@@ -35,6 +35,17 @@ School_Project/
 | [04 · Dev. Applications Distribuées](./A3_25-26/04_Development_Distributed_Applications/) | API REST, Front-End, JWT, Docker, sécurité | Projet distribué |
 
 Rapports transverses : [Citizen Engineer](./A3_25-26/_Report/Citizen_Engineer/), [Job Survey](./A3_25-26/_Report/Job_Survey/), [Surprise Report SAFRAN](./A3_25-26/_Report/Surprise_Report_SAFRAN/).
+
+---
+
+## Archive — [A2 · 2024-2025](./A2_24-25/)
+
+| Module | Thématique | Projet associé |
+| :--- | :--- | :--- |
+| 01 · Embedded System | Systèmes embarqués et programmation bas niveau | *à compléter* |
+| 02 · Object-oriented Design & Programming | Conception et programmation orientée objet (POO) | *à compléter* |
+| 03 · Networks System | Réseaux et systèmes : protocoles, adressage, services | *à compléter* |
+| [04 · Web Development](./A2_24-25/04_Web_Development/) | Développement web full-stack PHP/MVC | [Internity](./A2_24-25/04_Web_Development/Internity/) |
 
 ---
 
