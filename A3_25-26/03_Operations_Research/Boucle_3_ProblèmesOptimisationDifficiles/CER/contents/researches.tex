@@ -1,0 +1,195 @@
+% --- ETUDE DE CAS ---
+\newpage
+\section*{Étude de cas~: Problèmes d'optimisation difficiles}
+\addcontentsline{toc}{section}{Étude de cas~: Problèmes d'optimisation difficiles}
+
+\section*{AAV}
+\addcontentsline{toc}{section}{AAV}
+\begin{itemize}
+	\item [4] Distinguer les différentes classifications des problèmes d’optimisation : continue vs discrète, avec ou sans contraintes, etc.
+	\item [3] Déterminer les types de problèmes concrets qui peuvent être résolus via les méthodes de la recherche opérationnelle
+	\item [3] Décrire les modèles de calcul utilisés en recherche opérationnelle
+	\item [3] Interpréter un modèle de PL
+	\item [3] Déterminer les caractéristiques d'un problème d'optimisation difficile
+\end{itemize}
+
+\newpage
+
+\subsection*{Mots clés}
+\phantomsection
+\addcontentsline{toc}{subsection}{Mots clés}
+\begin{itemize}
+	\item PLNE
+	\item Solveur simplexe
+	\item Méta-heuristique
+	\item Solution optimale
+	\item Ensemble de données
+\end{itemize}
+
+\subsection*{Contexte}
+\phantomsection
+\addcontentsline{toc}{subsection}{Contexte}
+\noindent Apres avoir prouvé que notre problème étais NP-complet, on s’est rendu compte qu’il n’y avais pas de solution optimal en temps polynomial. Nous cherchons donc d’autres solutions et approche optimal
+
+
+\subsection*{Problématique}
+\phantomsection
+\addcontentsline{toc}{subsection}{Problématique}
+\noindent Comment déterminer la meilleur approche pour résoudre ce problème ?
+
+\subsection*{Contraintes}
+\phantomsection
+\addcontentsline{toc}{subsection}{Contraintes}
+\begin{itemize}
+	\item NP-complet
+	\item Plan de la ville
+\end{itemize}
+
+\subsection*{Généralisation}
+\phantomsection
+\addcontentsline{toc}{subsection}{Généralisation}
+\begin{itemize}
+	\item Python 
+	\item Théorie des graphs 
+	\item Complexité algorithmique  
+\end{itemize}
+
+\subsection*{Livrables}
+\phantomsection
+\addcontentsline{toc}{subsection}{Livrables}
+\begin{itemize}
+	\item Rendre un algorithme Python
+\end{itemize}
+
+\subsection*{Pistes de solutions}
+\phantomsection
+\addcontentsline{toc}{subsection}{Pistes de solutions}
+\begin{itemize}
+	\item Se renseigner sur l’Algorithme d’Agathe
+\end{itemize}
+
+\subsection*{Plan d'actions}
+\phantomsection
+\addcontentsline{toc}{subsection}{Plan d'actions}
+\begin{itemize}
+	\item Définir les mots clés 
+	\item Etudier les ressources
+	\item Etudier les algorithmes (solveur simplexe)
+	\item Analyser le problème et en déduire la bonne approche
+	\item Produire l’algorithme
+\end{itemize}
+
+\newpage
+\section*{Démarche~: Problèmes d'optimisation difficiles}
+\addcontentsline{toc}{section}{Démarche~: Problèmes d'optimisation difficiles}
+
+\subsection*{Définition~: Mots clés}
+\phantomsection
+\addcontentsline{toc}{subsection}{Définition: Mots clés}
+
+\noindent \textbf{PL}: Méthode d'optimisation mathématique qui cherche à maximiser ou minimiser une fonction objectif linéaire, sous un ensemble de contraintes également linéaires. Les variables peuvent prendre n'importe quelle valeur réelle. Par exemple, optimiser la production d'une usine en tenant compte des ressources disponibles.
+
+\vspace{0.5cm}
+
+\noindent \textbf{PLNE (Programmation Linéaire en Nombres Entiers)} : Extension de la PL où certaines ou toutes les variables sont contraintes à prendre des valeurs entières. Cela rend le problème bien plus complexe à résoudre car on ne peut plus simplement parcourir les sommets du domaine réalisable. On l'utilise quand les variables représentent des quantités indivisibles, comme le nombre de machines, de personnes ou de véhicules.
+
+\vspace{0.5cm}
+
+\noindent \textbf{Solveur simplexe} : Algorithme itératif permettant de résoudre des problèmes d'optimisation linéaire en parcourant les sommets du domaine réalisable jusqu'à trouver la solution optimale.
+
+\vspace{0.5cm}
+
+\noindent \textbf{Méta-heuristique} : Stratégie d'optimisation approchée de haut niveau (ex: algorithme génétique, recuit simulé) permettant d'explorer intelligemment un grand espace de solutions pour trouver une bonne solution en un temps raisonnable, sans garantie d'optimalité.
+
+\vspace{0.5cm}
+
+\noindent \textbf{Programmation dynamique} : Méthode algorithmique de résolution de problèmes d'optimisation qui consiste à décomposer un problème complexe en sous-problèmes plus simples, résoudre chaque sous-problème une seule fois et mémoriser les résultats pour éviter de les recalculer.
+
+\vspace{0.5cm}
+
+\noindent \textbf{Solution optimale} : Solution d'un problème d'optimisation qui minimise ou maximise la fonction objectif tout en respectant l'ensemble des contraintes définies.
+
+\vspace{0.5cm}
+
+\noindent \textbf{Ensemble de données} : Collection structurée d'informations utilisée comme entrée d'un algorithme ou d'un modèle, représentant les instances du problème à résoudre.
+
+\newpage
+
+\section*{Analyse et résolution : Problèmes d'optimisation difficiles}
+\addcontentsline{toc}{section}{Analyse et résolution : Problèmes d'optimisation difficiles}
+
+\noindent 
+
+\newpage
+
+\subsection*{Conclusion}
+\phantomsection
+\addcontentsline{toc}{subsection}{Conclusion}
+
+\noindent 
+
+\newpage
+
+\section*{Capitalisation}
+\addcontentsline{toc}{section}{Capitalisation}
+
+\begin{center}
+\setlength{\tabcolsep}{10pt}
+
+\begin{tabular}{|p{0.30\textwidth}|p{0.45\textwidth}|m{0.08\textwidth}|}
+\hline
+\textbf{AAV} & \textbf{Commentaire} & \textbf{Statut} \\ \hline
+
+Décrire .NET Core et .NET Framework et leur rôle dans .Net &
+Les différences, rôles et évolutions sont expliqués, avec schéma et exemples. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Décrire les architectures .NET &
+L'architecture interne (CLR, CoreCLR, composants) est détaillée, distinctions claires. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Expliquer les évolutions entre .NET Core et .NET Framework &
+Les ruptures (performance, modularité, open source) sont bien identifiées et justifiées. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Expliquer les notions de CoreCLR et CLR &
+Explications précises sur le CLR/CoreCLR, compilation, JIT, Garbage Collector. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Expliquer les notions d'assemblage pour .NET Core et .NET Framework &
+Assemblages, GAC, déploiement autonome bien expliqués, différences mises en avant. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Connaître les principaux outils supportant la chaine d'intégration continue &
+Outils CI (Azure DevOps, GitHub Actions, GitLab CI, SonarQube) listés et expliqués. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Connaître les principes généraux de la conteneurisation et ses avantages &
+Principe de conteneurisation, avantages et outils (Docker, Dockerfile) présentés clairement. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Connaître les environnements et outils Docker &
+Docker Desktop, Docker Hub, fichiers Dockerfile mentionnés et contextualisés. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Pratiquer l'installation et la configuration de Git &
+Procédure d'installation, configuration utilisateur, commandes de base détaillées. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Relier Visual Studio à un dépôt Git &
+Lien entre Visual Studio et Git expliqué, utilisation de l'onglet "Git Changes" abordée. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Illustrer les principes généraux de gestion de versions pour un fichier et Appliquer les commandes Git associées &
+Principes de versionning, commandes Git (init, add, commit, push, pull, merge, etc.) illustrés par des exemples pratiques. &
+{\color{green!60!black}Acquis} \\ \hline
+
+\end{tabular}
+\end{center}
+
+\section*{Ressources}
+\addcontentsline{toc}{section}{Ressources}
+
+\begin{itemize}
+	\item 
+\end{itemize}

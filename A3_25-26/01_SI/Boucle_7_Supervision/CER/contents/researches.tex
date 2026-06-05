@@ -1,0 +1,334 @@
+% --- ETUDE DE CAS ---
+\newpage
+\section*{Étude de cas~: Supervision}
+\addcontentsline{toc}{section}{Étude de cas~: Supervision}
+
+\section*{AAV}
+\addcontentsline{toc}{section}{AAV}
+\begin{itemize}
+	\item [3] Etablir un inventaire fonctionnel
+  \item [2] Résumer l'intérêt d'un CMDB en entreprise au regard de la supervision
+  \item [3] Préparer des scripts sous Linux liés à la supervision
+  \item [3] Utiliser des outils de supervision
+  \item [2] Reconnaitre différents protocoles pour la supervision
+  \item [2] Décrire le rôle des MIB et des OID
+  \item [5] Proposer une supervision technique et fonctionnelle
+\end{itemize}
+
+\newpage
+
+\subsection*{Mots clés}
+\phantomsection
+\addcontentsline{toc}{subsection}{Mots clés}
+\begin{itemize}
+	\item Supervision
+	\item Monitoring
+	\item SNMP
+	\item MIB
+	\item ODI
+	\item CMDB
+	\item Métrologie
+	\item Logs
+	\item VPN
+	\item DSI 
+	\item Script de surveillance
+\end{itemize}
+
+\subsection*{Contexte}
+\phantomsection
+\addcontentsline{toc}{subsection}{Contexte}
+\noindent Le serveur bureautique de l'entreprise a planté suite à une saturation de disques causée par des logs. Les scripts de surveillance existants n'ont pas fonctionné et il faut revoir la gestion du protocole SNMP/MIB et l'absence d'outils de monitoring.
+
+\subsection*{Problématique}
+\phantomsection
+\addcontentsline{toc}{subsection}{Problématique}
+\noindent Comment mettre en place une solution de monitoring incluant la gestion des alertes et l'analyse historique pour garantir la disponibilité du SI ?
+
+\subsection*{Contraintes}
+\phantomsection
+\addcontentsline{toc}{subsection}{Contraintes}
+\begin{itemize}
+	\item Alerte temps réel
+	\item Seuils critique 
+\end{itemize}
+
+\subsection*{Généralisation}
+\phantomsection
+\addcontentsline{toc}{subsection}{Généralisation}
+\begin{itemize}
+	\item Zabbix
+	\item Packet Tracer
+  \item Protocole SNMP ICMP Tracer
+\end{itemize}
+
+\subsection*{Livrables}
+\phantomsection
+\addcontentsline{toc}{subsection}{Livrables}
+\begin{itemize}
+	\item Architecteur
+	\item Script de surveillance
+	\item Maquette Packet Tracer
+\end{itemize}
+
+\subsection*{Pistes de solutions}
+\phantomsection
+\addcontentsline{toc}{subsection}{Pistes de solutions}
+\begin{itemize}
+	\item Protocoles SNMP et MIB
+  \item Logs
+\end{itemize}
+
+\newpage
+
+\subsection*{Plan d'actions}
+\phantomsection
+\addcontentsline{toc}{subsection}{Plan d'actions}
+\begin{itemize}
+	\item Définir les mots clés et comprendre le vocabulaire de la supervision
+	\item Analyser l'existant et les besoins (Vérifier les logs)
+	\item Étudier le protocole SNMP et MIB: Comprendre le fonctionnement client/serveur et la structure des MIB.
+	\item Étudier le monitoring
+	\item Identifier le matériel de supervision et monitoring 
+	\item Configurer les alertes et Dashboard
+	\item Réalisation de la maquette et de l'architecture
+\end{itemize}
+
+\newpage
+\section*{Démarche~: Supervision}
+\addcontentsline{toc}{section}{Démarche~: Supervision}
+
+
+\subsection*{Définition~: Mots clés}
+\phantomsection
+\addcontentsline{toc}{subsection}{Définition: Mots clés}
+
+\noindent \textbf{Supervision} \\
+Processus stratégique et global visant à garantir le Maintien en Condition Opérationnelle (MCO) et l'amélioration continue du Système d'Information (SI). Elle couvre deux aspects : 1) La surveillance technique des composants (\textit{Monitoring}) ; 2) La surveillance des Services Métier (\textit{Supervision Fonctionnelle}). Son objectif principal, aligné sur ITIL, est d'assurer les niveaux de service (SLA) définis.
+\vspace{0.5em}
+
+\noindent \textbf{Monitoring} \\
+Ensemble des techniques de **collecte systématique et en temps réel** des données quantitatives (\textit{métriques}) et qualitatives (\textit{états}) d'un Équipement de Configuration (CI - \textit{Configuration Item}) : utilisation du CPU, latence, taux de perte de paquets, espace disque disponible. Le Monitoring est la brique technique qui alimente l'outil de Supervision pour déclencher les alertes.
+\vspace{0.5em}
+
+\noindent \textbf{SNMP (\textit{Simple Network Management Protocol})} \\
+Protocole de la couche application standard (modèle OSI) utilisé pour l'échange d'informations de gestion entre un **Manager** (le logiciel de supervision) et un **Agent** (le logiciel sur le périphérique). Il opère généralement via UDP sur le port \textbf{161} (requêtes) et \textbf{162} (\textit{Traps}). La version \textbf{v3} est privilégiée pour ses mécanismes de sécurité (Authentification et Cryptage).
+\vspace{0.5em}
+
+\noindent \textbf{MIB (\textit{Management Information Base})} \\
+Base de données virtuelle et arborescente résidant sur un Agent SNMP. Elle définit la structure logique et l'organisation des données que l'équipement rend disponibles pour la gestion. La MIB est une collection de définitions formelles d'objets (variables) que l'on peut interroger ou modifier via SNMP.
+\vspace{0.5em}
+
+\noindent \textbf{OID (\textit{Object Identifier})} \\
+Séquence numérique unique (\textit{e.g.,} $1.3.6.1.4.1.\dots$) qui sert d'adresse absolue pour identifier une variable spécifique au sein de la MIB. Le Manager SNMP utilise l'OID pour demander la valeur d'une métrique précise (comme le taux d'utilisation du disque ou l'état d'une interface).
+\vspace{0.5em}
+
+\noindent \textbf{CMDB (\textit{Configuration Management Database})} \\
+Référentiel centralisé et logique d'informations sur l'ensemble des Éléments de Configuration (CI) du Système d'Information. Son rôle n'est pas seulement d'inventorier, mais surtout de modéliser les \textbf{relations de dépendance} entre les CI. Elle est indispensable à l'analyse d'impact (qu'est-ce qui est affecté si le Serveur Bureautique tombe) et à la gestion des changements (selon le cadre ITIL).
+\vspace{0.5em}
+
+\newpage
+
+\noindent \textbf{Métrologie} \\
+Discipline qui s'intéresse à la \textbf{mesure continue et à l'historisation} des métriques de performance et de charge (provenant du Monitoring) sur le long terme. Elle permet d'effectuer du \textit{trending} (analyse des tendances), de la corrélation d'événements, et de projeter les besoins futurs en ressources (Planification de Capacité ou \textit{Capacity Planning}), répondant ainsi directement à la demande de planification de Marta.
+\vspace{0.5em}
+
+\noindent \textbf{Logs} \\
+Enregistrements chronologiques et immuables générés par les applications, les systèmes d'exploitation ou les équipements réseau, détaillant les événements survenus (erreurs, transactions, accès, etc.). Le problème de BERRIA montre que les Logs doivent eux-mêmes faire l'objet d'un Monitoring pour éviter la saturation du volume de stockage. L'analyse des Logs est cruciale pour le diagnostic et l'audit de sécurité.
+\vspace{0.5em}
+
+\noindent \textbf{VPN (\textit{Virtual Private Network})} \\
+Réseau privé virtuel. Mécanisme de télécommunication permettant de créer un **tunnel sécurisé et chiffré** entre deux entités (ex: un utilisateur distant et le réseau d'entreprise) via un réseau public non sécurisé. Il assure la Confidentialité, l'Intégrité et l'Authentification (CIA) des communications pour les accès distants critiques (comme celui du directeur).
+\vspace{0.5em}
+
+\noindent \textbf{DSI (\textit{Directeur des Systèmes d'Information})} \\
+Membre du comité de direction (ComEx) responsable de l'alignement stratégique du SI sur les objectifs de l'entreprise. La DSI (Marta) gère l'ensemble des ressources technologiques (humaines, matérielles, logicielles) et est responsable de la continuité d'activité (PCA) et de la qualité de service fournie aux utilisateurs.
+\vspace{0.5em}
+
+\noindent \textbf{Script de surveillance} \\
+Programme léger et automatisé (souvent en \textit{Shell}, Python, Perl) exécuté périodiquement par une tâche planifiée (\textit{Cron} sous Linux) pour effectuer un \textbf{contrôle binaire} (OK/Non-OK) sur un point spécifique du système (ex: `df` pour le disque). Ils sont l'étape primitive du Monitoring et doivent être remplacés ou intégrés à un outil de supervision central pour une gestion efficace des alertes.
+
+\newpage
+
+\section*{Corbeille d'Excercice}
+\addcontentsline{toc}{section}{Corbeille d'Excercice}
+
+Pas encore ajouté au document final.
+
+\newpage
+
+\section*{Analyse et résolution : Supervision}
+\addcontentsline{toc}{section}{Analyse et résolution : Supervision}
+
+\subsection*{Définir les mots clés et comprendre le vocabulaire de la supervision}
+\phantomsection
+\addcontentsline{toc}{subsection}{Définir les mots clés et comprendre le vocabulaire de la supervision}
+
+\noindent Cette étape est essentielle pour établir un langage commun. Les définitions des mots-clés (Supervision, Monitoring, SNMP, MIB, OID, CMDB, Métrologie) ont été établies en préambule, permettant de distinguer :
+\begin{itemize}
+    \item La \textbf{Supervision Fonctionnelle} : surveiller les services de l'entreprise (gestion des logs, VPN).
+    \item Le \textbf{Monitoring Technique} : surveiller les ressources des machines (CPU, Disque).
+\end{itemize}
+
+\subsection*{Analyser l'existant et les besoins}
+\phantomsection
+\addcontentsline{toc}{subsection}{Analyser l'existant et les besoins}
+
+\noindent L'analyse révèle trois problèmes majeurs :
+\begin{enumerate}
+    \item \textbf{La panne initiale} : Saturation de disque causée par les logs.
+    \item \textbf{Absence d'outils} : Dépendance à des scripts locaux non fiables.
+    \item \textbf{Gestion SNMP/MIB obsolète} : Manque de sécurité et de centralisation.
+\end{enumerate}
+\vspace{0.5em}
+\noindent \textbf{Action prioritaire sur les Logs :} Le nouveau système de supervision doit absolument intégrer la \textbf{vérification de l'espace disque} spécifiquement dédié aux journaux (Logs) avec un seuil d'alerte très bas (ex: 80\% d'occupation) pour anticiper la récurrence de la panne.
+
+\subsection*{Étudier le protocole SNMP et MIB}
+\phantomsection
+\addcontentsline{toc}{subsection}{Étudier le protocole SNMP et MIB}
+
+\noindent \textbf{Fonctionnement Manager/Agent}
+
+\begin{itemize}
+    \item Le \textbf{Manager} (le logiciel de supervision, ex: Zabbix) envoie des requêtes (\texttt{GET} sur port \textbf{161/UDP}).
+    \item L'\textbf{Agent} (sur l'équipement à surveiller) consulte sa MIB et répond.
+    \item L'Agent peut aussi envoyer des alertes non sollicitées (\texttt{Trap} sur port \textbf{162/UDP}) en cas de problème grave.
+\end{itemize}
+
+\newpage
+
+\noindent \textbf{Structure des MIB et OID}
+\begin{itemize}
+    \item La \textbf{MIB} (\textit{Management Information Base}) est la base de données virtuelle qui organise les informations disponibles sur l'équipement de manière arborescente.
+    \item L'\textbf{OID} (\textit{Object Identifier}) est la séquence numérique unique (ex: $1.3.6.1.4.1.\dots$) qui permet au Manager de cibler très précisément une variable (ex: la température du CPU ou l'utilisation du disque).
+\end{itemize}
+\vspace{0.5em}
+\noindent \textbf{Sécurité} : Passage obligatoire à la version \textbf{SNMPv3} pour l'authentification et le chiffrement des communications.
+
+\subsection*{Étudier le monitoring}
+\phantomsection
+\addcontentsline{toc}{subsection}{Étudier le monitoring}
+
+\noindent Le monitoring vise à collecter les métriques essentielles pour la performance et la disponibilité.
+\begin{itemize}
+    \item \textbf{Métriques clés} : CPU, RAM, Taux d'I/O (Input/Output) du disque, Latence réseau, nombre de sessions VPN actives.
+    \item \textbf{Métrologie (Analyse historique)} : La collecte continue des données doit être historisée. Cette base de données d'historiques permet la \textit{Métrologie} (mesure sur le long terme) et le \textit{Capacity Planning} (projection des besoins futurs pour éviter la saturation).
+\end{itemize}
+
+\subsection*{Identifier le matériel de supervision et monitoring}
+\phantomsection
+\addcontentsline{toc}{subsection}{Identifier le matériel de supervision et monitoring}
+
+\noindent La solution retenue est basée sur le logiciel \textbf{Zabbix} (référence fournie dans la Généralisation).
+\begin{itemize}
+    \item \textbf{Serveur Zabbix} : Serveur physique ou virtuel qui centralise la collecte et l'exé-cution des vérifications.
+    \item \textbf{Base de données} : Supporte le serveur Zabbix pour le stockage de la configuration et de l'historique (Métrologie).
+    \item \textbf{Agents} : \textbf{Agent Zabbix natif} (installé sur les serveurs) ou \textbf{Agent SNMPv3} (sur les équipements réseau ou serveurs où l'agent natif n'est pas possible).
+    \item \textbf{CMDB} : Outil complémentaire mais indispensable pour structurer l'inventaire et les dépendances des CI.
+\end{itemize}
+
+\newpage
+
+\subsection*{Configurer les alertes et Dashboard}
+\phantomsection
+\addcontentsline{toc}{subsection}{Configurer les alertes et Dashboard}
+
+\noindent \textbf{Configuration des Alertes (Alertes Temps Réel et Seuils Critiques)}
+\begin{itemize}
+    \item Les alertes sont définies par des \textbf{Triggers} (déclencheurs) dans Zabbix.
+    \item Définir des \textbf{seuils critiques} (ex: espace disque du serveur bureautique à 90\%).
+    \item Configurer la notification par différents médias (email, SMS, application de chat) et l'\textbf{escalade} (si l'administrateur n'a pas réagi dans 15 minutes, l'alerte monte au DSI).
+    \item Priorisation des alertes basée sur l'analyse d'impact du CMDB.
+\end{itemize}
+\vspace{0.5em}
+\noindent \textbf{Création de Dashboards}
+\begin{itemize}
+    \item Le \textbf{Dashboard Opérationnel} : Vue détaillée pour les administrateurs avec graphiques de performance et statut des services.
+    \item Le \textbf{Dashboard Stratégique} : Vue simple (feux de signalisation Vert / Orange / Rouge) des services métier pour la DSI.
+\end{itemize}
+
+\subsection*{Réalisation de la maquette et de l'architecture}
+\phantomsection
+\addcontentsline{toc}{subsection}{Réalisation de la maquette et de l'architecture}
+
+\noindent \textbf{Architecture de Supervision}
+L'architecture proposée est une structure en étoile avec le serveur Zabbix au centre, assurant la communication sécurisée (SNMPv3 ou Agent Zabbix) avec tous les équipements surveillés.
+
+\vspace{0.5em}
+\noindent \textbf{Script de Surveillance}
+Un exemple de script (Shell) est préparé pour vérifier la saturation de disque, qui sera intégré dans le système de supervision pour remplacer les anciens scripts.
+\begin{verbatim}
+#!/bin/bash
+SEUIL=90 
+USAGE=$(df -h /var/log | awk 'NR==2 {print $5}' | sed 's/%//')
+if [ $USAGE -gt $SEUIL ]; then
+  echo "CRITIQUE - Partition Logs: $USAGE%" 
+  exit 2 
+else
+  echo "OK - Partition Logs: $USAGE%"
+  exit 0
+fi
+\end{verbatim}
+
+\newpage
+
+\subsection*{Conclusion}
+\phantomsection
+\addcontentsline{toc}{subsection}{Conclusion}
+\noindent La problématique, ``Comment mettre en place une solution de monitoring incluant la gestion des alertes et l'analyse historique pour garantir la disponibilité du SI ?'', trouve sa réponse dans l'implémentation d'une solution de supervision centralisée et robuste.
+\vspace{0.5em}
+
+\noindent Le déploiement de l'outil \textbf{Zabbix} permet de centraliser le monitoring, d'assurer la \textbf{sécurité} des échanges via \textbf{SNMPv3}, et d'intégrer des \textbf{seuils critiques} (comme la surveillance des logs) pour des alertes en \textbf{temps réel}. L'historisation des données (Métrologie) garantit, quant à elle, une \textbf{analyse historique} indispensable au \textit{Capacity Planning} et à l'amélioration continue du SI. Enfin, l'utilisation du CMDB permet de transformer le monitoring technique en une véritable \textbf{supervision fonctionnelle} par l'analyse d'impact, assurant ainsi la disponibilité des services critiques pour l'entreprise. Cette démarche passe d'une gestion réactive des incidents (attendre la panne) à une gestion proactive (anticiper la saturation).
+
+\newpage
+
+\section*{Capitalisation}
+\addcontentsline{toc}{section}{Capitalisation}
+
+\begin{center}
+\setlength{\tabcolsep}{10pt}
+\begin{tabular}{|p{0.30\textwidth}|p{0.45\textwidth}|m{0.08\textwidth}|}
+\hline
+\textbf{AAV} & \textbf{Commentaire} & \textbf{Statut} \\ \hline
+
+Établir un inventaire fonctionnel (via CMDB) &
+L'analyse intègre le rôle clé du CMDB pour l'analyse d'impact et les dépendances fonctionnelles. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Résumer l'intérêt d'un CMDB en entreprise au regard de la supervision &
+Rôle identifié dans la priorisation des alertes et la distinction entre supervision technique/fonctionnelle. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Préparer des scripts sous Linux liés à la supervision &
+Exemple de script Shell fourni pour la vérification du disque dédié aux logs. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Utiliser des outils de supervision &
+\textbf{Zabbix} est choisi, configuré pour la gestion des alertes, des seuils et de la Métrologie. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Reconnaître différents protocoles pour la supervision &
+SNMPv3 (avec sécurisation), Agents natifs et ICMP sont intégrés à l'architecture. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Décrire le rôle des MIB et des OID &
+Rôles de structure (MIB) et d'adresse unique (OID) sont définis pour l'interrogation SNMP. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Proposer une supervision technique et fonctionnelle &
+Distinction faite et intégrée dans la configuration des Dashboards (Admin vs DSI). &
+{\color{green!60!black}Acquis} \\ \hline
+\end{tabular}
+\end{center}
+
+\newpage
+
+\section*{Ressources}
+\addcontentsline{toc}{section}{Ressources}
+
+\begin{itemize}
+	\item \textbf{Zabbix Documentation} : \url{https://www.zabbix.com/documentation/current/manual}
+	\item \textbf{SNMP Protocol Overview} : \url{https://tools.ietf.org/html/rfc3411}
+	\item \textbf{MIB Structure and OID Explanation} : \url{https://www.ietf.org/rfc/rfc2578.txt}
+	\item \textbf{ITIL Framework} : \url{https://www.axelos.com/best-practice-solutions/itil}
+	\item \textbf{Capacity Planning Guide} : \url{https://www.cisco.com/c/en/us/td/docs/solutions/Enterprise/Data_Center/DC_Infra2_5/DCInfra2_5_Capacity_Planning/DCInfra2_5_Capacity_Planning_chapter_01.pdf}
+\end{itemize}

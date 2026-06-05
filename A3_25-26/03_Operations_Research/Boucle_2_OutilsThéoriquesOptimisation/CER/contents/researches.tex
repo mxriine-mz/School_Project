@@ -1,0 +1,296 @@
+% --- ETUDE DE CAS ---
+\newpage
+\section*{Étude de cas~: Outils théoriques \\ pour l'optimisation}
+\addcontentsline{toc}{section}{Étude de cas~: Outils théoriques pour l'optimisation}
+
+\section*{AAV}
+\addcontentsline{toc}{section}{AAV}
+\begin{itemize}
+	\item [3] Utiliser les notions théoriques de complexité algorithmique
+	\item [3] Étudier la complexité d’un problème de décision
+	\item [2] Estimer la difficulté d’un problème d’optimisation
+\end{itemize}
+
+\newpage
+
+\subsection*{Mots clés}
+\phantomsection
+\addcontentsline{toc}{subsection}{Mots clés}
+\begin{itemize}
+	\item NP Complet
+	\item Problème voyageur de commerce
+	\item Compléxité algorithmique
+	\item Polynomial
+	\item Heuristique
+	\item Problème de décision
+	\item Optimisation combinatoire
+\end{itemize}
+
+\subsection*{Contexte}
+\phantomsection
+\addcontentsline{toc}{subsection}{Contexte}
+\noindent Suite au projet de pont realise la semaine derniere, Agathe souhaite evoluer vers un logiciel de gestion de probleme de livraisons pour optimiser le temps des tournées de livraisons
+
+\subsection*{Problématique}
+\phantomsection
+\addcontentsline{toc}{subsection}{Problématique}
+\noindent Comment trouver une solution gloutonne pour le problème du voyageur ?
+
+\subsection*{Contraintes}
+\phantomsection
+\addcontentsline{toc}{subsection}{Contraintes}
+\begin{itemize}
+	\item Temps de trajet
+	\item Plan des villes
+	\item Complexité algorithmique
+\end{itemize}
+
+\subsection*{Généralisation}
+\phantomsection
+\addcontentsline{toc}{subsection}{Généralisation}
+\begin{itemize}
+	\item NP Complet
+	\item Complexité algorithmique
+	\item Optimisation fiscale
+\end{itemize}
+
+\subsection*{Livrables}
+\phantomsection
+\addcontentsline{toc}{subsection}{Livrables}
+\begin{itemize}
+	\item Modélisation du problème de voyageur de commerce
+	\item Algorithme
+\end{itemize}
+
+\subsection*{Pistes de solutions}
+\phantomsection
+\addcontentsline{toc}{subsection}{Pistes de solutions}
+\begin{itemize}
+	\item Modéliser le problème de voyageur de commerce
+	\item Etudier la complexité algorithmique du problème
+	\item Vérifier si c'est un problème NP Complet
+\end{itemize}
+
+\subsection*{Plan d'actions}
+\phantomsection
+\addcontentsline{toc}{subsection}{Plan d'actions}
+\begin{itemize}
+	\item Modéliser le problème de voyageur de commerce
+	\item Etudier la complexité algorithmique du problème
+	\item Vérifier l'appartenance NP avec des algorithmes
+	\item Déterminer la complexité algorithmique du problème
+\end{itemize}
+
+\newpage
+\section*{Démarche~: Outils théoriques \\ pour l'optimisation}
+\addcontentsline{toc}{section}{Démarche~: Outils théoriques pour l'optimisation}
+
+\subsection*{Définition~: Mots clés}
+\phantomsection
+\addcontentsline{toc}{subsection}{Définition: Mots clés}
+
+\noindent \textbf{NP Complet}: Classe de problèmes de décision tels qu'il est possible de vérifier une solution proposée en temps polynomial, mais pour lesquels on ne connaît pas d'algorithme capable de trouver la solution en temps polynomial. Ils font partie des problèmes les plus difficiles de la classe $NP$.
+
+\vspace{0.5cm}
+
+\noindent \textbf{Complexité algorithmique :} Mesure de l'utilisation des ressources (temps de calcul ou espace mémoire) par un algorithme en fonction de la taille $n$ des données d'entrée. Elle est généralement exprimée avec la notation grand O, notée $\mathcal{O}(f(n))$.:
+
+\vspace{0.5cm}
+
+\noindent \textbf{Polynomial :} Se dit d'un algorithme dont la complexité peut être exprimée sous la forme d'un polynôme $P(n)$, par exemple $\mathcal{O}(n^2)$ ou $\mathcal{O}(n^k)$. Ces algorithmes sont considérés comme "efficaces" car leur temps d'exécution reste gérable même lorsque $n$ augmente.
+
+\vspace{0.5cm}
+
+ \noindent \textbf{Problème de décision :} Problème mathématique dont la réponse attendue est binaire : soit "VRAI" (Oui), soit "FAUX" (Non). En théorie de la complexité, on transforme souvent les problèmes d'optimisation en problèmes de décision pour les classer.
+
+\vspace{0.5cm}
+
+\noindent \textbf{Problème du Voyageur de Commerce (TSP) :} Problème d'optimisation consistant à trouver le cycle le plus court passant exactement une fois par chaque sommet (ville) d'un graphe donné. C'est un problème $NP$-difficile classique.
+
+\vspace{0.5cm}
+
+\noindent \textbf{Optimisation combinatoire :} Domaine des mathématiques visant à trouver une solution optimale dans un ensemble fini d'objets (comme les chemins dans un graphe). Le nombre de combinaisons possibles est souvent si grand qu'une recherche exhaustive est impossible.
+
+\vspace{0.5cm}
+
+\noindent \textbf{Heuristique :} Algorithme qui fournit une solution "suffisamment bonne" en un temps rapide, sans toutefois garantir l'optimalité de la solution ni même, parfois, sa découverte. C'est une approche pratique pour s'attaquer aux problèmes $NP$-complets.
+
+\newpage
+
+\section*{Analyse et résolution : Outils théoriques \\ pour l'optimisation}
+\addcontentsline{toc}{section}{Analyse et résolution : Outils théoriques pour l'optimisation}
+
+\noindent Le passage d'un problème de franchissement de ponts à une gestion de livraisons urbaines induit un changement fondamental de structure de graphe.
+
+\subsection*{Distinction Fondamentale}
+\phantomsection
+\addcontentsline{toc}{subsection}{Distinction Fondamentale}
+
+\noindent \begin{itemize}
+    \item \textbf{Problème Initial (Ponts) :} Correspond à la recherche d'un \textit{Cycle Eulérien}. L'objectif est de parcourir chaque \textbf{arête} $e \in E$ exactement une fois.
+    \item \textbf{Problème Actuel (Livraison) :} Correspond à la recherche d'un \textit{Cycle Hamiltonien}. L'objectif est de visiter chaque \textbf{sommet} $v \in V$ exactement une fois en minimisant la distance totale.
+\end{itemize}
+
+\subsection*{Le Problème du Voyageur de Commerce Métrique}
+\phantomsection
+\addcontentsline{toc}{subsection}{Le Problème du Voyageur de Commerce Métrique}
+
+\noindent Soit un graphe complet $G = (V, E)$ où chaque arête $(u, v)$ possède un poids $w(u, v)$ représentant le temps de trajet. Puisqu'il s'agit d'un réseau routier urbain, les poids respectent l'inégalité triangulaire :
+\begin{equation}
+    \forall u, v, w \in V, \quad d(u, w) \le d(u, v) + d(v, w)
+\end{equation}
+
+\noindent \textbf{Analyse de Complexité}
+
+\noindent Pour prouver la difficulté du problème, nous passons par sa version de décision.
+
+\subsection*{Définition du Problème de Décision}
+\phantomsection
+\addcontentsline{toc}{subsection}{Définition du Problème de Décision}
+
+\noindent \textbf{Instance :} Un ensemble de villes $V$, une matrice de distances $d$, et une constante $K \in \mathbb{R}^+$. \\
+
+\noindent \textbf{Question :} Existe-t-il une permutation $\sigma$ de $\{1, \dots, n\}$ telle que :
+
+\begin{equation}
+    \left( \sum_{i=1}^{n-1} d(v_{\sigma(i)}, v_{\sigma(i+1)}) \right) + d(v_{\sigma(n)}, v_{\sigma(1)}) \le K
+\end{equation}
+
+\subsection*{Preuve d'appartenance à la classe NP}
+\phantomsection
+\addcontentsline{toc}{subsection}{Preuve d'appartenance à la classe NP}
+
+\noindent Pour prouver que $TSP_{dec} \in NP$, nous proposons un algorithme de vérification (certificat) fonctionnant en temps polynomial :
+
+\vspace{0.5cm}
+
+\begin{tcolorbox}[title={Algorithme de Vérification $A(I, C)$}]
+\begin{enumerate}
+    \item \textbf{Certificat $C$ :} Une séquence ordonnée de sommets $(v_1, v_2, \dots, v_n)$.
+    \item \textbf{Vérification de validité :} 
+    \begin{itemize}
+        \item Vérifier que chaque sommet $v \in V$ apparaît exactement une fois : $O(n \log n)$.
+        \item Calculer la somme des poids des arêtes du cycle : $L = \sum w(e_i)$. $O(n)$.
+    \end{itemize}
+    \item \textbf{Décision :} Si $L \le K$, retourner \texttt{VRAI}, sinon \texttt{FAUX}.
+\end{enumerate}
+\end{tcolorbox}
+
+\vspace{0.5cm}
+
+\noindent La complexité temporelle est $O(n)$, ce qui est polynomial par rapport à la taille de l'entrée. Donc, \textbf{le problème est dans NP}.
+
+\subsection*{NP-Complétude}
+\phantomsection
+\addcontentsline{toc}{subsection}{NP-Complétude}
+
+\noindent Le problème du cycle hamiltonien est un cas particulier du TSP (où les distances sont soit 1, soit $> K$). Le cycle hamiltonien étant prouvé NP-complet par réduction de SAT, le TSP (même métrique) est \textbf{NP-complet}. 
+
+\subsection*{Conséquences Algorithmiques}
+\phantomsection
+\addcontentsline{toc}{subsection}{Conséquences Algorithmiques}
+
+\noindent La preuve de NP-complétude implique qu'il est inutile de chercher un algorithme exact (optimal) fonctionnant en temps polynomial (sauf si $P=NP$).
+
+\subsection*{Stratégies recommandées}
+\phantomsection
+\addcontentsline{toc}{subsection}{Stratégies recommandées}
+
+\begin{enumerate}
+    \item \textbf{Heuristique Gloutonne :} Choix de la ville la plus proche. Très rapide mais peut s'éloigner de l'optimum de manière significative.
+    \item \textbf{Approximation de Christofides :} Pour le $\Delta$-TSP, cet algorithme garantit une solution $L \le \frac{3}{2} L_{opt}$ en utilisant des arbres couvrants minimaux et des couplages parfaits.
+    \item \textbf{Métaheuristiques :} Algorithmes génétiques ou recherche tabou pour obtenir des solutions quasi-optimales sur des instances de grande taille.
+\end{enumerate}
+
+\subsection*{Démonstration sur une instance concrète}
+\phantomsection
+\addcontentsline{toc}{subsection}{Démonstration sur une instance concrète}
+
+\noindent Afin de valider la transition entre la théorie et la mise en œuvre, nous présentons ici la résolution complète d'une instance réduite de la Zone A, composée de 4 points d'intérêt : le point de Départ ($D$), l'intersection Rue Smatti ($S$), l'Avenue Kister ($K$) et la Rue Ramon ($R$).
+
+\vspace{0.3cm}
+
+\noindent \textbf{1. Matrice des coûts (temps en minutes) :}
+\noindent Nous définissons les temps de trajet réels entre chaque sommet :
+\[
+M = \begin{pmatrix} 
+ & D & S & K & R \\
+D & 0 & 5 & 12 & 8 \\
+S & 5 & 0 & 9 & 10 \\
+K & 12 & 9 & 0 & 4 \\
+R & 8 & 10 & 4 & 0 
+\end{pmatrix}
+\]
+
+\noindent \textbf{2. Résolution par l'algorithme du "Plus Proche Voisin" (Heuristique) :}
+\begin{itemize}
+    \item \textbf{Étape 1 :} Départ de $D$. La ville la plus proche est $S$ (5 min).
+    \item \textbf{Étape 2 :} De $S$, la ville non visitée la plus proche est $K$ (9 min).
+    \item \textbf{Étape 3 :} De $K$, la ville non visitée restante est $R$ (4 min).
+    \item \textbf{Étape 4 :} Retour au point de départ $D$ (8 min).
+\end{itemize}
+\noindent \textbf{Résultat :} Cycle $\mathcal{C} = (D, S, K, R, D)$ avec une durée totale de $5 + 9 + 4 + 8 = \mathbf{26}$ \textbf{minutes}.
+
+\vspace{0.3cm}
+
+\noindent \textbf{3. Preuve d'optimalité :}
+\noindent Pour cette instance de taille $n=4$, le nombre de cycles possibles est $(n-1)! / 2 = 3$. L'analyse exhaustive montre les résultats suivants :
+\begin{itemize}
+    \item Cycle $(D, S, K, R, D) : 26$ min.
+    \item Cycle $(D, S, R, K, D) : 5 + 10 + 4 + 12 = 31$ min.
+    \item Cycle $(D, K, S, R, D) : 12 + 9 + 10 + 8 = 39$ min.
+\end{itemize}
+
+\vspace{0.5cm}
+
+\noindent \textbf{Conclusion :} L'algorithme heuristique a permis de trouver la solution optimale de 26 minutes pour cette instance. Cette résolution démontre la capacité du modèle à fournir une solution concrète et efficace pour la logistique de la Zone A.
+
+\newpage
+
+\subsection*{Conclusion}
+\phantomsection
+\addcontentsline{toc}{subsection}{Conclusion}
+
+Le problème du voyageur de commerce, même dans sa version métrique, est un problème NP-complet. Par conséquent, il est crucial d'adopter des approches heuristiques ou d'approximation pour obtenir des solutions efficaces dans un délai raisonnable, surtout dans le contexte de la gestion de livraisons urbaines où les contraintes de temps sont strictes.
+
+\noindent                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          	
+\newpage
+
+\section*{Capitalisation}
+\addcontentsline{toc}{section}{Capitalisation}
+
+\begin{center}
+\setlength{\tabcolsep}{10pt}
+
+\begin{tabular}{|p{0.30\textwidth}|p{0.45\textwidth}|m{0.08\textwidth}|}
+\hline
+\textbf{AAV} & \textbf{Commentaire} & \textbf{Statut} \\ \hline
+
+Identifier les concepts et usages de la théorie des graphes &
+Les notions de graphe, de cycle eulérien, de cycle hamiltonien, de TSP et d'optimisation combinatoire sont définies et réutilisées correctement. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Modéliser un problème concret à l’aide d’un graphe &
+Le problème de livraison est modélisé par un graphe complet pondéré avec matrice des coûts et contraintes explicitées. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Résoudre un problème concret à l’aide d’un graphe &
+Une instance concrète est résolue avec l’heuristique du plus proche voisin, puis comparée à une analyse exhaustive. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Analyser la complexité asymptotique d'un algorithme &
+La complexité du vérificateur est analysée, l’appartenance à NP est démontrée et la NP-complétude est discutée. &
+{\color{green!60!black}Acquis} \\ \hline
+
+\end{tabular}
+
+\end{center}
+
+\newpage
+
+\section*{Ressources}
+\addcontentsline{toc}{section}{Ressources}
+
+\begin{itemize}
+	\item 
+\end{itemize}

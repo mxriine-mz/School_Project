@@ -1,0 +1,62 @@
+% --- PREAMBULE ---
+\usepackage[utf8]{inputenc} % Encodage d'entrée
+\usepackage[T1]{fontenc}    % Encodage des fontes
+\usepackage[margin=2.5cm]{geometry} % Marges du document
+\usepackage{setspace}       % Gestion de l'interligne
+\usepackage{lmodern}        % Police Latin Modern
+\usepackage{indentfirst}    % Indente le premier paragraphe
+\usepackage{microtype}      % Améliore la typographie
+\usepackage{ragged2e}       % Alignement du texte
+
+\usepackage{graphicx}       % Insertion d'images
+\usepackage{helvet}         % Police Helvetica
+\renewcommand{\familydefault}{\sfdefault} % Police sans-serif par défaut
+
+\usepackage{fancyhdr}       % En-têtes et pieds de page personnalisés
+\usepackage{xcolor}         % Gestion des couleurs
+\usepackage{transparent}    % Transparence
+\usepackage{pdfpages}       % Insertion de pages PDF
+\usepackage[absolute,overlay]{textpos} % Positionnement absolu de texte
+\usepackage{titlesec}       % Personnalisation des titres
+
+\usepackage{needspace}      % Gestion de l'espace avant les titres
+
+\usepackage{caption}        % Personnalisation des légendes
+\usepackage{float}          % Contrôle du placement des flottants
+\usepackage{parskip}        % Gestion des espacements entre paragraphes
+
+\usepackage{tikz}           % Dessins vectoriels
+\usepackage{hyperref}
+
+\usepackage[toc]{appendix}
+
+\usepackage{wrapfig}
+
+\usepackage{tikz}
+\usetikzlibrary{shadows}
+
+\usepackage{tabularx}
+\usepackage{array} % pour \arraybackslash
+\newcolumntype{C}{>{\centering\arraybackslash}X} % X centrée
+
+\usepackage{csquotes}
+\usepackage{booktabs}
+\usepackage{siunitx}
+\sisetup{detect-all, output-decimal-marker={,}}
+
+% Réglages locaux pour réduire les warnings "Underfull \hbox" lors de la compilation.
+% Ces réglages s'appliquent au document après inclusion de ce fichier.
+% Ils rendent LaTeX moins verbeux pour les problèmes de césure/justification.
+\hfuzz=2pt
+\hbadness=10000
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+\usepackage{amsfonts}
+\usepackage{listings}
+
+

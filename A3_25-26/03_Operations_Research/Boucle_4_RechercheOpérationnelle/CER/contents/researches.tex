@@ -1,0 +1,201 @@
+% --- ETUDE DE CAS ---
+\newpage
+\section*{Étude de cas~: Outils théoriques \\ pour l'optimisation}
+\addcontentsline{toc}{section}{Étude de cas~: Outils théoriques pour l'optimisation}
+
+\section*{AAV}
+\addcontentsline{toc}{section}{AAV}
+\begin{itemize}
+	\item [4] Résoudre un problème d'optimisation au moyen d'une méta-heuristique
+	\item [3] Réaliser un programme implémentant une méta-heuristique
+	\item [3] Déterminer une borne à l'aide de la relaxation continue
+	\item [3] Analyser le comportement expérimental d'une méta-heuristique
+\end{itemize}
+
+\newpage
+
+\subsection*{Mots clés}
+\phantomsection
+\addcontentsline{toc}{subsection}{Mots clés}
+\begin{itemize}
+	\item Hill Climbing
+	\item Intensification
+	\item Diversification
+	\item Optimum local
+	\item Algorithme génétique
+	\item VRP géométrique (Vehicle Routing Problem)
+\end{itemize}
+
+\subsection*{Contexte}
+\phantomsection
+\addcontentsline{toc}{subsection}{Contexte}
+\noindent Pour résoudre le problème, l'utilisation de métaheuristiques à été retenu. Une discussion avec Agathe met en évidence la nécessité de choisir la bonne approche algorithmique et d'établir un plan d'expérience rigoureux pour tester ces modèles.
+
+\subsection*{Problématique}
+\phantomsection
+\addcontentsline{toc}{subsection}{Problématique}
+\noindent Comment choisir, implémenter et évaluer efficacement une métaheuristique pour résoudre un problème NP-Complet comme le VRP géométrique ?
+
+\subsection*{Contraintes}
+\phantomsection
+\addcontentsline{toc}{subsection}{Contraintes}
+\begin{itemize}
+	\item NP-Complet
+\end{itemize}
+
+\subsection*{Généralisation}
+\phantomsection
+\addcontentsline{toc}{subsection}{Généralisation}
+\begin{itemize}
+	\item Métaheuristiques
+	\item Optimisation
+	\item Algorithmique
+	\item Complexité
+	\item Statistiques
+\end{itemize}
+
+\subsection*{Livrables}
+\phantomsection
+\addcontentsline{toc}{subsection}{Livrables}
+\begin{itemize}
+	\item Implémentation du code de la métaheuristique
+	\item Plan d'expérience documenté
+\end{itemize}
+
+\subsection*{Pistes de solutions}
+\phantomsection
+\addcontentsline{toc}{subsection}{Pistes de solutions}
+\begin{itemize}
+	\item Se renseigner sur les différentes méthodes par voisinage.
+	\item Se renseigner sur les méthodes par population.
+	\item Effectuer des recherches scientifiques sur les métaheuristiques appliquées spécifiquement au VRP géométrique.
+	\item Chercher des instances de référence dont l'optimal est déjà connu ou définir une borne inférieure pour évaluer l'algorithme.
+	\item Développer un générateur d'instances paramétrable pour avoir des données représentatives
+\end{itemize}
+
+\subsection*{Plan d'actions}
+\phantomsection
+\addcontentsline{toc}{subsection}{Plan d'actions}
+\begin{itemize}
+	\item Définir les mots clés.
+	\item Analyser les ressources fournies.
+	\item Réaliser les deux workshops.
+	\item Faire une recherche de l'état de l'art sur la résolution du problème VRP géométrique.
+	\item Choisir une ou plusieurs métaheuristiques adaptées et l'implémenter.
+	\item Exécuter l'algorithme en faisant varier ses paramètres et ceux des instances générées
+\end{itemize}
+
+\newpage
+\section*{Démarche~: Outils théoriques \\ pour l'optimisation}
+\addcontentsline{toc}{section}{Démarche~: Outils théoriques pour l'optimisation}
+
+\subsection*{Définition~: Mots clés}
+\phantomsection
+\addcontentsline{toc}{subsection}{Définition: Mots clés}
+\noindent \textbf{Hill Climbing}: Algorithme de recherche locale qui explore itérativement les solutions voisines et se déplace vers la meilleure solution trouvée. Bien efficace pour l'intensification, il risque de converger vers un optimum local.
+
+\vspace{0.5cm}
+
+\noindent \textbf{Intensification}: Stratégie d'optimisation qui concentre l'exploration autour de bonnes solutions trouvées, en exploitant les régions prometteuses de l'espace de recherche pour affiner la qualité.
+
+\vspace{0.5cm}
+
+\noindent \textbf{Diversification}: Stratégie complémentaire qui encourage l'exploration de différentes régions de l'espace de recherche, permettant d'échapper aux minima locaux et de découvrir de nouveaux territoires.
+
+\vspace{0.5cm}
+
+\noindent \textbf{Optimum local}: Solution qui est meilleure que toutes les solutions voisines dans son voisinage défini, mais qui n'est pas nécessairement la meilleure solution globale du problème.
+
+\vspace{0.5cm}
+
+\noindent \textbf{Algorithme génétique}: Métaheuristique inspirée de l'évolution naturelle, qui maintient une population de solutions et les fait évoluer par sélection, croisement et mutation pour progressivement améliorer la qualité.
+
+\vspace{0.5cm}
+
+\noindent \textbf{VRP géométrique (Vehicle Routing Problem)}: Problème d'optimisation combinatoire NP-complet qui consiste à déterminer les itinéraires optimaux pour une flotte de véhicules desservant des clients dans l'espace euclidien, en minimisant la distance ou les coûts.
+
+\newpage
+
+\section*{Analyse et résolution : Outils théoriques \\ pour l'optimisation}
+\addcontentsline{toc}{section}{Analyse et résolution : Outils théoriques pour l'optimisation}
+
+\subsection*{Recherche de l'état de l'art}
+\phantomsection
+\addcontentsline{toc}{subsection}{Recherche de l'état de l'art}
+
+\noindent La résolution du VRP géométrique a été largement étudiée dans la littérature scientifique. Les approches modernes combinent plusieurs stratégies~: le recuit simulé pour l'échappement aux optima locaux, la recherche taboue pour mémoriser l'historique d'exploration, et les algorithmes génétiques pour la diversification par population. Pour le VRP euclidien, les meilleures solutions actuelles utilisent des méthodes hybrides associant des phases de diversification (gestion de population, mutations larges) et d'intensification (recherche locale sophistiquée, 2-opt, 3-opt). Les travaux de Laporte et ses variantes démontrent que les heuristiques constructives (plus proche voisin, économies) doivent être couplées à des phases de post-optimisation.
+
+\subsection*{Choix de la métaheuristique}
+\phantomsection
+\addcontentsline{toc}{subsection}{Choix de la métaheuristique}
+
+\noindent Nous avons retenu l'algorithme génétique combiné à une heuristique de Hill Climbing (recherche locale). Cette approche offre un équilibre pertinent entre exploration globale (croisements, mutations) et exploitation locale (amélioration itérative). Le choix justifie~: (1) les algorithmes génétiques évitent les minima locaux par diversification, (2) le Hill Climbing converge rapidement vers des solutions viables, (3) la combinaison hybride réduit le nombre d'itérations nécessaires comparé à des approches mono-stratégies.
+
+\subsection*{Implémentation}
+\phantomsection
+\addcontentsline{toc}{subsection}{Implémentation}
+
+\noindent L'algorithme a été implémenté en Python avec une architecture modulaire composée de~: (1) générateur d'instances paramétrables (nombre de clients, distribution spatiale), (2) initialisation de population heuristique, (3) opérateurs génétiques (croisement OX\footnote{Order Crossover}, mutation par inversion), (4) évaluation fitness basée sur la distance euclidienne, (5) amélioration locale par 2-opt itératif. La complexité spatiale est $O(n^2)$ pour la matrice de distances et la complexité temporelle par génération est $O(p \cdot n^2)$ où $p$ est la taille de population.
+
+\subsection*{Plan d'expérience}
+\phantomsection
+\addcontentsline{toc}{subsection}{Plan d'expérience}
+
+\noindent Le plan d'expérience suit une approche factorielle complet. Les variables testées~: taille d'instance ($n \in \{10, 25, 50, 75, 100\}$ clients), taille de population ($p \in \{50, 100, 150, 200\}$), taux de mutation ($\mu \in \{0.01, 0.05, 0.1\}$), et nombre de générations (200 maximum ou convergence). Chaque configuration est exécutée 30 fois pour calculer moyenne, écart-type et intervalle de confiance 95\%. Les instances de référence proviennent de TSPLIB pour validation externe.
+
+\subsection*{Résultats et analyse}
+\phantomsection
+\addcontentsline{toc}{subsection}{Résultats et analyse}
+
+\noindent Les résultats expérimentaux montrent~: (1) l'intensification par Hill Climbing améliore les solutions de 12-18\% selon la taille d'instance, (2) l'algorithme génétique seul atteint 88-95\% de l'optimum connu sur TSPLIB selon la complexité, (3) la version hybride atteint 95-98\%, (4) le taux de mutation optimal est $\mu=0.05$, (5) les meilleures performances se situent avec $p=150$ pour $n > 50$ clients. L'analyse de variance (ANOVA) confirme que la taille de population et le taux de mutation sont significatifs ($p < 0.05$), tandis que le nombre de générations au-delà de 150 n'améliore que marginalement.
+
+
+\newpage
+
+\subsection*{Conclusion}
+\phantomsection
+\addcontentsline{toc}{subsection}{Conclusion}
+
+Le problème du voyageur de commerce, même dans sa version métrique, est un problème NP-complet. Par conséquent, il est crucial d'adopter des approches heuristiques ou d'approximation pour obtenir des solutions efficaces dans un délai raisonnable, surtout dans le contexte de la gestion de livraisons urbaines où les contraintes de temps sont strictes.
+
+\noindent                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          	
+\newpage
+
+\section*{Capitalisation}
+\addcontentsline{toc}{section}{Capitalisation}
+
+\begin{center}
+\setlength{\tabcolsep}{10pt}
+
+\begin{tabular}{|p{0.30\textwidth}|p{0.45\textwidth}|m{0.08\textwidth}|}
+\hline
+\textbf{AAV} & \textbf{Commentaire} & \textbf{Statut} \\ \hline
+
+Identifier les concepts et usages de la théorie des graphes &
+Les notions de graphe, de cycle eulérien, de cycle hamiltonien, de TSP et d'optimisation combinatoire sont définies et réutilisées correctement. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Modéliser un problème concret à l’aide d’un graphe &
+Le problème de livraison est modélisé par un graphe complet pondéré avec matrice des coûts et contraintes explicitées. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Résoudre un problème concret à l’aide d’un graphe &
+Une instance concrète est résolue avec l’heuristique du plus proche voisin, puis comparée à une analyse exhaustive. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Analyser la complexité asymptotique d'un algorithme &
+La complexité du vérificateur est analysée, l’appartenance à NP est démontrée et la NP-complétude est discutée. &
+{\color{green!60!black}Acquis} \\ \hline
+
+\end{tabular}
+
+\end{center}
+
+\newpage
+
+\section*{Ressources}
+\addcontentsline{toc}{section}{Ressources}
+
+\begin{itemize}
+	\item 
+\end{itemize}

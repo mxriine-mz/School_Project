@@ -1,0 +1,67 @@
+% --- STYLES ---
+
+% ========================
+%       INDENTATION
+% ========================
+\setlength{\parindent}{1.5em}      % Indentation automatique des paragraphes
+
+% ========================
+%         COULEURS
+% ========================
+\definecolor{title1}{RGB}{32, 94, 153} % Bleu foncé (titres de sections)
+\definecolor{title2}{RGB}{75, 147, 215} % Bleu clair (titres de sous-sections)
+\definecolor{footer}{RGB}{75, 147, 215}
+
+% ========================
+%   FORMATTAGE DES TITRES
+% ========================
+\titleformat{\section}
+  {\color{title1}\normalfont\Large\bfseries\fontfamily{cmss}}
+  {\color{title1}\thesection}{1em}
+  {\MakeUppercase}
+  [\noindent\color{black}\rule{\textwidth}{0.5pt}]
+
+\titleformat{\subsection}
+  {\color{title2}\normalfont\large\bfseries\fontfamily{cmss}}
+  {\color{title2}\thesubsection}{1em}
+  {\MakeUppercase}
+  [\noindent\color{black}\rule{\textwidth}{0.4pt}]
+
+% ========================
+%   PERSONNALISATION LISTES
+% ========================
+\renewcommand{\contentsname}{Table des Matières}
+\renewcommand{\listfigurename}{Table des Figures}
+\renewcommand{\appendixname}{Annexe}
+
+% ========================
+%    STYLE DES PAGES
+% ========================
+\pagestyle{empty} % Pas d'en-tête ni pied de page par défaut
+
+% ========================
+% POSITIONNEMENT TEXTBLOCK
+% ========================
+\setlength{\TPHorizModule}{1cm}
+\setlength{\TPVertModule}{1cm}
+
+% ========================
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    urlcolor=blue,
+    citecolor=blue
+}
+
+% ========================
+%     STYLE DES CAPTIONS
+% ========================
+\newmdenv[
+  topline=false,
+  rightline=false,
+  bottomline=false,      % Active la ligne du bas
+  linewidth=2pt,         % Épaisseur de la barre verticale
+  linecolor=black,       % Couleur de la barre verticale
+  innerleftmargin=10pt   % Optionnel : espace après le bloc
+  innertopmargin=15pt
+]{captionbox}

@@ -1,0 +1,50 @@
+% --- FOOTER ---
+\newpage 
+\pagestyle{fancy}
+\setlength{\headheight}{16pt}
+\fancyhf{}  % Clear all header and footer fields
+
+% Header (do not clear with fancyhf)
+\fancyhead[C]{%
+    \transparent{0.5}%
+    \textcolor{confidentialC2}{\textbf{C2 - Confidential}}
+}
+
+% Footer - Left side
+\fancyfoot[L]{%
+    \transparent{0.5}%
+    \textcolor{footer}{\fontsize{16}{18}\selectfont \textbf{\thepage}}%
+}
+
+% Footer - Right side
+\fancyfoot[R]{%
+    \raisebox{-0.7cm}{%
+        \transparent{0.5}%
+        % Logo on the right side
+        %\includegraphics[height=1cm]{_Template/assets/img/}%
+    }%
+}
+
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% Apply the same style to "plain" pages
+\fancypagestyle{plain}{%
+    \fancyhead[C]{%
+        \transparent{0.5}%
+        \textcolor{confidentialC2}{\textbf{C2 - Confidential}}
+    }%
+    \fancyfoot[L]{%
+        \transparent{0.5}%
+        \textcolor{footer}{\fontsize{16}{18}\selectfont \textbf{\thepage}}%
+    }%
+    \fancyfoot[R]{%
+        \raisebox{-0.7cm}{%
+            \transparent{0.5}%
+            % Logo on the right side
+            %\includegraphics[height=1cm]{_Template/assets/img/}%
+        }%
+    }%
+    \renewcommand{\headrulewidth}{0pt}%
+    \renewcommand{\footrulewidth}{0pt}%
+}

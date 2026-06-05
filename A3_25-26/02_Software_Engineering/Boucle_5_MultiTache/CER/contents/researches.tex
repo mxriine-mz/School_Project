@@ -1,0 +1,847 @@
+% --- ETUDE DE CAS - Multi-tâches ---
+\newpage
+\section*{Étude de cas~: Multi-tâches}
+\addcontentsline{toc}{section}{Étude de cas~: Multi-tâches}
+
+\section*{AAV}
+\addcontentsline{toc}{section}{AAV}
+\begin{itemize}
+	\item [3] Décrire parfaitement les deux notions
+	\item [3] Décrire les relations interprocessus (permutation de contexte)
+	\item [1] Enumérer les algorithmes les plus importants
+	\item [3] Coder un des algorithmes de façon simple (« hors contexte » d'un SE)
+	\item [3] Coder un programme en C\# pour gérer des processus avec le framework .NET
+\end{itemize}
+
+\newpage
+
+\subsection*{Mots clés}
+\phantomsection
+\addcontentsline{toc}{subsection}{Mots clés}
+\begin{itemize}
+	\item Monoprogrammation
+	\item Multiprogrammation
+	\item Temps partagé
+	\item Préemptif
+	\item PID
+	\item Pointeur Stack
+	\item Processus
+	\item Gestion de processus
+	\item Tâche asynchrone
+	\item Conflits
+	\item Temps processeur
+	\item Ressources
+\end{itemize}
+
+\subsection*{Contexte}
+\phantomsection
+\addcontentsline{toc}{subsection}{Contexte}
+\noindent Le client demande à Franck une amélioration de son appplication afin de gérer plusieurs processus à partir d'un seul processus
+
+\subsection*{Problématique}
+\phantomsection
+\addcontentsline{toc}{subsection}{Problématique}
+\noindent Comment gérer efficacement plusieurs processus à partir d'un seul processus, en assurant une utilisation optimale des ressources et une performance adéquate de l'application?
+
+\subsection*{Contraintes}
+\phantomsection
+\addcontentsline{toc}{subsection}{Contraintes}
+\begin{itemize}
+	\item Un seul processus
+	\item Traiter plusieurs tâches simultanément
+	\item Minimer les conflits
+\end{itemize}
+
+\subsection*{Généralisation}
+\phantomsection
+\addcontentsline{toc}{subsection}{Généralisation}
+\begin{itemize}
+	\item Multi-taches
+	\item Processus
+\end{itemize}
+
+\subsection*{Livrables}
+\phantomsection
+\addcontentsline{toc}{subsection}{Livrables}
+\begin{itemize}
+	\item Documentation technique de l'implémentation
+	\item Code expliquant la gestion de processus en multi-taches
+\end{itemize}
+
+\subsection*{Pistes de solutions}
+\phantomsection
+\addcontentsline{toc}{subsection}{Pistes de solutions}
+\begin{itemize}
+	\item Etudier le multi-tâches
+	\item Comprendre le fonctionnement des processus
+	\item Monoprogrammation vs Multiprogrammation
+	\item Etudier les systèmes à temps partagé
+\end{itemize}
+
+\subsection*{Plan d'actions}
+\phantomsection
+\addcontentsline{toc}{subsection}{Plan d'actions}
+\begin{itemize}
+	\item Etudier les mots clés
+	\item Etudier le multi-tâches
+	\item Comprendre le fonctionnement des processus
+	\item Monoprogrammation vs Multiprogrammation
+	\item Etudier les systèmes à temps partagé
+	\item Implémenter un programme en C\# pour gérer des processus avec le framework .NET
+	\item Rédiger la documentation technique de l'implémentation
+\end{itemize}
+
+\newpage
+\section*{Démarche~: Multi-tâches}
+\addcontentsline{toc}{section}{Démarche~: Multi-tâches}
+
+
+\subsection*{Définition~: Mots clés}
+\phantomsection
+\addcontentsline{toc}{subsection}{Définition: Mots clés}
+
+\noindent \textbf{Monoprogrammation}: Exécution d'un seul programme à la fois sur le processeur, sans partage des ressources entre plusieurs processus.
+
+\vspace{0.5cm}
+
+\noindent \textbf{Multiprogrammation}: Capacité à exécuter plusieurs programmes simultanément en partageant les ressources du système d'exploitation.
+
+\vspace{0.5cm}
+
+\noindent \textbf{Temps partagé}: Technique d'allocation du temps processeur entre plusieurs processus, chacun recevant des tranches de temps (quantum) successives.
+
+\vspace{0.5cm}
+
+\noindent \textbf{Préemptif}: Mode d'ordonnancement où le système peut interrompre un processus en cours d'exécution pour en lancer un autre, sans attendre sa terminaison volontaire.
+
+\vspace{0.5cm}
+
+\noindent \textbf{PID}: Identifiant unique (Process IDentifier) attribué à chaque processus pour le distinguer des autres au sein du système.
+
+\vspace{0.5cm}
+
+\noindent \textbf{Pointeur Stack}: Adresse mémoire pointant vers le sommet de la pile (stack) où sont stockées les variables locales et les adresses de retour.
+
+\vspace{0.5cm}
+
+\noindent \textbf{Processus}: Programme en cours d'exécution disposant de son propre contexte (mémoire, registres, PID) et géré par le système d'exploitation.
+
+\vspace{0.5cm}
+
+\noindent \textbf{Gestion de processus}: Ensemble des mécanismes permettant au système d'exploi-tation de créer, ordonnancer, surveiller et terminer les processus.
+
+\vspace{0.5cm}
+
+\noindent \textbf{Tâche asynchrone}: Opération exécutée de manière indépendante du flux principal du programme, permettant d'autres traitements en parallèle.
+
+\vspace{0.5cm}
+
+\noindent \textbf{Conflits}: Situations où plusieurs processus accèdent simultanément à une ressource partagée, risquant d'incohérence ou de corruption de données.
+
+\vspace{0.5cm}
+
+\noindent \textbf{Temps processeur}: Durée réelle d'exécution d'un processus sur le processeur, alloué et géré par l'ordonnanceur du système.
+
+\vspace{0.5cm}
+
+\noindent \textbf{Ressources}: Éléments matériels ou logiciels limités (processeur, mémoire, fichiers, entrées/sorties) partagés entre plusieurs processus.
+
+\vspace{0.5cm}
+
+\noindent \textbf{L'ordonnancement de processus}: Mécanisme par lequel le système d'exploitation décide quel processus doit être exécuté à un moment donné, en fonction de critères tels que la priorité, le temps d'attente, etc.
+
+\section*{Corbeille Gestion des processus}
+\addcontentsline{toc}{section}{Corbeille Gestion des processus}
+
+\noindent \textbf{Question}: 1.1 Quelle est la différence entre les systèmes monoprogrammation et multiprogrammation ? Quelle est la différence entre les systèmes mono et multi utilisateurs ? Pouvez-vous faire un tableau comparatif ?
+
+\vspace{0.5cm}
+
+\begin{center}
+\setlength{\tabcolsep}{10pt}
+
+\begin{tabular}{|p{0.25\textwidth}|p{0.30\textwidth}|p{0.30\textwidth}|}
+\hline
+\textbf{Caractéristiques} & \textbf{Monoprogrammation} & \textbf{Multiprogrammation} \\ \hline
+
+Nombre de programmes & Un seul à la fois & Plusieurs simultanément \\ \hline
+
+Partage des ressources & Non & Oui \\ \hline
+
+Utilisation du processeur & Basse & Élevée \\ \hline
+
+Contexte switch & Aucun & Fréquent \\ \hline
+
+Temps d'attente & Long & Court \\ \hline
+
+Complexité & Simple & Complexe \\ \hline
+
+Système d'exploitation & Basique & Avancé \\ \hline
+
+\end{tabular}
+\end{center}
+
+\vspace{0.5cm}
+
+\begin{center}
+\setlength{\tabcolsep}{10pt}
+
+\begin{tabular}{|p{0.25\textwidth}|p{0.30\textwidth}|p{0.30\textwidth}|}
+\hline
+\textbf{Caractéristiques} & \textbf{Mono-utilisateur} & \textbf{Multi-utilisateurs} \\ \hline
+
+Nombre d'utilisateurs & Un seul & Plusieurs simultanément \\ \hline
+
+Accès au système & Exclusif & Partagé \\ \hline
+
+Gestion des droits & Minimale & Complexe \\ \hline
+
+Sécurité & Simple & Renforcée \\ \hline
+
+Ressources allouées & Totalité du système & Distribuées entre utilisateurs \\ \hline
+
+Isolation des données & N/A & Nécessaire \\ \hline
+
+\end{tabular}
+\end{center}
+
+\vspace{0.5cm}
+
+\noindent \textbf{Question}: 1.2 Est-ce qu'on peut parler « vraiment » de multiprogrammation dans un ordinateur avec un seul processeur ?
+
+\noindent Oui, même avec un seul processeur, on peut parler de multiprogrammation grâce à la technique du temps partagé. Le système d'exploitation alloue des tranches de temps (quantum) à chaque processus, permettant ainsi à plusieurs programmes de s'exécuter de manière quasi simultanée en alternant leur accès au processeur. Cela donne l'illusion que les processus s'exécutent en parallèle, même si en réalité ils sont exécutés séquentiellement sur le même processeur.
+
+\vspace{0.5cm}
+
+\noindent \textbf{Question}: 1.3 Quelles sont les tâches principales d'un gestionnaire de processus ?
+
+\noindent Les tâches principales d'un gestionnaire de processus sont :
+\begin{itemize}
+	\item \textbf{Création de processus} : Initialiser un nouveau processus avec son propre contexte d'exécution.
+	\item \textbf{Ordonnancement} : Déterminer l'ordre d'exécution des processus en fonction de critères tels que la priorité, le temps d'attente, etc.
+	\item \textbf{Synchronisation} : Gérer les accès concurrents aux ressources partagées pour éviter les conflits et assurer l'intégrité des données.
+	\item \textbf{Communication interprocessus} : Faciliter l'échange de données et de messages entre les processus.
+	\item \textbf{Terminaison} : Gérer la fin d'un processus, libérer les ressources allouées et mettre à jour les structures de données du système.
+	\item \textbf{Surveillance} : Suivre l'état des processus en cours d'exécution et fournir des informations sur leur statut.
+\end{itemize}
+
+\vspace{0.5cm}
+
+\noindent \textbf{Question}: 1.4 Pouvez-vous donner les caractéristiques des mécanismes de commutation/permutation de contexte de processus et d'ordonnancement de processus ?
+
+\begin{center}
+\setlength{\tabcolsep}{10pt}
+
+\begin{tabular}{|p{0.25\textwidth}|p{0.30\textwidth}|p{0.30\textwidth}|}
+\hline
+\textbf{Caractéristiques} & \textbf{Context Switch} & \textbf{Ordonnancement} \\ \hline
+
+Définition & Sauvegarde et restauration du contexte d'un processus & Sélection du prochain processus à exécuter \\ \hline
+
+Moment & Entre chaque changement de processus & À chaque interruption ou fin de quantum \\ \hline
+
+Opération & Sauvegarde des registres, PC et état & Choix basé sur critères de priorité \\ \hline
+
+Coût & Élevé (ralentissement du système) & Variable selon l'algorithme \\ \hline
+
+Fréquence & Fréquente en multiprogrammation & Fréquente en temps partagé \\ \hline
+
+Impact & Perte de cache, surcharge système & Équilibre entre équité et performance \\ \hline
+
+Objectif & Préserver l'état d'exécution du processus & Optimiser utilisation des ressources \\ \hline
+
+\end{tabular}
+\end{center}
+
+\newpage
+
+\noindent \textbf{Question}: 1.5 Quels types d'algorithmes de « scheduling » connaissez-vous ? Pouvez-vous donner ses avantages et ses inconvénients ?
+
+\vspace{0.5cm}
+
+\begin{center}
+\setlength{\tabcolsep}{10pt}
+	\begin{tabular}{|p{0.25\textwidth}|p{0.30\textwidth}|p{0.30\textwidth}|}
+	\hline
+	\textbf{Algorithme} & \textbf{Avantages} & \textbf{Inconvénients} \\ \hline
+	\textbf{First-Come, First-Served (FCFS)} & Simple à implémenter, équitable pour les processus courts & Peut entraîner un temps d'attente élevé pour les processus longs (effet de convoyage) \\ \hline
+	\textbf{Shortest Job Next (SJN)} & Minimise le temps d'attente moyen & Difficile à implémenter, peut entraîner une famine pour les processus longs \\ \hline
+	\textbf{Round Robin (RR)} & Équitable, bon pour les systèmes interactifs & Peut entraîner un temps d'attente élevé si le quantum est mal choisi \\ \hline
+	\textbf{Priority Scheduling} & Permet de donner la priorité aux processus importants & Peut entraîner une famine pour les processus à faible priorité \\ \hline
+	\textbf{Multilevel Queue Scheduling} & Permet de gérer différents types de processus avec des politiques d'ordonnancement adaptées & Complexe à implémenter, peut entraîner une famine pour les processus dans les queues inférieures \\ \hline
+	\textbf{Multilevel Feedback Queue Scheduling} & Permet d'ajuster dynamiquement les priorités des processus en fonction de leur comportement & Complexe à implémenter, peut entraîner une surcharge du système \\ \hline
+	\end{tabular}
+\end{center}	
+
+\vspace{0.5cm}
+
+\noindent \textbf{Question}: 1.6 Quelles différences trouvez-vous entre un processus et un programme ?
+
+\noindent Un programme est un ensemble de instructions statiques stockées sur un support de stockage (disque dur, mémoire) qui peut être exécuté. Un processus, en revanche, est une instance d'un programme en cours d'exécution, avec son propre contexte d'exécution (mémoire, registres, PID). Un programme peut être considéré comme une recette, tandis qu'un processus est le résultat de la mise en œuvre de cette recette. Un programme peut être exécuté plusieurs fois, créant ainsi plusieurs processus distincts, chacun avec son propre état et ressources.
+
+\newpage
+
+\noindent \textbf{Question}: 1.7 Un quantum est associé à un processus dans un système temps partagé. Est-ce que le processus « peut quitter » l'UC avant la fin de ce quantum ?
+
+\noindent Oui, un processus peut quitter l'unité centrale (UC) avant la fin de son quantum dans un système à temps partagé. Cela peut se produire si le processus termine son exécution ou s'il est bloqué en attente d'une ressource (par exemple, une opération d'entrée/sortie). Dans ces cas, le système d'exploitation peut interrompre le processus et libérer l'UC pour permettre à un autre processus de s'exécuter, même si le quantum initial n'est pas encore écoulé.
+
+\vspace{0.5cm}
+
+\noindent \textbf{Question}: 1.8 Quels sont les critères souvent utilisés par les politiques d'ordon-nancement ?
+
+\noindent Les critères souvent utilisés par les politiques d'ordonnancement incluent :
+\begin{itemize}
+	\item \textbf{Priorité} : Certains processus peuvent être considérés comme plus importants que d'autres et recevoir une priorité plus élevée.
+	\item \textbf{Temps d'attente} : Le temps que les processus ont passé en attente peut être pris en compte pour éviter la famine.
+	\item \textbf{Temps de service} : La durée estimée d'exécution d'un processus peut influencer son ordonnancement, favorisant les processus courts.
+	\item \textbf{Équité} : Assurer que tous les processus ont une chance équitable d'accéder à l'UC, en particulier dans les systèmes interactifs.
+	\item \textbf{Utilisation des ressources} : Prendre en compte les ressources nécessaires pour l'exécution d'un processus, comme la mémoire ou les périphériques d'entrée/sortie.
+\end{itemize}
+
+\vspace{0.5cm}
+
+\noindent \textbf{Question}: 1.9 Pouvez-vous donner les avantages et inconvénients de mécanismes préemptif et collaboratif ? Pourquoi les SE devraient TOUS avoir un mode préemptif ?
+
+\vspace{0.5cm}
+
+\begin{center}
+\setlength{\tabcolsep}{10pt}
+
+\begin{tabular}{|p{0.25\textwidth}|p{0.30\textwidth}|p{0.30\textwidth}|}
+\hline
+\textbf{Caractéristiques} & \textbf{Préemptif} & \textbf{Collaboratif} \\ \hline
+
+Interruption & Système interrompt le processus & Processus cède volontairement le contrôle \\ \hline
+
+Avantages & Meilleure réactivité, équité garantie, évite la famine & Simple à implémenter, moins de surcharge \\ \hline
+
+Inconvénients & Fréquents changements de contexte, complexité de synchronisation & Risque de famine, moins adapté aux systèmes interactifs \\ \hline
+
+Performance & Peut engendrer une surcharge système & Potentiellement plus efficace \\ \hline
+
+Fiabilité & Un processus bloqué ne paralyse pas le système & Un processus mal conçu peut paralyser le système \\ \hline
+
+Cas d'usage & Systèmes temps réel, multi-utilisateurs & Systèmes simples, processus coopératifs \\ \hline
+
+\end{tabular}
+\end{center}
+
+\vspace{0.5cm}
+
+\noindent Tous les systèmes d'exploitation devraient disposer d'un mode préemptif pour garantir une meilleure gestion des ressources, une réactivité accrue, éviter les problèmes de famine et assurer une expérience utilisateur plus fluide et équitable.
+
+\vspace{0.5cm}
+
+\noindent \textbf{Question}: 1.10 Qu'est qu'on appelle un processus « léger » ? Quelles sont les différences avec un processus « normal/classique » ?
+
+\noindent Un processus « léger », souvent appelé thread, est une unité d'exécution plus petite qu'un processus classique. Les threads partagent le même espace d'adressage et les ressources du processus parent, ce qui les rend plus légers en termes de consommation de mémoire et de temps de création. En revanche, un processus classique a son propre espace d'adressage et ressources, ce qui le rend plus lourd à gérer. Les threads sont généralement utilisés pour des tâches concurrentes au sein d'une même application, tandis que les processus classiques sont utilisés pour des applications distinctes.
+
+\noindent Les différences entre un processus léger (thread) et un processus classique incluent :
+\begin{itemize}
+	\item \textbf{Espace d'adressage} : Les threads partagent le même espace d'adressage, tandis que les processus classiques ont des espaces d'adressage séparés.
+	\item \textbf{Ressources} : Les threads partagent les ressources du processus parent, tandis que les processus classiques ont leurs propres ressources.
+	\item \textbf{Création et gestion} : Les threads sont plus rapides à créer et à gérer que les processus classiques en raison de leur nature légère.
+	\item \textbf{Communication} : La communication entre threads est plus facile et plus rapide que la communication entre processus classiques, qui nécessite des mécanismes d'interprocessus plus complexes.
+\end{itemize}
+
+\vspace{0.5cm}
+
+\noindent \textbf{Question}: 1.11 Les processus peuvent communiquer entre eux ?
+
+\noindent Oui, les processus peuvent communiquer entre eux à l'aide de mécanismes d'inter-processus (IPC) tels que les pipes, les files de messages, les sémaphores, les mémoires partagées, etc. Ces mécanismes permettent aux processus d'échanger des données et de synchroniser leurs actions, même s'ils sont exécutés dans des espaces d'adressage séparés.
+
+\vspace{0.5cm}
+
+\noindent \textbf{Question}: 1.12 Quelles sont les informations minimales pour pouvoir créer un processus ?
+
+\noindent Les informations minimales pour créer un processus incluent :
+\begin{itemize}
+	\item \textbf{Programme à exécuter} : Le chemin vers l'exécutable ou le script à lancer.
+	\item \textbf{Arguments} : Les paramètres nécessaires pour l'exécution du programme.
+	\item \textbf{Environnement} : Les variables d'environnement nécessaires pour le processus.
+	\item \textbf{Permissions} : Les droits d'accès nécessaires pour exécuter le processus.
+	\item \textbf{Ressources} : Les ressources nécessaires pour le processus, telles que la mémoire, les fichiers, etc.
+	\item \textbf{PID} : Un identifiant unique pour le processus, généralement attribué par le système d'exploitation lors de sa création.
+	\item \textbf{Contexte d'exécution} : Les informations sur l'état du processus, telles que les registres, le compteur de programme, etc.
+\end{itemize}
+
+\vspace{0.5cm}
+
+\noindent \textbf{Question}: 1.13 Quels états de processus connaissez-vous ?
+
+\noindent Les états de processus couramment reconnus sont :
+\begin{itemize}
+	\item \textbf{Nouveau} : Le processus est en cours de création.
+	\item \textbf{Prêt} : Le processus est prêt à être exécuté, mais attend que le processeur soit disponible.
+	\item \textbf{En cours d'exécution} : Le processus est actuellement exécuté sur le processeur.
+	\item \textbf{Bloqué} : Le processus est en attente d'une ressource ou d'un événement pour continuer son exécution.
+	\item \textbf{Terminé} : Le processus a terminé son exécution et attend que le système d'exploitation libère ses ressources.
+\end{itemize}
+
+\vspace{0.5cm}
+
+\noindent \textbf{Question}: 1.14 Le SE est un chargeur de programme ?
+
+\noindent Non, le système d'exploitation (SE) n'est pas simplement un chargeur de programme. Le SE est un ensemble de logiciels qui gère les ressources matérielles et logicielles d'un ordinateur, fournit des services aux applications et assure la communication entre les utilisateurs et le matériel. Le chargeur de programme est une composante du SE responsable de charger les programmes en mémoire pour leur exécution, mais le SE englobe également d'autres fonctions telles que la gestion des processus, la gestion de la mémoire, la gestion des fichiers, la sécurité, etc.
+
+\vspace{0.5cm}
+
+\noindent \textbf{Question}: 1.15 Le SE est-il un ensemble de logiciels ?
+
+\noindent Oui, le système d'exploitation (SE) est un ensemble de logiciels qui gère les ressources matérielles et logicielles d'un ordinateur, fournit des services aux applications et assure la communication entre les utilisateurs et le matériel. Le SE comprend des composants tels que le noyau, les pilotes de périphériques, les utilitaires système, les interfaces utilisateur, etc.
+
+\vspace{0.5cm}
+
+\noindent \textbf{Question}: 1.16 On peut coder nos propres processus ?
+
+\noindent Oui, il est possible de coder nos propres processus en utilisant des langages de programmation qui offrent des bibliothèques ou des API pour la gestion des processus. Par exemple, en C\#, on peut utiliser la classe `System.Diagnostics.Process` pour créer et gérer des processus. En utilisant cette classe, on peut lancer de nouveaux processus, communiquer avec eux, surveiller leur état, etc. De même, d'autres langages comme Python, Java, C++, etc., offrent également des moyens de créer et de gérer des processus.
+
+\vspace{0.5cm}
+
+\noindent \textbf{Question}: 1.17 On va pouvoir définir des espaces de mémoires spécifiques pour retrouver nos programmes en cours d'exécution ? (Lien avec prosit précédent)
+
+\noindent Oui, chaque processus en cours d'exécution dispose de son propre espace de mémoire, ce qui permet de retrouver et d'isoler les données et les instructions spécifiques à ce processus. Le système d'exploitation gère ces espaces de mémoire pour assurer que les processus ne se chevauchent pas et que les données restent sécurisées. Cela permet également de faciliter la gestion des processus et de garantir que les programmes s'exécutent de manière stable et sécurisée.
+
+\vspace{0.5cm}
+
+\noindent \textbf{Question}: 1.18 Il va falloir conserver la valeur du compteur de programme ?
+
+\noindent Oui, il est essentiel de conserver la valeur du compteur de programme (Program Counter) lors de la commutation de contexte entre processus. Le compteur de programme indique l'adresse de la prochaine instruction à exécuter pour un processus donné. Lorsqu'un processus est interrompu pour permettre à un autre processus de s'exécuter, le système d'exploitation doit sauvegarder le compteur de programme du processus interrompu afin de pouvoir reprendre son exécution ultérieurement à partir du point où il a été interrompu. Cela garantit que les processus peuvent être exécutés de manière fluide et sans perte d'informations.
+
+\vspace{0.5cm}
+
+\noindent \textbf{Question}: 1.19 On va pouvoir stocker toutes les informations dans la « RAM » ?
+
+\noindent Oui, les informations nécessaires à l'exécution des processus, telles que les instructions, les données, les registres, etc., sont généralement stockées dans la mémoire vive (RAM) de l'ordinateur. La RAM permet un accès rapide aux données et instructions nécessaires pour l'exécution des processus. Cependant, il est important de noter que la gestion de la mémoire est une tâche complexe pour le système d'exploitation, qui doit s'assurer que les processus disposent de suffisamment de mémoire pour s'exécuter tout en évitant les conflits et en optimisant l'utilisation des ressources.
+
+\vspace{0.5cm}
+
+\noindent \textbf{Question}: 2. L'état du processus devra aussi être conservé ?
+
+\noindent Oui, l'état du processus doit également être conservé lors de la commutation de contexte. L'état du processus peut inclure des informations telles que les registres CPU, les variables locales, les descripteurs de fichiers ouverts, etc. Le système d'exploitation doit sauvegarder ces informations pour chaque processus afin de pouvoir reprendre son exécution ultérieurement sans perte de données ou d'instructions. Cela permet de garantir que les processus peuvent être exécutés de manière fluide et sans interruption, même lorsqu'ils sont interrompus pour permettre à d'autres processus de s'exécuter.
+
+\newpage
+
+\section*{Workshop : Multi-tâches}
+\addcontentsline{toc}{section}{Workshop : Multi-tâches}
+
+\noindent \textbf{Question 1}
+
+\begin{itemize}
+	\item Créer une application console nommée ConsoleHelloWorld.
+	\item Le programme reçoit deux valeurs en paramètre :
+	\begin{itemize}
+		\item valeur 1 : name
+		\item valeur 2 : durée avant fermeture automatique (en milliseconde)
+	\end{itemize}
+	\item Le programme affiche et retourne : « Hello {name} »
+	\item Tester l'exécution du programme à l'aide d'une commande PowerShell.
+\end{itemize}
+
+\vspace{0.5cm}
+
+\begin{minted}{csharp}
+using System;
+using System.Diagnostics;
+using System.ComponentModel;
+
+namespace HelloWorld
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            string name = args[0];
+
+            int waitTime = int.Parse(args[1]);
+
+            Console.WriteLine($"Hello, {name}!");
+
+            System.Threading.Thread.Sleep(waitTime * 1000);
+
+        }
+    }
+}
+\end{minted}
+
+\newpage
+
+\noindent \textbf{Question 2}
+
+\noindent Créer un programme C\# (que nous allons appeler processus père ou programme principal) qui crée un nouveau processus qui lance « ConsoleHelloWorld ».
+
+\begin{minted}[tabsize=2]{csharp}
+using System; using System.Diagnostics;
+using System.ComponentModel; using System.IO; using System.Reflection;
+
+class Program
+{
+	static void Main()
+	{
+		// Construire le chemin absolu depuis le répertoire de l'exe
+		string File = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+		string targetPath = Path.GetFullPath(Path.Combine(File, @"..\..\..\..\"));
+
+		var processStartInfo = new ProcessStartInfo
+		{
+			FileName = targetPath,
+			Arguments = "ZelPhy 5",
+			RedirectStandardOutput = true,
+			RedirectStandardError = true,
+			UseShellExecute = false,
+			CreateNoWindow = true
+		};
+
+		using var process = Process.Start(processStartInfo);
+
+		if (process != null)
+		{
+			string output = process.StandardOutput.ReadToEnd();
+			Console.WriteLine(output);
+			Thread.Sleep(3000);
+
+			if (!process.HasExited)
+			{
+				process.Kill();
+			}
+		}
+	}
+}
+\end{minted}
+
+\noindent Qu'est-ce que le programme principal fait après lancement du processus ? \\
+
+\begin{captionbox}
+Le programme principal lance le processus « ConsoleHelloWorld » avec les arguments « ZelPhy 5 ». Ensuite, il lit la sortie standard du processus et l'affiche dans la console. Après cela, il attend pendant 3 secondes (3000 millisecondes) avant de vérifier si le processus est toujours en cours d'exécution. Si le processus n'a pas encore terminé, le programme principal le termine en appelant la méthode `Kill()`.
+\end{captionbox}
+
+\newpage
+
+\noindent \textbf{Question 3}
+
+\noindent Lancer les 2 processus du Q2 un après l'autre.
+
+\noindent Rajouter un message dans la Console lors du lancement du processus créé en donnant l'information du nom du processus et de son Id. Lancer les 2 processus
+
+\noindent Par exemple, afficher dans la console « Processus explorer n° 4567 » est lancé.
+
+\begin{minted}[tabsize=2]{csharp}
+using System; using System.Diagnostics;
+using System.ComponentModel; using System.IO; using System.Reflection;
+
+class Program
+{
+	static void Main()
+	{
+		// Construire le chemin absolu depuis le répertoire de l'exe
+		string File = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+		string targetPath = Path.GetFullPath(Path.Combine(File, @"..\..\..\..\"));
+
+		// Lancer le premier processus
+		var processStartInfo1 = new ProcessStartInfo
+		{
+			FileName = targetPath,
+			Arguments = "Alice 3",
+			RedirectStandardOutput = true,
+			RedirectStandardError = true,
+			UseShellExecute = false,
+			CreateNoWindow = true
+		};
+
+		using var process1 = Process.Start(processStartInfo1);
+
+		if (process1 != null)
+		{
+			Console.WriteLine($"Processus {process1.ProcessName}");
+			Console.WriteLine($"n° {process1.Id} est lancé");
+			
+			string output1 = process1.StandardOutput.ReadToEnd();
+			Console.WriteLine(output1);
+
+			process1.WaitForExit(); // Attendre la fin du premier processus
+		}
+\end{minted}
+
+\newpage
+
+\begin{minted}[tabsize=2]{csharp}
+		// Lancer le deuxième processus
+		var processStartInfo2 = new ProcessStartInfo
+		{
+			FileName = targetPath,
+			Arguments = "Bob 5",
+			RedirectStandardOutput = true,
+			RedirectStandardError = true,
+			UseShellExecute = false,
+			CreateNoWindow = true
+		};
+
+		using var process2 = Process.Start(processStartInfo2);
+
+		if (process2 != null)
+		{
+			Console.WriteLine($"Processus {process2.ProcessName}");
+			Console.WriteLine($"n° {process2.Id} est lancé");
+			
+			string output2 = process2.StandardOutput.ReadToEnd();
+			Console.WriteLine(output2);
+
+			Thread.Sleep(3000);
+
+			if (!process2.HasExited)
+			{
+				process2.Kill();
+			}
+		}
+	}
+}
+\end{minted}
+
+\newpage 
+
+\noindent \textbf{Question 4}
+
+\noindent Vous avez remarqué en Q1 que le processus père peut se terminer même si le processus fils est encore actif.
+
+\noindent Modifier le programme Q2 pour que les processus père attendent que l'explorateur des fichiers soit fermé pour fermer le processus père. Encapsuler le lancement et l'attente dans une fonction et rajouter une attente de 2 secondes au processus père avant de continuer son exécution. Utiliser la fonction créée pour appeler « explorer.exe » et « notepad.exe ».
+
+\begin{minted}[tabsize=2]{csharp}
+using System; using System.Diagnostics;
+using System.ComponentModel; using System.IO; using System.Reflection;
+
+namespace HelloWorld
+{
+    class Program
+    {
+        static void Main()
+        {
+            // Lancer explorer.exe
+            LancerEtAttendreProcessus("explorer.exe", "");
+
+            // Attendre 2s avant de continuer
+            Console.WriteLine("Attente de 2s avant le prochain processus...");
+            Thread.Sleep(2000);
+
+            // Lancer notepad.exe
+            LancerEtAttendreProcessus("notepad.exe", "");
+
+            Console.WriteLine("Tous les processus sont terminés.");
+			Console.WriteLine("Le processus père se termine.");
+        }
+
+        static void LancerEtAttendreProcessus(string nomFichier, string arguments)
+        {
+            var processStartInfo = new ProcessStartInfo
+            {
+                FileName = nomFichier,
+                Arguments = arguments,
+                UseShellExecute = false
+            };
+\end{minted}
+
+\newpage
+
+\begin{minted}[tabsize=2]{csharp}
+            try
+            {
+                using var process = Process.Start(processStartInfo);
+
+                if (process != null)
+                {
+                    Console.WriteLine($"Processus {process.ProcessName}");
+					Console.WriteLine($"n° {process.Id} est lancé");
+
+                    // Attendre que le processus se termine
+                    process.WaitForExit();
+
+                    Console.WriteLine($"Processus {process.ProcessName}");
+					Console.WriteLine($"n° {process.Id} est terminé");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"{ex.Message}");
+            }
+        }
+    }
+}
+\end{minted}
+
+\vspace{0.5cm}
+
+\noindent Qu'est-ce que vous remarquez ? Trouvez-vous une différence entre les 2 processus lancés ? Que pouvons-nous en conclure ? \\
+
+\begin{captionbox}
+Lorsque nous lançons « explorer.exe », le processus père attend que l'explorateur de fichiers soit fermé avant de continuer son exécution. En revanche, lorsque nous lançons « notepad.exe », le processus père attend également que Notepad soit fermé avant de continuer. La différence réside dans le fait que l'explorateur de fichiers peut ouvrir plusieurs fenêtres et rester actif même si une fenêtre est fermée, tandis que Notepad est généralement utilisé pour une seule instance. Cela signifie que le processus père peut rester en attente plus longtemps avec l'explorateur de fichiers si plusieurs fenêtres sont ouvertes, tandis qu'avec Notepad, il se terminera dès que la fenêtre sera fermée. Nous pouvons conclure que le comportement du processus père dépend du comportement du processus fils et de la manière dont il gère ses instances et ses fenêtres.
+\end{captionbox}
+
+\newpage
+
+\noindent \textbf{Question 5}
+
+\noindent Vous allez passer le paramètre nécessaire pour que l'explorateur de fichiers s'ouvre directement sur le répertoire \texttt{C:\textbackslash Windows}
+
+\noindent Créez également un fichier texte et faites-le ouvrir dans Notepad.
+
+\begin{minted}[tabsize=2]{csharp}
+using System; using System.Diagnostics;
+using System.ComponentModel; using System.IO; using System.Reflection;
+
+namespace HelloWorld
+{
+    class Program
+    {
+        static void Main()
+        {
+            // Lancer explorer.exe sur le répertoire C:\Windows
+            LancerEtAttendreProcessus("explorer.exe", @"C:\Windows");
+
+            // Attendre 2 secondes avant de continuer
+            Console.WriteLine("Attente de 2s avant le prochain processus...");
+            Thread.Sleep(2000);
+
+            // Créer un fichier texte
+            string cheminFichier = Path.Combine(Path.GetTempPath(), "notepad.txt");
+            File.WriteAllText(cheminFichier, "Bonjour !");
+            Console.WriteLine($"Fichier créé : {cheminFichier}");
+
+            // Lancer notepad.exe avec le fichier créé
+            LancerEtAttendreProcessus("notepad.exe", cheminFichier);
+
+            Console.WriteLine("Tous les processus sont terminés. " +
+                "Le processus père se termine.");
+        }
+
+        static void LancerEtAttendreProcessus(string nomFichier, string arguments)
+        {
+            var processStartInfo = new ProcessStartInfo
+            {
+                FileName = nomFichier,
+                Arguments = arguments,
+                UseShellExecute = true
+            };
+
+\end{minted}
+
+\newpage
+
+\begin{minted}[tabsize=2]{csharp}
+            try
+            {
+                using var process = Process.Start(processStartInfo);
+
+                if (process != null)
+                {
+                    Console.WriteLine($"Processus {process.ProcessName} " +
+                        $"n° {process.Id} est lancé");
+
+                    // Attendre que le processus se termine
+                    process.WaitForExit();
+
+                    Console.WriteLine($"Processus {process.ProcessName}" +
+                        $"n° {process.Id} est terminé");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"{ex.Message}");
+            }
+        }
+    }
+}
+
+\end{minted}
+
+\newpage
+
+\noindent \textbf{Question 6}
+
+\noindent Modifier un des programmes précédents pour qu'en utilisant les verbes ci-dessous, le programme ouvre l'explorateur dans le répertoire \texttt{C:\textbackslash Windows} et ouvre le fichier « \texttt{C:\textbackslash Windows\textbackslash win.ini} » dans l'éditeur de texte par défaut (notepad).
+
+\noindent Verbes les plus utilisés
+\begin{itemize}
+	\item open Ouvrir un exécutable, document ou répertoire. Verbe par défaut
+	\item edit Editer un document
+	\item print Imprimer un document
+	\item explore Explorer un répertoire
+	\item find Lance une recherche dans un répertoire spécifié
+\end{itemize}
+
+
+\newpage
+
+\section*{Analyse et résolution : Multi-tâches}
+\addcontentsline{toc}{section}{Analyse et résolution : Multi-tâches}
+
+
+\subsection*{Conclusion}
+\phantomsection
+\addcontentsline{toc}{subsection}{Conclusion}
+
+\newpage
+
+\section*{Capitalisation}
+\addcontentsline{toc}{section}{Capitalisation}
+
+\begin{center}
+\setlength{\tabcolsep}{10pt}
+
+\begin{tabular}{|p{0.30\textwidth}|p{0.45\textwidth}|m{0.08\textwidth}|}
+\hline
+\textbf{AAV} & \textbf{Commentaire} & \textbf{Statut} \\ \hline
+
+Connaître les deux modes d'allocation : contiguë et fragmentée &
+Les modes d'allocation contiguë et fragmentée sont explicités avec leurs caractéristiques et cas d'usage. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Décrire les techniques d'allocation mémoire &
+Allocation de taille fixe/variable, pagination et segmentation présentées avec schémas et explications. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Expliquer les algorithmes d'allocation : First fit, Best fit, Worst fit &
+Fonctionnement détaillé et comparatif des trois algorithmes avec exemples concrets. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Expliquer les algorithmes de remplacement de pages &
+Algorithmes Random, FIFO, NRU, LRU, LFU décrits avec illustrations et cas d'usage. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Implémenter IDisposable et utiliser using &
+Pattern IDisposable implémenté, usage de l'instruction using démontré avec gestion des ressources. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Décrire l'exécution managée et gestion automatique de la mémoire &
+Processus CLR, garbage collection et Multi-tâches explicités. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Comprendre et expliquer les algorithmes de collecte de mémoire &
+Mécanismes de garbage collection détaillés avec avantages et limitations. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Utiliser les délégués et délégués anonymes &
+Délégués simples, multicast, expressions lambda et closures implémentés avec exemples. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Différencier Stack et Heap &
+Caractéristiques, performances et limites du Stack versus Heap comparées (vitesse, taille). &
+{\color{green!60!black}Acquis} \\ \hline
+
+Expliquer les types d'OS et gestion des processus &
+Monoprogrammation, multiprogrammation, temps partagé et mécanismes préemptif/collaboratif décrits. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Décrire les composants d'un processus &
+PID, Pointeur Stack, État, Program Counter, Registres CPU, Fichiers ouverts explicités. &
+{\color{green!60!black}Acquis} \\ \hline
+
+\end{tabular}
+\end{center}
+
+\section*{Ressources}
+\addcontentsline{toc}{section}{Ressources}
+
+\begin{itemize}
+	\item \url{https://www.geeksforgeeks.org/operating-system-process-scheduling/}
+	\item \url{https://www.geeksforgeeks.org/inter-process-communication-ipc/}
+	\item \url{https://www.geeksforgeeks.org/multithreading-in-c-sharp/}
+\end{itemize}
