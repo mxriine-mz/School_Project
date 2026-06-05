@@ -115,6 +115,7 @@
 \addcontentsline{toc}{subsection}{Composant}
 
 \noindent Un \textbf{composant} est la \textbf{brique de base, autonome et réutilisable}, d'une interface React. Concrètement, c'est une fonction JavaScript qui reçoit des données en entrée (les \textbf{props}) et retourne un morceau d'interface décrit en \textbf{JSX} (syntaxe mêlant HTML et JS). Une page se construit en \textbf{assemblant} des composants imbriqués, comme des LEGO.
+\vspace{0.5cm}
 \begin{center}
 \begin{tikzpicture}[font=\small]
 	\draw[fill=blue!15, rounded corners] (4.0,3.2) rectangle (6.2,3.9) node[midway]{\texttt{<App/>}};
@@ -127,9 +128,12 @@
 	\draw (5.1,1.8) -- (4.05,1.1); \draw (5.1,1.8) -- (6.35,1.1);
 \end{tikzpicture}
 \end{center}
+\vspace{0.5cm}
 \noindent\textit{Figure~: arbre de composants — une UI React est une hiérarchie de composants réutilisables.}
 
 \noindent \textbf{Règles de création} (AAV \og{}Appliquer les règles de création des composants\fg{})~: nom en \textbf{PascalCase} (\texttt{PostItem}), \textbf{responsabilité unique}, fonction \textbf{pure} (mêmes props → même rendu), \textbf{props en lecture seule} (jamais modifiées), retour d'un \textbf{seul élément racine}, et conception \textbf{réutilisable et indépendante}.
+
+\newpage
 
 \subsubsection*{React}
 \phantomsection
@@ -164,6 +168,7 @@
 \addcontentsline{toc}{subsection}{Wireframe}
 
 \noindent Un \textbf{wireframe} (\og{}maquette filaire\fg{}) est un \textbf{schéma simplifié, en basse fidélité}, de la structure d'une page ou d'un écran. Sans couleurs ni graphismes définitifs, il sert à positionner les \textbf{zones fonctionnelles} (en-tête, navigation, contenu, pied de page) et à valider l'\textbf{agencement} avant de coder. C'est un outil central de la \textbf{modélisation d'une application Frontend} (AAV) et un préalable au découpage en composants.
+\vspace{0.2cm}
 \begin{center}
 \begin{tikzpicture}[font=\footnotesize]
 	\draw[thick] (0,0) rectangle (5,4);
@@ -188,6 +193,7 @@
 	\item \textbf{Reducer}~: fonction pure qui calcule le \textbf{nouvel état} à partir de l'état courant et de l'action.
 	\item \textbf{Dispatch}~: déclenche une action depuis l'interface.
 \end{itemize}
+\vspace{0.5cm}
 \begin{center}
 \begin{tikzpicture}[font=\footnotesize]
 	\draw[fill=blue!12, rounded corners] (0,1.4) rectangle (2.2,2.4) node[midway, align=center]{\textbf{UI}\\(Composants)};
@@ -213,6 +219,8 @@
 \end{center}
 \noindent Ici \texttt{bg-blue-600} (fond bleu), \texttt{text-white} (texte blanc), \texttt{px-4 py-2} (marges internes), \texttt{rounded} (coins arrondis). \textbf{Avantages}~: rapidité, cohérence visuelle, design \textbf{responsive} simple (\texttt{md:}, \texttt{lg:}), pas de feuilles CSS séparées à maintenir. C'est la \textbf{librairie de style} retenue (AAV \og{}Utiliser l'une des librairies de style\fg{}). \textbf{Différence avec Bootstrap}~: Bootstrap impose des composants tout faits (look reconnaissable), Tailwind laisse une liberté totale de design.
 
+\newpage
+
 \subsubsection*{useEffect}
 \phantomsection
 \addcontentsline{toc}{subsection}{useEffect}
@@ -223,6 +231,7 @@
 	\item \texttt{useEffect(fn, [x])}~: se ré-exécute à chaque changement de \texttt{x} (mise à jour).
 	\item \textbf{Fonction de nettoyage} (\textit{return})~: exécutée au démontage, pour annuler abonnements/requêtes et éviter les fuites.
 \end{itemize}
+\vspace{0.5cm}
 \begin{center}
 \begin{tikzpicture}[font=\footnotesize]
 	\draw[fill=green!16, rounded corners] (0,0.8) rectangle (2.6,1.8) node[midway, align=center]{\textbf{Montage}\\\texttt{[]}};
@@ -241,6 +250,7 @@
 \addcontentsline{toc}{subsection}{Axios}
 
 \noindent \textbf{Axios} est une bibliothèque cliente \textbf{HTTP basée sur les promesses} (\textit{Promise}) permettant au front-end d'effectuer des \textbf{requêtes asynchrones} vers une API REST (GET, POST, PUT, DELETE) et d'en récupérer les données. Atouts par rapport au \texttt{fetch} natif~: conversion \textbf{automatique en JSON}, gestion simplifiée des erreurs, en-têtes et intercepteurs, délais d'attente. Couplé à \texttt{useEffect}, il constitue le mécanisme de \textbf{chargement asynchrone} des données~:
+\vspace{0.5cm}
 \begin{center}
 \begin{tikzpicture}[font=\footnotesize]
 	\draw[fill=blue!12, rounded corners] (0,0.6) rectangle (2.6,1.6) node[midway, align=center]{Composant\\React};
@@ -254,11 +264,14 @@
 \end{center}
 \noindent\textit{Figure~: Axios fait le pont asynchrone entre le composant React et l'API REST.}
 
+\newpage
+
 \subsubsection*{DOM}
 \phantomsection
 \addcontentsline{toc}{subsection}{DOM}
 
 \noindent Le \textbf{DOM} (\textit{Document Object Model}) est la \textbf{représentation en mémoire, sous forme d'arbre}, de la page HTML telle qu'interprétée par le navigateur. Chaque balise HTML y devient un \textbf{n\oe ud} manipulable par JavaScript (créer, modifier, supprimer des éléments, réagir aux événements). C'est via le DOM que l'interface est réellement affichée et mise à jour.
+\vspace{0.5cm}
 \begin{center}
 \begin{tikzpicture}[font=\footnotesize]
 	\draw[fill=blue!14, rounded corners] (4.2,3.2) rectangle (5.8,3.8) node[midway]{\texttt{html}};
@@ -270,6 +283,8 @@
 	\draw (7.7,2.0) -- (6.2,1.4); \draw (7.7,2.0) -- (9.2,1.4);
 \end{tikzpicture}
 \end{center}
+\vspace{0.5cm}
+
 \noindent\textit{Figure~: le DOM, arbre des n\oe uds de la page.} React n'agit pas directement sur ce DOM réel (coûteux)~: il passe par un \textbf{Virtual DOM}, en calcule les différences, et ne met à jour que les n\oe uds modifiés — d'où ses bonnes \textbf{performances}.
 
 \newpage
@@ -277,6 +292,100 @@
 \section*{Analyse et résolution : Front-end}
 \addcontentsline{toc}{section}{Analyse et résolution : Front-end}
 
+\noindent \textit{Rappel de la problématique~:} \og{}Comment gérer efficacement le cycle de vie des composants et le chargement asynchrone des données dans une application React pour éviter les erreurs d'affichage~?\fg{}
+
+\vspace{0.3cm}
+
+\noindent Pour y répondre, nous traitons successivement les quatre facettes du problème~: \textbf{(1)} la \textbf{modélisation} de l'interface et son découpage en composants, \textbf{(2)} le \textbf{cycle de vie} d'un composant et le hook \texttt{useEffect}, \textbf{(3)} le \textbf{chargement asynchrone} des données (Axios) et la \textbf{gestion des états} qui élimine les erreurs d'affichage, \textbf{(4)} l'\textbf{état global} (Redux) et le \textbf{style} (Tailwind). Une synthèse argumentée clôt l'analyse.
+
+\vspace{0.4cm}
+
+\subsection*{1. Modélisation et découpage en composants}
+\phantomsection
+\addcontentsline{toc}{subsection}{1. Modélisation et découpage en composants}
+\noindent La conception débute \textbf{avant le code} par un \textbf{wireframe} qui fixe la structure des écrans (en-tête, navigation, contenu, pied de page). Ce découpage se traduit ensuite en un \textbf{arbre de composants} où chaque zone fonctionnelle devient une brique autonome (\texttt{<Header/>}, \texttt{<PostList/>}, \texttt{<PostItem/>}, \texttt{<Footer/>}). Les \textbf{règles de création} sont appliquées~: nom en \textbf{PascalCase}, \textbf{responsabilité unique}, fonction \textbf{pure}, \textbf{props en lecture seule} et \textbf{réutilisabilité}. Un composant feuille typique ne fait que recevoir des props et retourner du JSX~:
+
+\begin{minted}[fontsize=\footnotesize, bgcolor=gray!8]{jsx}
+// PostItem.jsx -- composant pur, réutilisable, props en lecture seule
+function PostItem({ auteur, contenu }) {
+  return (
+    <li className="p-4 rounded shadow bg-white">
+      <strong>{auteur}</strong> : {contenu}
+    </li>
+  );
+}
+\end{minted}
+
+\vspace{0.3cm}
+
+\subsection*{2. Cycle de vie et hook \texttt{useEffect}}
+\phantomsection
+\addcontentsline{toc}{subsection}{2. Cycle de vie et useEffect}
+\noindent Un composant traverse trois phases~: le \textbf{montage} (première insertion dans le DOM), les \textbf{mises à jour} (re-rendus déclenchés par un changement d'état ou de props) et le \textbf{démontage} (retrait du DOM). L'erreur décrite dans le contexte vient d'un \textbf{mauvais placement de la logique de chargement}~: si l'on tente d'exploiter les données pendant le rendu, le composant s'exécute \textbf{avant} l'arrivée du JSON. La solution consiste à déporter l'appel réseau dans un \texttt{useEffect} déclenché \textbf{au montage} (tableau de dépendances vide \texttt{[]})~: le rendu n'attend pas le réseau, et c'est l'arrivée des données qui provoque un re-rendu propre.
+
+\newpage
+
+\subsection*{3. Chargement asynchrone et gestion des états}
+\phantomsection
+\addcontentsline{toc}{subsection}{3. Chargement asynchrone et gestion des états}
+\noindent Le c\oe ur de la résolution combine \textbf{Axios} (requête HTTP asynchrone, JSON déjà parsé) avec \textbf{trois états} maintenus par \texttt{useState}~: les \textbf{données}, un indicateur de \textbf{chargement} et une éventuelle \textbf{erreur}. L'appel est lancé au montage et une \textbf{fonction de nettoyage} annule la requête au démontage (\texttt{AbortController}), évitant les fuites et les mises à jour sur composant démonté.
+
+\begin{minted}[fontsize=\footnotesize, bgcolor=gray!8]{jsx}
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+
+function PostList() {
+  const [posts, setPosts]       = useState([]);    // données (JSON -> objets)
+  const [chargement, setLoad]   = useState(true);  // état de chargement
+  const [erreur, setErreur]     = useState(null);  // état d'erreur
+
+  useEffect(() => {
+    const controleur = new AbortController();       // annulation au démontage
+
+    axios.get('/api/posts', { signal: controleur.signal })
+      .then((reponse) => setPosts(reponse.data))    // JSON déjà parsé par Axios
+      .catch((err) => { if (!axios.isCancel(err)) setErreur(err); })
+      .finally(() => setLoad(false));
+
+    return () => controleur.abort();                // nettoyage (démontage)
+  }, []);                                           // [] -> une fois, au montage
+\end{minted}
+
+\noindent Le \textbf{rendu conditionnel} garantit ensuite que l'on n'affiche \textbf{jamais} la liste tant que les données ne sont pas disponibles~: c'est précisément ce qui \textbf{supprime les erreurs d'affichage} de la problématique.
+
+\begin{minted}[fontsize=\footnotesize, bgcolor=gray!8]{jsx}
+  if (chargement) return <p className="text-gray-500">Chargement...</p>;
+  if (erreur)     return <p className="text-red-600">Erreur de chargement.</p>;
+
+  return (
+    <ul className="space-y-2">
+      {posts.map((post) => (
+        <PostItem key={post.id} auteur={post.auteur} contenu={post.contenu} />
+      ))}
+    </ul>
+  );
+}
+\end{minted}
+
+\noindent Tant que \texttt{chargement} est vrai, l'interface affiche un indicateur~; en cas d'échec, un message d'erreur~; ce n'est qu'\textbf{une fois le JSON arrivé} que la liste est rendue. Le composant est ainsi \textbf{robuste à l'asynchronisme}, ce qui répond directement au contexte (rendu déclenché avant la disponibilité des données).
+
+\newpage
+
+\subsection*{4. État global (Redux) et style (Tailwind)}
+\phantomsection
+\addcontentsline{toc}{subsection}{4. État global et style}
+\noindent Lorsqu'une donnée doit être \textbf{partagée entre de nombreux composants éloignés} (utilisateur connecté, liste de posts mutualisée), la faire transiter par les props devient ingérable. \textbf{Redux} centralise alors cet état dans un \textbf{store unique} au flux unidirectionnel et prévisible (\textit{action} → \textit{reducer} → \textit{store} → re-rendu de l'UI), ce qui rend l'évolution de l'application plus lisible et testable.
+
+\vspace{0.2cm}
+
+\noindent Côté présentation, \textbf{Tailwind CSS} (\textit{utility-first}) applique le style directement dans le JSX via des classes atomiques (\texttt{p-4}, \texttt{rounded}, \texttt{bg-white}, \texttt{text-red-600}…), comme dans les extraits ci-dessus. On obtient un rendu \textbf{cohérent et responsive} sans feuille CSS séparée à maintenir.
+
+\vspace{0.4cm}
+
+\subsection*{Synthèse}
+\phantomsection
+\addcontentsline{toc}{subsection}{Synthèse}
+\noindent La réponse à la problématique tient en une chaîne cohérente~: \textbf{modéliser} (wireframe → arbre de composants), \textbf{isoler l'asynchrone} dans un \texttt{useEffect} de montage, \textbf{charger} via Axios en pilotant trois états (données / chargement / erreur), \textbf{rendre conditionnellement} pour ne jamais afficher de données absentes, et \textbf{nettoyer} au démontage. Redux et Tailwind complètent la pile pour l'état partagé et le style. Cette démarche élimine les erreurs d'initialisation et constitue un \textbf{patron reproductible} pour toute page consommant une API.
 
 \newpage
 
@@ -284,15 +393,15 @@
 \phantomsection
 \addcontentsline{toc}{subsection}{Conclusion}
 
-\noindent \textbf{En réponse à la problématique}, gérer efficacement le cycle de vie des composants et le chargement asynchrone des données dans une application React repose sur une combinaison cohérente de bonnes pratiques. L'interface est découpée en \textbf{composants modulaires, indépendants et réutilisables} (règles de création~: PascalCase, responsabilité unique, props en lecture seule), dont la conception est préparée en amont par des \textbf{wireframes} qui modélisent la structure de l'application avant le codage.
+\noindent \textbf{En réponse à la problématique}, l'analyse a montré que gérer efficacement le cycle de vie des composants et le chargement asynchrone des données ne relève pas d'une astuce isolée, mais d'une \textbf{chaîne de décisions cohérentes}. Tout part de la \textbf{modélisation}~: un wireframe fixe la structure des écrans, traduite en un \textbf{arbre de composants} modulaires, purs et réutilisables (PascalCase, responsabilité unique, props en lecture seule).
 
 \vspace{0.2cm}
 
-\noindent Le c\oe ur de la solution réside dans la maîtrise du \textbf{cycle de vie} via le hook \texttt{useEffect}~: les données sont chargées de façon \textbf{asynchrone} à l'aide d'\textbf{Axios} dans un effet déclenché au montage du composant (\texttt{[]}), et l'on affiche un \textbf{état de chargement} tant que le \textbf{JSON} n'est pas arrivé. Cette approche supprime les \textbf{erreurs d'initialisation} décrites dans le contexte (rendu déclenché avant la disponibilité des données). Une \textbf{fonction de nettoyage} au démontage évite par ailleurs les fuites mémoire et les mises à jour sur composant démonté.
+\noindent Le c\oe ur de la résolution est le \textbf{placement correct de la logique asynchrone}~: l'appel réseau est déporté dans un \texttt{useEffect} déclenché au \textbf{montage} (\texttt{[]}), de sorte que le rendu n'attend jamais le réseau. \textbf{Axios} récupère le \textbf{JSON} et alimente trois états (\texttt{données}, \texttt{chargement}, \texttt{erreur}) qui pilotent un \textbf{rendu conditionnel}~: on n'affiche la liste qu'une fois les données présentes. C'est ce mécanisme qui \textbf{supprime les erreurs d'affichage} décrites dans le contexte. Une \textbf{fonction de nettoyage} (\texttt{AbortController}) annule la requête au démontage et évite les fuites mémoire.
 
 \vspace{0.2cm}
 
-\noindent Pour l'état partagé entre de nombreux composants, \textbf{Redux} centralise les données dans un store unique au flux unidirectionnel et prévisible, tandis que \textbf{Tailwind CSS} assure un style cohérent et responsive. Au final, la stack \textbf{React + Axios + Redux + Tailwind} satisfait l'ensemble des AAV visés (création de composants, manipulation de JSON, cycle de vie, modélisation, framework et librairie de style) et constitue un \textbf{modèle reproductible} pour le développement front-end des futures applications de l'entreprise.
+\noindent Pour l'état partagé entre composants éloignés, \textbf{Redux} centralise les données dans un store unique au flux unidirectionnel et prévisible, tandis que \textbf{Tailwind CSS} assure un style cohérent et responsive directement dans le JSX. Au final, la pile \textbf{React + Axios + Redux + Tailwind} satisfait l'ensemble des AAV visés et constitue un \textbf{patron reproductible} pour le développement front-end des futures applications de l'entreprise.
 
 \newpage
 
@@ -307,27 +416,27 @@
 \textbf{AAV} & \textbf{Commentaire} & \textbf{Statut} \\ \hline
 
 Appliquer les règles de création des composants &
-Règles détaillées (PascalCase, responsabilité unique, fonction pure, props en lecture seule, racine unique, réutilisabilité) et illustrées par un arbre de composants. &
+Règles détaillées (PascalCase, responsabilité unique, fonction pure, props en lecture seule, racine unique) et mises en \oe uvre dans le composant \texttt{PostItem} de l'analyse. &
 {\color{green!60!black}Acquis} \\ \hline
 
 Construire et manipuler des données en JSON &
-Structure du JSON (objets/tableaux) expliquée~; manipulation via \texttt{JSON.parse}/\texttt{JSON.stringify} et exploitation des réponses d'API. &
+Structure du JSON (objets/tableaux) expliquée~; réponse d'API récupérée via Axios (\texttt{reponse.data}) puis parcourue (\texttt{.map}) pour alimenter les composants. &
 {\color{green!60!black}Acquis} \\ \hline
 
 Reconnaître les cycles de vie d'un composant &
-Phases montage / mise à jour / démontage schématisées et pilotées par \texttt{useEffect} (tableau de dépendances, nettoyage). &
+Phases montage / mise à jour / démontage schématisées et pilotées par \texttt{useEffect} (dépendances \texttt{[]}, nettoyage par \texttt{AbortController}) dans le code de résolution. &
 {\color{green!60!black}Acquis} \\ \hline
 
 Réaliser la modélisation d'une application Frontend &
-Modélisation par wireframes (structure des écrans) et découpage en arbre de composants présentés et schématisés. &
+Modélisation par wireframes (structure des écrans) puis découpage en arbre de composants, repris comme point de départ de l'analyse. &
 {\color{green!60!black}Acquis} \\ \hline
 
 Utiliser un framework Frontend &
-React expliqué (composants, déclaratif, Virtual DOM, flux unidirectionnel, hooks) et retenu comme framework du projet. &
+React expliqué (composants, déclaratif, Virtual DOM, flux unidirectionnel, hooks) et appliqué concrètement (\texttt{useState}/\texttt{useEffect}, rendu conditionnel) pour résoudre la problématique. &
 {\color{green!60!black}Acquis} \\ \hline
 
 Utiliser l'une des librairies de style (Bootstrap, Tailwind, etc.) &
-Tailwind CSS (utility-first) présenté avec exemple de classes, design responsive et comparaison avec Bootstrap. &
+Tailwind CSS (utility-first) présenté avec exemple de classes, comparé à Bootstrap et utilisé directement dans le JSX des extraits de l'analyse. &
 {\color{green!60!black}Acquis} \\ \hline
 
 \end{tabular}
