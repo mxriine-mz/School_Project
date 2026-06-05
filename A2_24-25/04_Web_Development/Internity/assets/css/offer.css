@@ -1,0 +1,206 @@
+.hero-section {
+    position: relative;
+    width: 100%;
+    height: 30%;
+}
+
+.hero-header {
+    background-color: #AAAAAA;
+    text-align: center;
+    padding: 0px;
+    border-radius: 10px 10px 0px 0px;
+    height: 100%;
+}
+
+.hero-img {
+    background-color: #FFFFFF;
+    opacity: 0.5;
+    display: inline-block;
+    padding: 20px;
+    width: 100%;
+    height: 100%;
+}
+
+.hero-img img {
+    max-width: 20px;
+    height: 20px;
+    margin-top: 12vh;
+}
+
+.hero-title {
+    position: absolute;
+    bottom: 0;
+    left: 20px;
+    color: white;
+    font-size: 3rem;
+    font-weight: bold;
+    background-color: rgba(0, 0, 0, 0.178);
+    padding: 10px 20px;
+    border-radius: 1px;
+    z-index: 5;
+}
+
+.content-container {
+    display: flex;
+    gap: 20px;
+    margin: 20px;
+}
+
+.text-section {
+    flex: 7;
+    padding: 20px;
+}
+
+.card-section {
+    flex: 3;
+    padding: 20px;
+}
+
+.card {
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    background-color: #AAAAAA;
+    text-align: center;
+    padding: 30px;
+    border-radius: 10px 10px 0px 0px;
+    position: relative;
+}
+
+.card-img img {
+    max-width: 20px;
+    height: 20px;
+    align-items: center;
+}
+
+.title-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+}
+
+.card-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--CBlack);
+    margin: 0;
+    flex: 1;
+}
+
+.wishlist-toggle {
+    border: none;
+    background: none;
+}
+
+.wishlist-heart-container {
+    margin-left: 10px;
+}
+
+.wishlist-heart {
+    width: 24px;
+    height: 24px;
+    color: var(--CpBlue);
+    cursor: pointer;
+    transition: opacity 0.3s ease;
+}
+
+.wishlist-heart:hover {
+    opacity: 0.8;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+.card-body p {
+    margin-bottom: 2vh;
+}
+
+.card-body li {
+    margin-left: 3vw;
+}
+
+.card-footer {
+    text-align: center;
+    margin-top: 20px;
+    padding: 10px;
+}
+
+.card-button {
+    background-color: var(--CpBlue);
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.card-button:hover {
+    background-color: var(--CpBlue);
+}
+
+
+/* POUR LE POPUP WIHLIST*/
+
+/* POUR LA WISHLIST*/
+
+/* Styles pour le popup */
+.popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+}
+
+.popup.hidden {
+    display: none;
+}
+
+.popup-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    width: 300px;
+}
+
+/* Styles pour le bouton OK dans les popups */
+.submit-rating {
+    margin-top: 15px;
+    padding: 10px 20px;
+    background-color: var(--CpBlue);
+    color: var(--CWhite);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: bold;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+    outline: none;
+}
+
+.submit-rating:hover {
+    transform: scale(1.05);
+    box-shadow: 0px 8px 15px var(--CoBlack);
+}
+
+.submit-rating:focus {
+    box-shadow: 0px 0px 8px 2px var(--CpBlue);
+    outline: none;
+}
+
+.submit-rating:active {
+    transform: scale(0.95);
+    box-shadow: none;
+}
+
