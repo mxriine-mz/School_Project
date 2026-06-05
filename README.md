@@ -18,7 +18,7 @@ School_Project/
 
 | Année | Période | Statut | Contenu |
 | :--- | :--- | :--- | :--- |
-| [A2](./A2_24-25/) | 2024 – 2025 | Archive | 4 modules, 1 projet |
+| [A2](./A2_24-25/) | 2024 – 2025 | Archive | 4 modules, 2 projets |
 | [A3](./A3_25-26/) | 2025 – 2026 | En cours | 4 modules, 5 projets, 3 rapports |
 | A4 | 2026 – 2027 | À venir | — |
 | A5 | 2027 – 2028 | À venir | — |
@@ -43,7 +43,7 @@ Rapports transverses : [Citizen Engineer](./A3_25-26/_Report/Citizen_Engineer/),
 | Module | Thématique | Projet associé |
 | :--- | :--- | :--- |
 | 01 · Embedded System | Systèmes embarqués et programmation bas niveau | *à compléter* |
-| 02 · Object-oriented Design & Programming | Conception et programmation orientée objet (POO) | *à compléter* |
+| [02 · Object-oriented Design & Programming](./A2_24-25/02_Object-oriented_Design_Programming/) | Programmation orientée objet (POO) en C++ | [Conway's Game of Life](./A2_24-25/02_Object-oriented_Design_Programming/ConwayGoL/) |
 | 03 · Networks System | Réseaux et systèmes : protocoles, adressage, services | *à compléter* |
 | [04 · Web Development](./A2_24-25/04_Web_Development/) | Développement web full-stack PHP/MVC | [Internity](./A2_24-25/04_Web_Development/Internity/) |
 

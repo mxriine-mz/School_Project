@@ -10,9 +10,9 @@ Deuxième année du cycle ingénieur **CESI**. Les supports de cette année sont
 Systèmes embarqués et programmation bas niveau.
 *Archive à compléter.*
 
-### 02 · Object-oriented Design & Programming
-Conception et programmation orientée objet (POO).
-*Archive à compléter.*
+### [02 · Object-oriented Design & Programming](./02_Object-oriented_Design_Programming/)
+Conception et programmation orientée objet (POO) en **C++**.
+Projet : **[Conway's Game of Life](./02_Object-oriented_Design_Programming/ConwayGoL/)** — implémentation de l'automate cellulaire de Conway (modes console et graphique), mettant en œuvre héritage et polymorphisme pour gérer les variantes de règles.
 
 ### 03 · Networks System
 Réseaux et systèmes : protocoles, adressage, services.
@@ -29,6 +29,6 @@ Projet : **[Internity](./04_Web_Development/Internity/)** — plateforme de rech
 | # | Module | Statut | Projet |
 | :---: | :--- | :--- | :--- |
 | 01 | Embedded System | À compléter | — |
-| 02 | Object-oriented Design & Programming | À compléter | — |
+| 02 | Object-oriented Design & Programming | Disponible | Conway's Game of Life |
 | 03 | Networks System | À compléter | — |
 | 04 | Web Development | Disponible | Internity |
