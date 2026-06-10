@@ -1,0 +1,60 @@
+name: workshop-jwt-docker
+
+services:
+  auth-postgres:
+    image: postgres:17-alpine
+    environment:
+      - POSTGRES_DB=authdb
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    # Sonde de disponibilité : Postgres n'est "healthy" qu'une fois prêt
+    # à accepter des connexions.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d authdb"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./auth-service/.env
+    restart: unless-stopped
+    depends_on:
+      auth-postgres:
+        # On attend que la base soit réellement prête, pas seulement démarrée.
+        condition: service_healthy
+    networks:
+      - app-network
+  private-service:
+    build:
+      context: ./private-service
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3000"
+    networks:
+      - app-network
+  nginx:
+    image: nginx:1.29.1-alpine
+    container_name: gateway
+    volumes:
+      - ./gateway/nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - "8080:80"
+    networks:
+      - app-network
+    depends_on:
+      - auth-service
+      - private-service
+volumes:
+  db-data:
+networks:
+  app-network:
+    driver: bridge

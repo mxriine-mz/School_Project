@@ -287,6 +287,40 @@
 
 \noindent\textit{Figure~: le DOM, arbre des n\oe uds de la page.} React n'agit pas directement sur ce DOM réel (coûteux)~: il passe par un \textbf{Virtual DOM}, en calcule les différences, et ne met à jour que les n\oe uds modifiés — d'où ses bonnes \textbf{performances}.
 
+\vspace{0.5cm}
+
+\subsubsection*{AJAX (Asynchronous JavaScript and XML)}
+
+\noindent AJAX (\textit{Asynchronous JavaScript and XML}) est une technique de développement web qui permet à une page d'échanger des données avec un serveur en arrière-plan, sans avoir à recharger toute la page.
+
+\noindent Concrètement, au lieu de recharger entièrement une page à chaque action de l'utilisateur, le navigateur envoie des requêtes au serveur de façon asynchrone (en tâche de fond) et met à jour seulement les parties concernées de la page. L'utilisateur peut continuer à interagir avec la page pendant que la requête est traitée.
+
+\begin{itemize}
+    \item \textbf{Asynchrone} : les requêtes n'interrompent pas l'utilisation
+    de la page. Le code n'attend pas la réponse pour continuer.
+
+    \item \textbf{Les briques techniques} : historiquement l'objet
+    \texttt{XMLHttpRequest}, aujourd'hui plus souvent l'API \texttt{fetch()}
+    ou des bibliothèques comme Axios. Malgré le nom, on échange aujourd'hui
+    surtout du JSON plutôt que du XML.
+
+    \item \textbf{Cas d'usage typiques} : suggestions de recherche en temps
+    réel (autocomplétion), validation de formulaire sans rechargement, fil
+    d'actualité qui se met à jour, chargement de contenu au défilement, etc.
+\end{itemize}
+
+\textbf{Exemple avec \texttt{fetch}}
+
+\begin{minted}[fontsize=\footnotesize, bgcolor=gray!8]{js}
+fetch('/api/donnees')
+  .then(response => response.json())
+  .then(data => {
+    // mise a jour du DOM avec les donnees recues
+    console.log(data);
+  })
+  .catch(error => console.error(error));
+\end{minted}
+
 \newpage
 
 \section*{Analyse et résolution : Front-end}
