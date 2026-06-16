@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+/* Tailwind v4 : on pilote le mode sombre par la classe ".dark" (posée sur <html>)
+   au lieu du réglage système "prefers-color-scheme". C'est l'équivalent v4 du
+   darkMode: "class" de Tailwind v3, ce qui permet au bouton DarkLightToggle
+   de contrôler le thème. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* Les variables de fond/texte suivent désormais la classe ".dark" elles aussi */
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
