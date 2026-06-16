@@ -1,0 +1,23 @@
+{
+  "name": "react-dark-light-toggle-zelphyris",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "react",
+    "dark-mode",
+    "light-mode",
+    "theme",
+    "toggle",
+    "tailwindcss"
+  ],
+  "author": "",
+  "license": "ISC",
+  "description": "A React component to toggle between light and dark modes, styled with Tailwind CSS.",
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  }
+}
