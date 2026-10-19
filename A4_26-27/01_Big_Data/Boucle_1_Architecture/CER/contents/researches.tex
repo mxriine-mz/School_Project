@@ -135,6 +135,17 @@
 Pour y répondre, on distribue le stockage et les calculs sur un ensemble de machines (cluster) plutôt que d'augmenter la puissance d'un seul serveur.
 
 \begin{center}
+\begin{tikzpicture}[
+  v/.style={circle,draw=title1,fill=title2!15,thick,minimum size=2.2cm,align=center,font=\small\bfseries}]
+  \node[circle,fill=title1,text=white,minimum size=2.4cm,font=\bfseries] (c) {Big Data};
+  \foreach \n/\a [count=\i] in {Volume/90,Vélocité/18,Variété/-54,Véracité/-126,Valeur/162} {
+    \node[v] (v\i) at (\a:3.3cm) {\n};
+    \draw[thick,title1] (c) -- (v\i);
+  }
+\end{tikzpicture}
+\end{center}
+
+\begin{center}
 \rule{5cm}{0.4pt}
 \end{center}
 
@@ -199,6 +210,14 @@ Les deux sont complémentaires~: le Data Lake sert souvent de zone d'atterrissag
 	\item \textbf{Sqoop}~: import/export entre bases relationnelles et Hadoop ;
 	\item \textbf{Hue}~: interface web pour manipuler ces outils.
 \end{itemize}
+
+\begin{center}
+  \raisebox{0.55cm}{\includegraphics[height=0.6cm]{contents/img/logo_cloudera.png}}\hspace{1cm}
+  \includegraphics[height=1.7cm]{contents/img/logo_hadoop.png}\hspace{1cm}
+  \includegraphics[height=1.7cm]{contents/img/logo_hive.png}
+\end{center}
+\source{Wikimedia Commons (logos Cloudera, Apache Hadoop, Apache Hive)}
+
 Dans le projet, Cloudera constitue la couche de stockage et de traitement de l'archi\-tec\-ture.
 
 \begin{center}
@@ -206,6 +225,14 @@ Dans le projet, Cloudera constitue la couche de stockage et de traitement de l'a
 \end{center}
 
 \vspace{0.5cm}
+
+\begin{wrapfigure}{r}{0.18\textwidth}
+    \vspace{-20pt}
+    \begin{center}
+        \includegraphics[width=0.13\textwidth]{contents/img/logo_powerbi.png}
+    \end{center}
+    \vspace{-15pt}
+\end{wrapfigure}
 
 \noindent \textbf{Power BI}:
 \noindent Power BI est l'outil de \textit{Business Intelligence} de Microsoft. Il se connecte à de nombreuses sources (dont Hive et Impala), permet de modéliser les données et de construire des tableaux de bord interactifs. Dans l'architecture, il forme la couche de restitution~: il présente aux décideurs du CHU les indicateurs (KPI) calculés à partir de l'entrepôt.
@@ -242,6 +269,11 @@ En France, l'hébergement de données de santé doit en plus être confié à un
 Cette organisation forme un \textbf{cube OLAP} que l'on peut explorer par agrégation (\textit{roll-up}), détail (\textit{drill-down}), découpage (\textit{slice}, \textit{dice}) ou pivot.
 
 \begin{center}
+  \includegraphics[width=0.45\textwidth]{contents/img/cube_olap.png}
+\end{center}
+\source{Wikimedia Commons, \textit{Olap-3d-cube.png} (CC BY-SA 4.0)}
+
+\begin{center}
 \rule{5cm}{0.4pt}
 \end{center}
 
@@ -269,6 +301,20 @@ Pour un entrepôt, on utilise la \textbf{modélisation dimensionnelle} (Ralph Ki
 	\item \textbf{schéma en flocon}~: les dimensions sont normalisées en sous-tables. Moins de redondance, mais plus de jointures ;
 	\item \textbf{schéma en constellation}~: plusieurs tables de faits partagent des dimensions communes.
 \end{itemize}
+
+\begin{center}
+  \begin{minipage}[b]{0.42\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{contents/img/schema_etoile.png}\\[0.1cm]
+    {\small Schéma en étoile}
+  \end{minipage}\hfill
+  \begin{minipage}[b]{0.52\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{contents/img/schema_flocon.png}\\[0.1cm]
+    {\small Schéma en flocon}
+  \end{minipage}
+\end{center}
+\source{Wikimedia Commons, SqlPac (CC BY-SA 3.0)}
 
 \begin{center}
 \rule{5cm}{0.4pt}
@@ -321,6 +367,12 @@ Le cluster apporte aussi la \textbf{tolérance aux pannes}~: les données étant
 \vspace{0.5cm}
 
 \noindent \textbf{DAS, NAS et SAN}:
+
+\begin{center}
+  \includegraphics[width=0.75\textwidth]{contents/img/das_nas_san.png}
+\end{center}
+\source{Wikimedia Commons, Mattias Campe, \textit{DASvsNASvsSAN.svg} (CC BY-SA 4.0)}
+
 \begin{center}
 \begin{tabularx}{\textwidth}{>{\bfseries}l X X X}
 \toprule
@@ -350,10 +402,15 @@ Usage & Nœuds Hadoop (HDFS) & Partage de documents, sauvegardes & Bases de donn
 \end{itemize}
 Et trois modèles de déploiement~: \textbf{public} (ressources mutualisées chez un fournisseur), \textbf{privé} (dédié à une organisation) et \textbf{hybride} (combinaison des deux).
 
+\begin{center}
+  \includegraphics[width=0.85\textwidth]{contents/img/cloud_iaas_paas_saas.png}
+\end{center}
+\source{Wikimedia Commons, P. Rosati \& T. Lynn (domaine public). En noir~: ce que gère le fournisseur.}
+
 \noindent Pour le stockage, le cloud propose notamment le \textbf{stockage objet} (Amazon S3, Azure Blob Storage, Google Cloud Storage), souvent utilisé comme Data Lake.
 
 \begin{center}
-\begin{tabularx}{\textwidth}{X X}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
 \toprule
 \textbf{Avantages} & \textbf{Inconvénients} \\
 \midrule
@@ -386,6 +443,30 @@ Services managés (moins d'administration) & Conformité réglementaire à véri
 	\item le modèle est \textbf{\textit{write once, read many}}~: un fichier écrit n'est pas modifié, on y ajoute ou on le réécrit. Ce modèle est adapté aux lectures séquentielles de gros volumes.
 \end{itemize}
 
+\begin{center}
+\begin{tikzpicture}[font=\small,
+  box/.style={draw=title1,thick,rounded corners,align=center},
+  blk/.style={draw,fill=#1,minimum width=0.7cm,minimum height=0.5cm,font=\scriptsize\bfseries},
+  arr/.style={-{Latex},thick,title1}]
+  \node[box,fill=gray!15,minimum width=2.4cm,minimum height=1cm] (cl) at (-5.2,3.6) {Client};
+  \node[box,fill=title1,text=white,minimum width=5.6cm,minimum height=1.2cm] (nn) at (2.6,3.6) {\textbf{NameNode}\\ métadonnées~: fichier $\rightarrow$ blocs $\rightarrow$ nœuds};
+  \foreach \i/\x in {1/-4.5,2/-1.5,3/1.5,4/4.5}{
+    \node[box,fill=title2!10,minimum width=2.7cm,minimum height=1.8cm] (dn\i) at (\x,0) {};
+    \node[font=\small\bfseries] at (\x,0.5) {DataNode \i};
+  }
+  \node[blk=red!30] at (-4.95,-0.3) {B1}; \node[blk=green!30] at (-4.05,-0.3) {B2};
+  \node[blk=red!30] at (-1.95,-0.3) {B1}; \node[blk=blue!25] at (-1.05,-0.3) {B3};
+  \node[blk=green!30] at (1.05,-0.3) {B2}; \node[blk=blue!25] at (1.95,-0.3) {B3};
+  \node[blk=red!30] at (3.75,-0.3) {B1}; \node[blk=green!30] at (4.5,-0.3) {B2}; \node[blk=blue!25] at (5.25,-0.3) {B3};
+  \draw[arr] (cl) -- node[above,font=\scriptsize]{1. où sont les blocs~?} (nn);
+  \draw[arr] (cl) -- node[left,font=\scriptsize,align=right]{2. lecture /\\écriture} (dn1);
+  \foreach \i in {2,3,4} \draw[-{Latex},dashed,gray] (dn\i.north) -- (nn.south);
+  \node[font=\scriptsize,gray] at (5.2,2.1) {\textit{heartbeat}};
+\end{tikzpicture}
+\end{center}
+
+\noindent Le fichier est découpé en trois blocs (B1, B2, B3), chacun répliqué sur trois DataNodes différents~: la perte d'un nœud ne fait perdre aucune donnée.
+
 \subsection*{Traitement distribué~: MapReduce}
 \phantomsection
 \addcontentsline{toc}{subsection}{Traitement distribué~: MapReduce}
@@ -399,16 +480,30 @@ Services managés (moins d'administration) & Conformité réglementaire à véri
 
 \noindent \textbf{Exemple CHU}~: compter le nombre d'hospitalisations par service à partir d'un fichier de séjours réparti sur trois nœuds.
 \begin{center}
-\begin{tabularx}{\textwidth}{>{\bfseries}l X}
-\toprule
-Étape & Résultat \\
-\midrule
-Entrée & Lignes de séjours~: \textit{(patient, service, date)} \\
-Map & \textit{(Cardiologie, 1)}, \textit{(Urgences, 1)}, \textit{(Cardiologie, 1)}, \textit{(Pédiatrie, 1)}\dots \\
-Shuffle \& Sort & \textit{Cardiologie~: [1, 1, 1]}, \textit{Pédiatrie~: [1]}, \textit{Urgences~: [1, 1]} \\
-Reduce & \textit{(Cardiologie, 3)}, \textit{(Pédiatrie, 1)}, \textit{(Urgences, 2)} \\
-\bottomrule
-\end{tabularx}
+\begin{tikzpicture}[font=\scriptsize,
+  st/.style={draw=title1,thick,rounded corners,fill=#1,align=center,text width=2.3cm,minimum height=1cm},
+  hd/.style={font=\small\bfseries,text=title1},
+  arr/.style={-{Latex},thick,gray}]
+  \foreach \t/\x in {Entrée/0,Map/3.1,Shuffle \& Sort/6.2,Reduce/9.3,Résultat/12.4}
+    \node[hd] at (\x,1.2) {\t};
+  \foreach \i/\y/\a/\b in {1/0/Cardio/Urgences,2/-1.5/Cardio/Pédiatrie,3/-3/Cardio/Urgences}{
+    \node[st=gray!10] (in\i) at (0,\y) {\textbf{Bloc \i}\\ séjour \a\\ séjour \b};
+    \node[st=title2!15] (m\i) at (3.1,\y) {(\a, 1)\\(\b, 1)};
+    \draw[arr] (in\i) -- (m\i);
+  }
+  \node[st=yellow!20] (s1) at (6.2,0) {Cardio~: [1, 1, 1]};
+  \node[st=yellow!20] (s2) at (6.2,-1.5) {Pédiatrie~: [1]};
+  \node[st=yellow!20] (s3) at (6.2,-3) {Urgences~: [1, 1]};
+  \draw[arr] (m1) -- (s1); \draw[arr] (m1) -- (s3);
+  \draw[arr] (m2) -- (s1); \draw[arr] (m2) -- (s2);
+  \draw[arr] (m3) -- (s1); \draw[arr] (m3) -- (s3);
+  \node[st=green!15] (r1) at (9.3,0) {(Cardio, 3)};
+  \node[st=green!15] (r2) at (9.3,-1.5) {(Pédiatrie, 1)};
+  \node[st=green!15] (r3) at (9.3,-3) {(Urgences, 2)};
+  \foreach \i in {1,2,3} \draw[arr] (s\i) -- (r\i);
+  \node[st=title1!80,text=white,minimum height=2.2cm] (res) at (12.4,-1.5) {\textbf{Hospitalisations}\\[0.1cm] Cardiologie~: 3\\ Pédiatrie~: 1\\ Urgences~: 2};
+  \foreach \i in {1,2,3} \draw[arr] (r\i) -- (res);
+\end{tikzpicture}
 \end{center}
 
 \noindent Dans l'écosystème Cloudera, Hive traduit les requêtes SQL en traitements distribués de ce type~: un \texttt{SELECT service, COUNT(*) FROM sejours GROUP BY service} produit le même résultat.
