@@ -1,0 +1,472 @@
+% --- ETUDE DE CAS ---
+\newpage
+\section*{Étude de cas~: Architecture Big Data}
+\addcontentsline{toc}{section}{Étude de cas~: Architecture Big Data}
+
+\section*{AAV}
+\addcontentsline{toc}{section}{AAV}
+\begin{itemize}
+	\item [1] Identifier les contraintes sur les données liées au RGPD
+	\item [2] Interpréter les 5V du Big Data
+	\item [2] Décrire une architecture Big Data
+	\item [2] Décrire une infrastructure de stockage distribuée (cluster de serveurs, virtualisation, NAS vs SAN, \dots)
+	\item [2] Décrire l'utilisation du cloud dans le cadre du stockage de données
+	\item [3] Présenter le traitement de données de manière distribuée (exemple~: MapReduce)
+	\item [2] Décrire le fonctionnement des systèmes de fichiers distribués
+	\item [2] Décrire le fonctionnement d'une application d'entreposage de données
+	\item [3] Concevoir un modèle dimensionnel (Data Mart)
+	\item [1] Identifier les difficultés associées aux traitements distribués
+\end{itemize}
+
+\newpage
+
+\subsection*{Rôles}
+\phantomsection
+\addcontentsline{toc}{subsection}{Rôles}
+\begin{itemize}
+	\item Animateur~: Stéphane
+	\item Secrétaire / Scribe~: Marine
+	\item Gestionnaire~: Victor
+\end{itemize}
+
+\subsection*{Mots clés}
+\phantomsection
+\addcontentsline{toc}{subsection}{Mots clés}
+\begin{itemize}
+	\item Big Data
+	\item CHU
+	\item Entrepôt de données
+	\item Data Lake
+	\item Cloudera
+	\item Power BI
+	\item RGPD
+	\item Données multidimensionnelles
+	\item Environnement virtualisé
+	\item Modélisation des données
+	\item Outil de planification
+\end{itemize}
+
+\subsection*{Contexte}
+\phantomsection
+\addcontentsline{toc}{subsection}{Contexte}
+\noindent Votre équipe reprend le projet du groupe CHU (\textit{Cloud Healthcare Unit}). Vous disposez de 3 semaines pour livrer une maquette complète d'entrepôt de données décisionnel pour le secteur hospitalier en repartant du schéma d'architecture Big Data et du modèle logique.
+
+\subsection*{Problématique}
+\phantomsection
+\addcontentsline{toc}{subsection}{Problématique}
+\noindent Comment valider une architecture Big Data performante et concevoir le modèle logique d'un entrepôt de données décisionnel adapté aux données personnelles du projet CHU~?
+
+\subsection*{Contraintes}
+\phantomsection
+\addcontentsline{toc}{subsection}{Contraintes}
+\begin{itemize}
+	\item Temps (2 jours)
+	\item Budget
+	\item L'existant (schéma d'architecture~; les données)
+	\item Performances / Volumétrie
+	\item Conformité / Légalité
+\end{itemize}
+
+\subsection*{Généralisation}
+\phantomsection
+\addcontentsline{toc}{subsection}{Généralisation}
+\begin{itemize}
+	\item Big Data
+	\item Architecture
+	\item Datawarehouse
+	\item Data Lake
+	\item Virtualisation
+	\item Cloud
+	\item Cloudera
+	\item Power BI
+	\item Stockage
+	\item Modélisation
+	\item RGPD
+\end{itemize}
+
+\subsection*{Livrables}
+\phantomsection
+\addcontentsline{toc}{subsection}{Livrables}
+\begin{itemize}
+	\item Une maquette d'architecture répondant aux besoins du projet
+	\item Modèle logique / conceptuel de données
+\end{itemize}
+
+\subsection*{Pistes de solutions}
+\phantomsection
+\addcontentsline{toc}{subsection}{Pistes de solutions}
+\begin{itemize}
+	\item Se renseigner sur les styles d'architecture Big Data, le stockage distribué, les systèmes de fichiers distribués, les Data Lakes et l'évolution des architectures décisionnelles.
+	\item Étudier le schéma de l'architecture produit par Archie et faire le lien avec les outils présents dans l'environnement virtualisé (comme Cloudera et Power BI).
+	\item Explorer les fichiers de données situés dans le dossier «~Mes documents~» afin d'identifier les informations répondant aux analyses du cahier des charges.
+	\item Appliquer les principes des bases de données multidimensionnelles et de l'entre\-po\-sage de données (Datawarehouse) pour démarrer la modélisation logique en parallèle.
+	\item Se renseigner sur la protection des données à caractère personnel via la ressource «~Data et RGPD~» ainsi que sur les métiers de la data science.
+\end{itemize}
+
+\subsection*{Plan d'actions}
+\phantomsection
+\addcontentsline{toc}{subsection}{Plan d'actions}
+\begin{itemize}
+	\item Définir les mots clés liés au Big Data, à l'entreposage de données décisionnel et au RGPD.
+	\item Étudier les ressources fournies sur l'architecture Big Data, le Datawarehouse, le Data Lake, la virtualisation, le stockage distribué et le RGPD.
+	\item Analyser le schéma de l'architecture d'Archie et inspecter l'environnement virtualisé mis en place.
+	\item Parcourir les données du dossier «~Mes documents~» en identifiant les données personnelles et les besoins d'analyse décrits dans le cahier des charges.
+	\item Concevoir en parallèle la modélisation des données (modèle logique multidimensionnel) pour répondre aux exigences de performance.
+	\item Valider le choix de l'architecture et le modèle logique dans le délai de 2 jours afin de préparer les phases suivantes (intégration, implémentation physique, exploitation et visualisation).
+\end{itemize}
+
+\newpage
+\section*{Démarche~: Architecture Big Data}
+\addcontentsline{toc}{section}{Démarche~: Architecture Big Data}
+
+\subsection*{Définition~: Mots clés}
+\phantomsection
+\addcontentsline{toc}{subsection}{Définition~: Mots clés}
+
+\noindent \textbf{Big Data}:
+\noindent Le Big Data désigne des ensembles de données si volumineux, rapides ou variés qu'ils dépassent les capacités des outils de stockage et de traitement traditionnels (SGBD relationnel sur un seul serveur). On le caractérise classiquement par les \textbf{5 V}~:
+\begin{itemize}
+	\item \textbf{Volume}~: des quantités de données massives (téraoctets, pétaoctets) ;
+	\item \textbf{Vélocité}~: des données produites et à traiter rapidement, parfois en temps réel ;
+	\item \textbf{Variété}~: des données structurées (tables), semi-structurées (JSON, XML, CSV) et non structurées (textes, images médicales) ;
+	\item \textbf{Véracité}~: la fiabilité et la qualité des données, à vérifier avant exploitation ;
+	\item \textbf{Valeur}~: l'intérêt métier que l'on peut tirer de l'analyse des données.
+\end{itemize}
+Pour y répondre, on distribue le stockage et les calculs sur un ensemble de machines (cluster) plutôt que d'augmenter la puissance d'un seul serveur.
+
+\begin{center}
+\rule{5cm}{0.4pt}
+\end{center}
+
+\vspace{0.5cm}
+
+\noindent \textbf{CHU}:
+\noindent Dans le sujet, CHU désigne le groupe \textit{Cloud Healthcare Unit}, client du projet, qui souhaite disposer d'un entrepôt de données décisionnel pour le secteur hospitalier. Le terme renvoie aussi aux Centres Hospitaliers Universitaires, établissements qui produisent un grand volume de données de santé (patients, consultations, hospitalisations, actes, prescriptions). Ces données sont sensibles et soumises à une réglementation stricte.
+
+\begin{center}
+\rule{5cm}{0.4pt}
+\end{center}
+
+\vspace{0.5cm}
+
+\noindent \textbf{Entrepôt de données (Data Warehouse)}:
+\noindent Un entrepôt de données est une base de données dédiée à l'analyse et à la prise de décision. Selon la définition de Bill Inmon, ses données sont~:
+\begin{itemize}
+	\item \textbf{orientées sujet}~: organisées autour des thèmes métier (patients, séjours, actes) ;
+	\item \textbf{intégrées}~: issues de sources multiples puis harmonisées ;
+	\item \textbf{non volatiles}~: les données chargées ne sont ni modifiées ni supprimées ;
+	\item \textbf{historisées}~: conservées dans le temps pour suivre les évolutions.
+\end{itemize}
+Il est alimenté par un processus ETL (\textit{Extract, Transform, Load}) et peut être découpé en \textbf{Data Marts}, des sous-ensembles dédiés à un service ou à un besoin d'analyse précis.
+
+\begin{center}
+\rule{5cm}{0.4pt}
+\end{center}
+
+\vspace{0.5cm}
+
+\noindent \textbf{Data Lake}:
+\noindent Un Data Lake (lac de données) est un espace de stockage qui conserve de grandes quantités de données \textbf{brutes}, dans leur format d'origine, qu'elles soient structurées ou non. Contrairement à l'entrepôt, le schéma n'est appliqué qu'au moment de la lecture (\textit{schema-on-read}). Il repose généralement sur un système de fichiers distribué (HDFS) ou un stockage objet dans le cloud.
+
+\begin{center}
+\begin{tabularx}{\textwidth}{>{\bfseries}l X X}
+\toprule
+ & Data Warehouse & Data Lake \\
+\midrule
+Données & Structurées, nettoyées & Brutes, tous formats \\
+Schéma & À l'écriture (\textit{schema-on-write}) & À la lecture (\textit{schema-on-read}) \\
+Usage & Reporting, tableaux de bord, OLAP & Exploration, data science, archivage \\
+Utilisateurs & Décideurs, analystes métier & Data scientists, data engineers \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Les deux sont complémentaires~: le Data Lake sert souvent de zone d'atterrissage avant l'alimentation de l'entrepôt.
+
+\begin{center}
+\rule{5cm}{0.4pt}
+\end{center}
+
+\vspace{0.5cm}
+
+\noindent \textbf{Cloudera}:
+\noindent Cloudera est un éditeur qui fournit une distribution de l'écosystème \textbf{Apache Hadoop} (CDH, puis Cloudera Data Platform). Elle regroupe et administre les principaux outils Big Data~:
+\begin{itemize}
+	\item \textbf{HDFS}~: système de fichiers distribué qui découpe et réplique les fichiers sur les nœuds du cluster ;
+	\item \textbf{YARN} et \textbf{MapReduce}~: gestion des ressources et traitement distribué ;
+	\item \textbf{Hive} et \textbf{Impala}~: interrogation des données en SQL ;
+	\item \textbf{HBase}~: base NoSQL orientée colonnes ;
+	\item \textbf{Sqoop}~: import/export entre bases relationnelles et Hadoop ;
+	\item \textbf{Hue}~: interface web pour manipuler ces outils.
+\end{itemize}
+Dans le projet, Cloudera constitue la couche de stockage et de traitement de l'archi\-tec\-ture.
+
+\begin{center}
+\rule{5cm}{0.4pt}
+\end{center}
+
+\vspace{0.5cm}
+
+\noindent \textbf{Power BI}:
+\noindent Power BI est l'outil de \textit{Business Intelligence} de Microsoft. Il se connecte à de nombreuses sources (dont Hive et Impala), permet de modéliser les données et de construire des tableaux de bord interactifs. Dans l'architecture, il forme la couche de restitution~: il présente aux décideurs du CHU les indicateurs (KPI) calculés à partir de l'entrepôt.
+
+\begin{center}
+\rule{5cm}{0.4pt}
+\end{center}
+
+\vspace{0.5cm}
+
+\noindent \textbf{RGPD}:
+\noindent Le Règlement Général sur la Protection des Données (UE 2016/679), applicable depuis le 25 mai 2018, encadre le traitement des données à caractère personnel. Les données de santé y sont classées comme \textbf{données sensibles}~: leur traitement est interdit sauf exceptions encadrées. Principes à respecter dans le projet~:
+\begin{itemize}
+	\item \textbf{licéité et finalité}~: traiter les données pour un objectif défini et légitime ;
+	\item \textbf{minimisation}~: ne conserver que les données nécessaires aux analyses ;
+	\item \textbf{limitation de la conservation}~: définir une durée de conservation ;
+	\item \textbf{sécurité}~: contrôle des accès, chiffrement, traçabilité ;
+	\item \textbf{pseudonymisation / anonymisation}~: retirer ou remplacer les identifiants directs (nom, numéro de sécurité sociale).
+\end{itemize}
+En France, l'hébergement de données de santé doit en plus être confié à un hébergeur certifié HDS, et la CNIL contrôle le respect du règlement.
+
+\begin{center}
+\rule{5cm}{0.4pt}
+\end{center}
+
+\vspace{0.5cm}
+
+\noindent \textbf{Données multidimensionnelles}:
+\noindent Les données multidimensionnelles sont organisées pour l'analyse selon plusieurs axes. Elles reposent sur deux notions~:
+\begin{itemize}
+	\item \textbf{les faits}~: les mesures à analyser, souvent numériques (nombre de consultations, durée de séjour, coût) ;
+	\item \textbf{les dimensions}~: les axes d'analyse (temps, patient, établissement, diagnostic, professionnel de santé).
+\end{itemize}
+Cette organisation forme un \textbf{cube OLAP} que l'on peut explorer par agrégation (\textit{roll-up}), détail (\textit{drill-down}), découpage (\textit{slice}, \textit{dice}) ou pivot.
+
+\begin{center}
+\rule{5cm}{0.4pt}
+\end{center}
+
+\vspace{0.5cm}
+
+\noindent \textbf{Environnement virtualisé}:
+\noindent Un environnement virtualisé est un ensemble de machines virtuelles exécutées sur une même machine physique grâce à un hyperviseur (VMware, VirtualBox, Hyper-V). Dans le projet, il héberge les outils de la maquette (Cloudera, Power BI) et les fichiers de données. Il permet de reproduire l'architecture cible à moindre coût, de l'isoler et de la remettre en état facilement (instantanés).
+
+\begin{center}
+\rule{5cm}{0.4pt}
+\end{center}
+
+\vspace{0.5cm}
+
+\noindent \textbf{Modélisation des données}:
+\noindent La modélisation consiste à décrire la structure des données à plusieurs niveaux~:
+\begin{itemize}
+	\item \textbf{modèle conceptuel}~: les entités métier et leurs relations, indépendamment de la technique ;
+	\item \textbf{modèle logique}~: la traduction en tables, clés et relations pour un type de base donné ;
+	\item \textbf{modèle physique}~: l'implémentation réelle (types, index, partitionnement).
+\end{itemize}
+Pour un entrepôt, on utilise la \textbf{modélisation dimensionnelle} (Ralph Kimball)~:
+\begin{itemize}
+	\item \textbf{schéma en étoile}~: une table de faits reliée directement à des tables de dimensions dénormalisées. Simple à interroger et performant ;
+	\item \textbf{schéma en flocon}~: les dimensions sont normalisées en sous-tables. Moins de redondance, mais plus de jointures ;
+	\item \textbf{schéma en constellation}~: plusieurs tables de faits partagent des dimensions communes.
+\end{itemize}
+
+\begin{center}
+\rule{5cm}{0.4pt}
+\end{center}
+
+\vspace{0.5cm}
+
+\noindent \textbf{Outil de planification}:
+\noindent Un outil de planification sert à organiser le projet dans le temps~: découper le travail en tâches, estimer leur durée, identifier les dépendances et répartir les responsabilités. Exemples~: diagramme de Gantt (MS Project, GanttProject), tableau Kanban (Trello, Jira). Avec trois semaines pour livrer la maquette, il permet de suivre l'avancement de chaque phase (architecture, intégration, implémentation, visualisation).
+
+\newpage
+\subsection*{OLTP vs OLAP}
+\phantomsection
+\addcontentsline{toc}{subsection}{OLTP vs OLAP}
+
+\noindent Les bases de données opérationnelles et l'entrepôt de données ne répondent pas au même besoin~:
+\begin{center}
+\begin{tabularx}{\textwidth}{>{\bfseries}l X X}
+\toprule
+ & OLTP (transactionnel) & OLAP (analytique) \\
+\midrule
+Objectif & Faire tourner l'activité au quotidien & Analyser l'activité et aider à la décision \\
+Opérations & Nombreuses petites transactions (INSERT, UPDATE, DELETE) & Peu de requêtes, mais lourdes (agrégations sur des millions de lignes) \\
+Données & Actuelles, détaillées & Historisées, agrégées \\
+Modèle & Normalisé (3FN) pour éviter la redondance & Dimensionnel (étoile, flocon) pour accélérer les lectures \\
+Exemple CHU & Dossier patient, prise de rendez-vous & Taux d'occupation des lits par service et par mois \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\noindent Une application d'entreposage de données fait le lien entre les deux~: l'ETL extrait les données des bases OLTP, les transforme et les charge dans l'entrepôt, que les outils OLAP et de reporting interrogent ensuite.
+
+\subsection*{Infrastructure de stockage distribuée}
+\phantomsection
+\addcontentsline{toc}{subsection}{Infrastructure de stockage distribuée}
+
+\noindent \textbf{Cluster de serveurs}:
+\noindent Un cluster est un ensemble de serveurs (\textbf{nœuds}) reliés en réseau qui travaillent comme un seul système. Face à l'augmentation des données, deux stratégies existent~:
+\begin{itemize}
+	\item \textbf{scalabilité verticale} (\textit{scale up})~: ajouter de la puissance (CPU, RAM, disques) à un seul serveur. Simple, mais limité et coûteux ;
+	\item \textbf{scalabilité horizontale} (\textit{scale out})~: ajouter des serveurs standards au cluster. C'est le principe du Big Data~: la capacité augmente de façon quasi linéaire avec le nombre de nœuds.
+\end{itemize}
+Le cluster apporte aussi la \textbf{tolérance aux pannes}~: les données étant répliquées, la perte d'un nœud n'interrompt pas le service.
+
+\vspace{0.5cm}
+
+\noindent \textbf{Virtualisation}:
+\noindent La virtualisation permet de faire tourner plusieurs serveurs virtuels sur une même machine physique. Elle facilite le déploiement et la mutualisation des ressources (maquettes, environnements de test). Pour un cluster Big Data en production, on préfère souvent des machines physiques ou des conteneurs, car Hadoop repose sur la \textbf{localité des données}~: le calcul est envoyé sur le nœud qui stocke la donnée, ce qu'une couche de stockage virtualisée partagée peut fausser.
+
+\vspace{0.5cm}
+
+\noindent \textbf{DAS, NAS et SAN}:
+\begin{center}
+\begin{tabularx}{\textwidth}{>{\bfseries}l X X X}
+\toprule
+ & DAS & NAS & SAN \\
+\midrule
+Principe & Disques attachés directement au serveur & Serveur de fichiers partagé sur le réseau & Réseau dédié au stockage, vu comme des disques locaux \\
+Accès & Bloc, local & Fichier (NFS, SMB/CIFS) & Bloc (Fibre Channel, iSCSI) \\
+Réseau & Aucun & Réseau local (Ethernet) & Réseau dédié haut débit \\
+Avantages & Simple, rapide, peu coûteux & Facile à partager, peu coûteux & Très performant, haute disponibilité \\
+Inconvénients & Non partagé & Performances limitées par le réseau & Coûteux, complexe à administrer \\
+Usage & Nœuds Hadoop (HDFS) & Partage de documents, sauvegardes & Bases de données critiques, virtualisation \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\noindent Hadoop privilégie le DAS~: chaque nœud stocke ses propres blocs et HDFS assure lui-même le partage et la réplication, sans matériel de stockage coûteux.
+
+\subsection*{Le cloud pour le stockage de données}
+\phantomsection
+\addcontentsline{toc}{subsection}{Le cloud pour le stockage de données}
+
+\noindent Le cloud fournit des ressources informatiques à la demande, accessibles par le réseau et facturées à l'usage. On distingue trois modèles de service~:
+\begin{itemize}
+	\item \textbf{IaaS}~: le fournisseur met à disposition l'infrastructure (machines virtuelles, stockage, réseau) ;
+	\item \textbf{PaaS}~: il fournit en plus une plateforme gérée (par exemple un cluster Hadoop ou un entrepôt managé) ;
+	\item \textbf{SaaS}~: il fournit une application prête à l'emploi (Power BI Service).
+\end{itemize}
+Et trois modèles de déploiement~: \textbf{public} (ressources mutualisées chez un fournisseur), \textbf{privé} (dédié à une organisation) et \textbf{hybride} (combinaison des deux).
+
+\noindent Pour le stockage, le cloud propose notamment le \textbf{stockage objet} (Amazon S3, Azure Blob Storage, Google Cloud Storage), souvent utilisé comme Data Lake.
+
+\begin{center}
+\begin{tabularx}{\textwidth}{X X}
+\toprule
+\textbf{Avantages} & \textbf{Inconvénients} \\
+\midrule
+Élasticité~: capacité ajustée au besoin & Dépendance au fournisseur et au réseau \\
+Pas d'investissement matériel initial & Coûts difficiles à prévoir sur de gros volumes \\
+Haute disponibilité et réplication géographique & Localisation et confidentialité des données \\
+Services managés (moins d'administration) & Conformité réglementaire à vérifier \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\noindent Pour le CHU, les données de santé imposent un fournisseur certifié \textbf{HDS} et un hébergement compatible avec le RGPD (données dans l'Union européenne).
+
+\subsection*{Systèmes de fichiers distribués~: HDFS}
+\phantomsection
+\addcontentsline{toc}{subsection}{Systèmes de fichiers distribués~: HDFS}
+
+\noindent Un système de fichiers distribué stocke les fichiers sur plusieurs machines tout en les présentant à l'utilisateur comme un système de fichiers unique. HDFS (\textit{Hadoop Distributed File System}) en est l'exemple de référence. Il repose sur une architecture maître/esclaves~:
+\begin{itemize}
+	\item \textbf{NameNode} (maître)~: gère l'arborescence et les métadonnées, c'est-à-dire la liste des blocs de chaque fichier et leur emplacement. Il ne stocke pas les données ;
+	\item \textbf{DataNodes} (esclaves)~: stockent les blocs de données et envoient régulièrement un signal de vie (\textit{heartbeat}) au NameNode ;
+	\item \textbf{Secondary / Standby NameNode}~: sauvegarde les métadonnées ou prend le relais en cas de panne du NameNode.
+\end{itemize}
+
+\noindent Fonctionnement~:
+\begin{itemize}
+	\item chaque fichier est découpé en \textbf{blocs} de grande taille (128~Mo par défaut) ;
+	\item chaque bloc est \textbf{répliqué} (3 copies par défaut) sur des nœuds différents, en tenant compte des racks (\textit{rack awareness}) ;
+	\item si un DataNode ne répond plus, le NameNode recrée les copies manquantes à partir des autres répliques ;
+	\item le modèle est \textbf{\textit{write once, read many}}~: un fichier écrit n'est pas modifié, on y ajoute ou on le réécrit. Ce modèle est adapté aux lectures séquentielles de gros volumes.
+\end{itemize}
+
+\subsection*{Traitement distribué~: MapReduce}
+\phantomsection
+\addcontentsline{toc}{subsection}{Traitement distribué~: MapReduce}
+
+\noindent MapReduce est un modèle de programmation qui traite de gros volumes de données en parallèle sur un cluster. Plutôt que de rapatrier les données vers le programme, on envoie le programme sur les nœuds qui stockent les données. Le traitement se déroule en trois étapes~:
+\begin{enumerate}
+	\item \textbf{Map}~: chaque nœud lit ses blocs et produit des paires \textit{(clé, valeur)} ;
+	\item \textbf{Shuffle \& Sort}~: les paires sont regroupées et triées par clé, puis envoyées vers les nœuds de réduction ;
+	\item \textbf{Reduce}~: pour chaque clé, les valeurs sont agrégées (somme, moyenne, comptage) pour produire le résultat final.
+\end{enumerate}
+
+\noindent \textbf{Exemple CHU}~: compter le nombre d'hospitalisations par service à partir d'un fichier de séjours réparti sur trois nœuds.
+\begin{center}
+\begin{tabularx}{\textwidth}{>{\bfseries}l X}
+\toprule
+Étape & Résultat \\
+\midrule
+Entrée & Lignes de séjours~: \textit{(patient, service, date)} \\
+Map & \textit{(Cardiologie, 1)}, \textit{(Urgences, 1)}, \textit{(Cardiologie, 1)}, \textit{(Pédiatrie, 1)}\dots \\
+Shuffle \& Sort & \textit{Cardiologie~: [1, 1, 1]}, \textit{Pédiatrie~: [1]}, \textit{Urgences~: [1, 1]} \\
+Reduce & \textit{(Cardiologie, 3)}, \textit{(Pédiatrie, 1)}, \textit{(Urgences, 2)} \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\noindent Dans l'écosystème Cloudera, Hive traduit les requêtes SQL en traitements distribués de ce type~: un \texttt{SELECT service, COUNT(*) FROM sejours GROUP BY service} produit le même résultat.
+
+\subsection*{Difficultés des traitements distribués}
+\phantomsection
+\addcontentsline{toc}{subsection}{Difficultés des traitements distribués}
+
+\begin{itemize}
+	\item \textbf{Pannes}~: plus il y a de machines, plus une panne est probable. Le système doit détecter les nœuds défaillants et relancer leurs tâches ailleurs.
+	\item \textbf{Réseau}~: la latence et la bande passante limitent les performances, surtout lors de la phase de \textit{shuffle} où les données circulent entre les nœuds.
+	\item \textbf{Déséquilibre de charge} (\textit{data skew})~: si une clé concentre beaucoup de données, un seul nœud fait l'essentiel du travail et ralentit tout le traitement.
+	\item \textbf{Cohérence}~: d'après le \textbf{théorème CAP}, un système distribué ne peut garantir à la fois la cohérence, la disponibilité et la tolérance au partitionnement réseau. Il faut choisir un compromis.
+	\item \textbf{Latence de MapReduce}~: les résultats intermédiaires sont écrits sur disque, ce qui le rend lent pour les traitements itératifs ou interactifs (d'où des alternatives comme Spark ou Impala).
+	\item \textbf{Petits fichiers}~: HDFS est conçu pour de gros fichiers. Beaucoup de petits fichiers saturent la mémoire du NameNode.
+	\item \textbf{Complexité}~: le développement, le débogage et l'administration d'un cluster demandent des compétences spécifiques.
+	\item \textbf{Sécurité}~: les données étant réparties et répliquées sur de nombreux nœuds, il faut sécuriser chaque nœud (authentification Kerberos, chiffrement, contrôle d'accès).
+\end{itemize}
+
+\newpage
+\subsection*{Analyse du schéma d'architecture d'Archie}
+\phantomsection
+\addcontentsline{toc}{subsection}{Analyse du schéma d'architecture d'Archie}
+
+\noindent Le schéma fourni par Archie décrit la chaîne de traitement des données du projet CHU, des sources jusqu'à la restitution.
+
+\begin{center}
+  \includegraphics[height=0.55\textheight]{contents/img/schema_archie.jpg}
+\end{center}
+
+\noindent L'architecture se lit de haut en bas, en cinq couches~:
+\begin{enumerate}
+	\item \textbf{Sources de données}~: des fichiers plats (CSV, Excel) et des bases relationnelles (MySQL, PostgreSQL). Elles correspondent aux systèmes existants du CHU et aux fichiers du dossier «~Mes documents~».
+	\item \textbf{Data Lake (HDFS Hadoop)}~: les données sont collectées brutes dans le système de fichiers distribué de Hadoop, qui les découpe en blocs répliqués sur les nœuds du cluster.
+	\item \textbf{ETL}~: les données sont extraites du Data Lake, nettoyées, transformées (dont l'anonymisation) puis chargées dans l'entrepôt.
+	\item \textbf{Stockage et traitement (Cloudera / Hadoop)}~: l'entrepôt de données est hébergé sur la plateforme Cloudera. Hive expose les données en SQL, et MapReduce exécute les traitements distribués pour l'analyse.
+	\item \textbf{Restitution}~: Power BI se connecte à l'entrepôt pour produire les tableaux de bord, et les requêtes multidimensionnelles (cube OLAP) répondent aux analyses du cahier des charges.
+\end{enumerate}
+
+\noindent \textbf{Correspondance avec l'environnement virtualisé}~:
+\begin{center}
+\begin{tabularx}{\textwidth}{>{\bfseries}l X}
+\toprule
+Couche & Outil \\
+\midrule
+Sources & Fichiers CSV / Excel, MySQL, PostgreSQL \\
+Data Lake & HDFS (Cloudera) \\
+Intégration & ETL \\
+Entrepôt / traitement & Hive, MapReduce (Cloudera) \\
+Restitution & Power BI, requêtes OLAP \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\noindent \textbf{Points à valider avec l'équipe}~:
+\begin{itemize}
+	\item Les flèches entre les sources et HDFS sont bidirectionnelles~: il faut préciser si des données reviennent vers les sources ou si le flux est uniquement en ingestion.
+	\item Le schéma n'indique pas où a lieu l'anonymisation exigée par le RGPD. Elle doit se faire au plus tôt, idéalement dans l'ETL, avant le chargement dans l'entrepôt.
+	\item L'outil d'ETL n'est pas nommé (Talend, Sqoop, scripts Hive\dots).
+	\item La sécurité (contrôle des accès, chiffrement, hébergement HDS) n'apparaît pas.
+\end{itemize}
