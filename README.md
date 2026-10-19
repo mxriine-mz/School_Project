@@ -19,20 +19,20 @@ School_Project/
 | Année | Période | Statut | Contenu |
 | :--- | :--- | :--- | :--- |
 | [A2](./A2_24-25/) | 2024 – 2025 | Archive | 4 modules, 2 projets |
-| [A3](./A3_25-26/) | 2025 – 2026 | Archive | 4 modules, 5 projets, 3 rapports |
-| [A4](./A4_26-27/) | 2026 – 2027 | En cours | 4 modules |
+| [A3](./A3_25-26/) | 2025 – 2026 | Archive | 4 modules, 4 projets, 3 rapports |
+| [A4](./A4_26-27/) | 2026 – 2027 | En cours | 4 modules (en construction) |
 | A5 | 2027 – 2028 | À venir | — |
 
 ---
 
 ## Année en cours — [A4 · 2026-2027](./A4_26-27/)
 
-| Module | Période | Thématique |
-| :--- | :--- | :--- |
-| [01 · Big Data](./A4_26-27/01_Big_Data/) | Oct. – Nov. 2026 | Architecture Big Data, entrepôt de données, NoSQL, data visualisation |
-| [02 · IoT](./A4_26-27/02_IoT/) | Janv. – Févr. 2027 | Objets connectés, capteurs et chaîne de données |
-| [03 · Artificial Intelligence](./A4_26-27/03_Artificial_Intelligence/) | Mars 2027 | Machine Learning |
-| [04 · Innovation Project](./A4_26-27/04_Innovation_Project/) | Avril 2027 | Projet d'innovation de fin d'année |
+| Module | Période | Thématique | Projet associé |
+| :--- | :--- | :--- | :--- |
+| [01 · Big Data](./A4_26-27/01_Big_Data/) | Oct. – Nov. 2026 | Architecture Big Data, entrepôt de données, NoSQL, data visualisation | Entrepôt de données hospitalier |
+| [02 · IoT](./A4_26-27/02_IoT/) | Janv. – Févr. 2027 | Objets connectés, capteurs et chaîne de données | *à venir* |
+| [03 · Artificial Intelligence](./A4_26-27/03_Artificial_Intelligence/) | Mars 2027 | Machine Learning | *à venir* |
+| [04 · Innovation Project](./A4_26-27/04_Innovation_Project/) | Avril 2027 | Projet d'innovation de fin d'année | *à venir* |
 
 ---
 
@@ -40,7 +40,7 @@ School_Project/
 
 | Module | Thématique | Projet associé |
 | :--- | :--- | :--- |
-| [01 · Systèmes & Infrastructure](./A3_25-26/01_SI/) | Virtualisation, ADDS, sécurité réseau, chiffrement, supervision | Projet d'infrastructure |
+| [01 · Systèmes & Infrastructure](./A3_25-26/01_SI/) | Virtualisation, ADDS, sécurité réseau, chiffrement, supervision | [Projet d'infrastructure](./A3_25-26/01_SI/_Project/) |
 | [02 · Software Engineering](./A3_25-26/02_Software_Engineering/) | Écosystème .NET, design patterns, multi-threading, Docker | [EasySave](./A3_25-26/02_Software_Engineering/_Project_EasySave/) |
 | [03 · Operations Research](./A3_25-26/03_Operations_Research/) | Théorie des graphes, optimisation, recherche opérationnelle | [Green VRP](./A3_25-26/03_Operations_Research/_Project_Green-VRP-Algorithms/) |
 | [04 · Dev. Applications Distribuées](./A3_25-26/04_Development_Distributed_Applications/) | API REST, Front-End, JWT, Docker, sécurité | [Breezy](./A3_25-26/04_Development_Distributed_Applications/_Project_Breezy/) |
