@@ -13,9 +13,13 @@ Ce module porte sur la conception d'applications web distribuées : exposition d
 
 Chaque boucle contient son CER (compte-rendu LaTeX) et un WorkShop de mise en pratique.
 
-## Projet — [`_Project_/`](./_Project_/)
+## Projet — [Breezy](./_Project_Breezy/)
 
-Projet fil rouge d'application distribuée (à venir / en cours).
+Réseau social léger et scalable inspiré de Twitter/X, pensé pour les environnements à faibles ressources (mobile-first), avec un back-end découpé en microservices conteneurisés.
+
+- Stack : Next.js / React, Node.js / Express (TypeScript), Nginx (API Gateway), PostgreSQL + MongoDB, Docker Compose.
+- Sécurité : JWT en cookies `httpOnly` (access + refresh), bcrypt, RBAC (user < moderator < admin).
+- Dépôt : [DAD-G4/Breezy](https://github.com/DAD-G4/Breezy), intégré ici en sous-module git, figé sur sa version finale (projet terminé).
 
 ## Compétences clés
 

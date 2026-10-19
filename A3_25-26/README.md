@@ -20,7 +20,7 @@ Modélisation mathématique et optimisation : théorie des graphes, complexité,
 
 ### [04 · Development of Distributed Applications](./04_Development_Distributed_Applications/)
 Conception d'applications web distribuées : **API REST**, **Front-End**, authentification **JWT**, **Docker** et sécurité.
-4 boucles · Projet distribué.
+4 boucles · Projet [Breezy](./04_Development_Distributed_Applications/_Project_Breezy/).
 
 ---
 
@@ -41,4 +41,4 @@ Conception d'applications web distribuées : **API REST**, **Front-End**, authen
 | 01 | Systèmes & Infrastructure | 7 | Infrastructure |
 | 02 | Software Engineering | 7 | EasySave |
 | 03 | Operations Research | 5 | Green VRP |
-| 04 | Dev. Applications Distribuées | 4 | Distribué |
+| 04 | Dev. Applications Distribuées | 4 | Breezy |
