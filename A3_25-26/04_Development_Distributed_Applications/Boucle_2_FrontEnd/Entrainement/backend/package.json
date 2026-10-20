@@ -19,7 +19,7 @@
     "rest",
     "mvc"
   ],
-  "author": "zelphyris",
+  "author": "Marine Mazou",
   "license": "MIT",
   "dependencies": {
     "cors": "^2.8.5",
