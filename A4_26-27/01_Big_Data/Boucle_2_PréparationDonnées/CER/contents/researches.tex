@@ -1,0 +1,881 @@
+% --- ETUDE DE CAS ---
+\newpage
+\section*{Étude de cas~: Préparation des données}
+\phantomsection
+\addcontentsline{toc}{section}{Étude de cas~: Préparation des données}
+
+\subsection*{AAV}
+\phantomsection
+\addcontentsline{toc}{subsection}{AAV}
+\begin{itemize}
+	\item [3] Alimenter un modèle dimensionnel (Data Mart)
+	\item [3] Écrire des requêtes SQL utilisant plusieurs tables
+	\item [3] Traduire une demande en requêtes
+	\item [3] Utiliser un ETL pour récupérer des données
+	\item [4] Qualifier un jeu de données
+	\item [4] Proposer une stratégie d'analyse de données
+	\item [3] Réaliser un traitement de données prenant en compte les contraintes RGPD (anonymisation)
+	\item [3] Proposer une organisation type Data Lake
+	\item [3] Utiliser un ETL pour intégrer des données dans une base NoSQL
+\end{itemize}
+
+\subsection*{Mots clés}
+\phantomsection
+\addcontentsline{toc}{subsection}{Mots clés}
+\begin{itemize}
+	\item Les 3 V
+	\item ETL / ELT
+	\item Données structurées, semi-structurées et non structurées
+	\item Charge de travail analytique
+\end{itemize}
+
+\subsection*{Contexte}
+\phantomsection
+\addcontentsline{toc}{subsection}{Contexte}
+\noindent Une équipe doit alimenter l'entrepôt de données d'un système décisionnel. Les sources sont hétérogènes~: structurées, semi-structurées et non structurées. Archie a prévu un stockage intermédiaire qui sert de source unique. Le modèle cible est déjà dessiné, avec plusieurs dimensions.
+
+\subsection*{Problématique}
+\phantomsection
+\addcontentsline{toc}{subsection}{Problématique}
+\noindent Comment transformer des données hétérogènes pour alimenter l'entrepôt de données, et faut-il transformer les données avant ou après le chargement~?
+
+\subsection*{Contraintes}
+\phantomsection
+\addcontentsline{toc}{subsection}{Contraintes}
+\begin{itemize}
+	\item Sources hétérogènes
+	\item Confidentialité des données
+	\item Modèle cible imposé
+	\item Format de date imposé par Hive
+\end{itemize}
+
+\subsection*{Généralisation}
+\phantomsection
+\addcontentsline{toc}{subsection}{Généralisation}
+\begin{itemize}
+	\item Transformation
+	\item Chargement
+	\item Confidentialité
+	\item Préparation des données
+\end{itemize}
+
+\subsection*{Livrables}
+\phantomsection
+\addcontentsline{toc}{subsection}{Livrables}
+\begin{itemize}
+	\item Analyse et comparaison des différentes méthodes (ETL, ELT\dots)
+	\item Plan de mise en place de l'alimentation de l'entrepôt
+\end{itemize}
+
+\subsection*{Pistes de solutions}
+\phantomsection
+\addcontentsline{toc}{subsection}{Pistes de solutions}
+\begin{itemize}
+	\item Choisir entre ETL et ELT.
+	\item Se renseigner sur l'état de l'art du stockage et de la transformation de données.
+	\item Étudier les mécanismes qui garantissent la confidentialité.
+\end{itemize}
+
+\subsection*{Plan d'actions}
+\phantomsection
+\addcontentsline{toc}{subsection}{Plan d'actions}
+\begin{itemize}
+	\item Définir les mots clés, étudier les ressources et réaliser le workshop.
+	\item Dresser un tableau comparatif des méthodes ETL et ELT.
+	\item Étudier la conversion des données~: dates, données structurées, semi-structurées et non structurées.
+	\item Étudier les mécanismes de confidentialité et les appliquer aux données du CHU.
+	\item Qualifier les jeux de données fournis et proposer une organisation du Data Lake.
+	\item Établir le plan de mise en place de l'alimentation de l'entrepôt, y compris vers une base NoSQL.
+	\item Proposer une stratégie d'analyse et traduire des demandes en requêtes SQL.
+\end{itemize}
+
+% --- DEFINITIONS ---
+\newpage
+\section{Définitions des mots clés}
+
+\needspace{8\baselineskip}
+\noindent \textbf{Les 3 V}:
+\noindent Définition du Big Data proposée par Doug Laney (Gartner) en 2001. Un ensemble de données relève du Big Data quand il se distingue par~:
+\begin{itemize}
+	\item \textbf{le volume}~: une quantité de données qui dépasse les capacités d'un serveur unique. Le fichier des décès fourni compte à lui seul plus de 25~millions de lignes (1,9~Go)~;
+	\item \textbf{la vélocité}~: la vitesse à laquelle les données sont produites et doivent être traitées, du chargement nocturne au flux en temps réel~;
+	\item \textbf{la variété}~: la diversité des formats et des structures (tables, fichiers CSV, JSON, documents PDF, images).
+\end{itemize}
+La définition a ensuite été étendue à 5~V avec la véracité et la valeur (CER~1). Pour l'alimentation de l'entrepôt, c'est surtout la \textbf{variété} qui pose problème~: chaque format demande sa propre conversion.
+
+\separateur
+
+\needspace{8\baselineskip}
+\noindent \textbf{ETL / ELT}:
+\noindent Deux façons d'enchaîner les trois opérations qui alimentent un entrepôt~: \textbf{E}xtraire les données des sources, les \textbf{T}ransformer (nettoyage, conversion, calculs) et les \textbf{C}harger (\textit{Load}) dans la cible.
+\begin{itemize}
+	\item \textbf{ETL}~: les données sont transformées \textbf{avant} le chargement, sur un serveur ou un outil d'intégration dédié (Talend, Informatica).
+	\item \textbf{ELT}~: les données sont chargées \textbf{brutes} dans la cible, puis transformées \textbf{sur place} avec la puissance de calcul de la cible (requêtes Hive ou Spark sur le cluster).
+\end{itemize}
+Les deux approches sont comparées dans la partie~\ref{sec:etl-elt}.
+
+\separateur
+
+\needspace{8\baselineskip}
+\noindent \textbf{Données structurées, semi-structurées et non structurées}:
+\noindent Les données se classent selon le degré d'organisation de leur contenu~:
+
+\begin{center}
+\begin{tabularx}{\textwidth}{>{\bfseries}l >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+\toprule
+ & Structurées & Semi-structurées & Non structurées \\
+\midrule
+Schéma & Fixe, défini à l'avance & Souple, porté par les données (balises, clés) & Aucun \\
+Formats & Tables SQL, CSV & JSON, XML, logs & Textes, PDF, images, sons \\
+Interrogation & SQL directement & Après aplatissement ou avec un SerDe & Après extraction d'informations \\
+Exemple CHU & Table \texttt{Patient}, fichier CSV des hospitalisations & Dossier patient échangé en JSON (norme FHIR) & Fiches descriptives PDF des indicateurs de satisfaction \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\separateur
+
+\needspace{8\baselineskip}
+\noindent \textbf{Charge de travail analytique}:
+\noindent Type de sollicitation d'une base de données propre au décisionnel. Elle se caractérise par~:
+\begin{itemize}
+	\item des requêtes en \textbf{lecture} qui parcourent et agrègent de très nombreuses lignes (sommes, moyennes, comptages par période)~;
+	\item des écritures rares et \textbf{en masse}, lors des chargements planifiés~;
+	\item peu d'utilisateurs simultanés, mais des requêtes longues et imprévisibles.
+\end{itemize}
+Elle s'oppose à la charge \textbf{transactionnelle} (OLTP), faite de nombreuses petites lectures et écritures. Une charge analytique justifie un stockage orienté colonnes (ORC, Parquet), le partitionnement et le parallélisme du cluster.
+
+% --- ETL ET ELT ---
+\newpage
+\section{Intégration des données~: ETL ou ELT}\label{sec:etl-elt}
+
+\subsection{Le processus ETL}
+
+\noindent Dans un ETL, les données transitent par un moteur de transformation situé entre les sources et l'entrepôt. Seules des données propres et conformes au modèle cible sont chargées.
+
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize,node distance=0.5cm,
+  st/.style={draw=title1,thick,rounded corners,fill=#1,align=center,text width=2.3cm,minimum height=1.3cm},
+  st/.default={title2!12},
+  arr/.style={-{Latex},thick,title1}]
+  \node[st=gray!12] (s) {\textbf{Sources}\\ PostgreSQL, CSV, JSON, PDF};
+  \node[st,right=of s] (e) {\textbf{Extraction}};
+  \node[st=orange!18,right=of e] (t) {\textbf{Transformation}\\ serveur Talend};
+  \node[st,right=of t] (l) {\textbf{Chargement}};
+  \node[st=title1!20,right=of l] (d) {\textbf{Entrepôt}\\ données propres};
+  \foreach \a/\b in {s/e,e/t,t/l,l/d} \draw[arr] (\a) -- (\b);
+\end{tikzpicture}
+\end{center}
+
+\begin{itemize}
+	\item[+] La cible ne reçoit que des données validées et conformes.
+	\item[+] Les données sensibles peuvent être pseudonymisées \textbf{avant} d'arriver dans le cluster.
+	\item[+] Les règles de transformation sont centralisées et documentées dans l'outil (jobs Talend).
+	\item[--] Le serveur de transformation devient un goulot d'étranglement sur de gros volumes.
+	\item[--] Les données brutes ne sont pas conservées~: un nouveau besoin oblige à réextraire les sources.
+\end{itemize}
+
+\subsection{Le processus ELT}
+
+\noindent Dans un ELT, les données sont d'abord copiées brutes dans la cible (Data Lake ou entrepôt), puis transformées par des requêtes exécutées sur la cible elle-même.
+
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize,node distance=0.5cm,
+  st/.style={draw=title1,thick,rounded corners,fill=#1,align=center,text width=2.3cm,minimum height=1.3cm},
+  st/.default={title2!12},
+  arr/.style={-{Latex},thick,title1}]
+  \node[st=gray!12] (s) {\textbf{Sources}\\ PostgreSQL, CSV, JSON, PDF};
+  \node[st,right=of s] (e) {\textbf{Extraction}};
+  \node[st,right=of e] (l) {\textbf{Chargement}\\ données brutes};
+  \node[st=title1!20,right=of l] (c) {\textbf{Cluster}\\ HDFS, zone brute};
+  \node[st=orange!18,right=of c] (t) {\textbf{Transformation}\\ requêtes Hive / Spark};
+  \foreach \a/\b in {s/e,e/l,l/c,c/t} \draw[arr] (\a) -- (\b);
+  \draw[arr] (t.south) -- ++(0,-0.45) -| node[pos=0.25,below,font=\tiny]{tables du modèle cible, dans le même cluster} (c.south);
+\end{tikzpicture}
+\end{center}
+
+\begin{itemize}
+	\item[+] La transformation profite de la puissance du cluster et passe à l'échelle avec lui.
+	\item[+] Les données brutes sont conservées~: on peut rejouer ou modifier une transformation sans réextraire.
+	\item[+] Chargement rapide, la transformation est faite plus tard, à la demande.
+	\item[--] Des données brutes, donc potentiellement identifiantes, sont stockées dans le cluster.
+	\item[--] La qualité des données doit être gérée dans la cible, avec des règles dispersées dans des scripts SQL.
+\end{itemize}
+
+\subsection{Tableau comparatif}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{>{\bfseries}l >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+\toprule
+Critère & ETL & ELT \\
+\midrule
+Ordre & Extraire, transformer, charger & Extraire, charger, transformer \\
+Lieu de la transformation & Serveur ou outil d'intégration & Cible (entrepôt, cluster) \\
+Données chargées & Nettoyées, conformes au modèle & Brutes, tous formats \\
+Volumes & Moyens, limités par le serveur ETL & Très gros, limités par le cluster \\
+Temps de chargement & Plus long (transformation au passage) & Court (copie directe) \\
+Données brutes & Non conservées & Conservées, transformations rejouables \\
+Confidentialité & Données masquées avant la cible & Données sensibles présentes dans la cible \\
+Qualité & Contrôlée avant le chargement & Contrôlée après, dans la cible \\
+Outils & Talend, Informatica, SSIS & Hive, Spark, dbt, entrepôts cloud \\
+Cas d'usage & Entrepôt classique, données sensibles & Data Lake, Big Data, entrepôts cloud \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{État de l'art du stockage et de la transformation}
+
+\noindent Les architectures ont évolué avec les volumes et le cloud~:
+\begin{itemize}
+	\item \textbf{Entrepôt classique} (années 1990)~: ETL nocturne vers un SGBD relationnel. Modèle stable, mais rigide et coûteux à faire grandir.
+	\item \textbf{Data Lake} (années 2010)~: stockage brut sur HDFS ou stockage objet (S3), schéma à la lecture. L'ELT devient naturel, au risque d'un «~marécage~» de données non documentées.
+	\item \textbf{Entrepôts cloud} (Snowflake, BigQuery, Redshift)~: stockage et calcul séparés et élastiques. L'ELT y est la norme, avec des transformations écrites en SQL et versionnées (dbt).
+	\item \textbf{Lakehouse} (Delta Lake, Apache Iceberg)~: des tables transactionnelles directement sur le Data Lake, qui réunissent souplesse du lac et fiabilité de l'entrepôt.
+	\item \textbf{Flux continus}~: la capture des changements (\textit{Change Data Capture}) et des outils comme Kafka alimentent la cible au fil de l'eau plutôt qu'en lot nocturne.
+\end{itemize}
+Dans la pratique, les deux approches se combinent souvent~: une transformation légère avant le chargement, puis les transformations lourdes dans la cible. On parle d'\textbf{EtLT}.
+
+\subsection{Choix pour le CHU}
+
+\noindent Pour le CHU, ni l'ETL pur ni l'ELT pur ne convient~:
+\begin{itemize}
+	\item un \textbf{ELT pur} déposerait dans HDFS des noms, des numéros de sécurité sociale et des diagnostics en clair, ce que le RGPD et l'architecture du CER~1 excluent~;
+	\item un \textbf{ETL pur} ferait porter à Talend des traitements lourds (25~millions de décès, jointures entre sources) que le cluster sait mieux paralléliser.
+\end{itemize}
+
+\noindent On retient donc un \textbf{EtLT}, cohérent avec l'architecture proposée au CER~1~:
+
+\begin{center}
+\begin{tabularx}{\textwidth}{>{\bfseries}l l >{\raggedright\arraybackslash}X}
+\toprule
+Étape & Outil & Traitements \\
+\midrule
+E + t (léger) & Talend & Extraction, encodage en UTF-8, formats de date, pseudonymisation des identifiants, rejet des lignes invalides \\
+L & Talend & Dépôt dans HDFS, zone brute (données déjà pseudonymisées) \\
+T (lourd) & Hive & Jointures, calcul des mesures, alimentation des dimensions et des faits du modèle cible, format ORC partitionné \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\noindent Les données sensibles ne sont jamais écrites en clair dans le cluster, et les transformations volumineuses profitent du parallélisme de Hive.
+
+% --- CONVERSION DES DONNEES ---
+\newpage
+\section{Qualification et préparation des données}
+
+\subsection{Qualifier un jeu de données}
+
+\noindent Qualifier un jeu de données, c'est mesurer ce qu'il contient avant de l'utiliser~: volume, structure, complétude, unicité, plages de valeurs et liens avec les autres sources. Ce profilage (\textit{data profiling}) dit si les données peuvent répondre au besoin, et quelles transformations seront nécessaires. Il a été réalisé sur trois fichiers fournis~:
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\bfseries\raggedright\arraybackslash}p{2.4cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+\toprule
+Critère & Hospitalisations & Établissements & Professionnels \\
+\midrule
+Volume & 2\,479 lignes, 7 colonnes & 416\,665 lignes, 24 colonnes & 1\,048\,575 lignes, 9 colonnes \\
+Format & CSV \texttt{;}, ASCII & CSV \texttt{;}, UTF-8 & CSV \texttt{;}, ISO-8859-1, CRLF \\
+Complétude & 100~\% sur toutes les colonnes & 100~\% sur l'identifiant et la raison sociale, 67~\% sur la commune, 14~\% sur l'e-mail, FINESS du site quasi vide & 100~\% sur l'identité et la profession, 64~\% sur la commune, 18~\% sur la spécialité \\
+Unicité & \texttt{Num\_\allowbreak Hospitalisation} unique, 2\,465 patients distincts & \texttt{identifiant\_\allowbreak organisation} unique & \texttt{identifiant} unique \\
+Plages & Entrées du 21/06/2015 au 19/06/2021, durées de 1 à 30 jours (moyenne 15,4) & -- & -- \\
+Liens & 100~\% des établissements retrouvés dans le fichier des établissements & Clé \texttt{identifiant\_\allowbreak organisation}, et non le FINESS & -- \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\noindent Ce profilage fait ressortir trois points qui guident la préparation~:
+\begin{itemize}
+	\item le fichier des professionnels compte exactement 1\,048\,576 lignes avec l'en-tête, soit la limite d'une feuille Excel~: il a très probablement été \textbf{tronqué} lors d'un passage par Excel. Il faut récupérer la source complète avant de l'utiliser comme référentiel~;
+	\item les hospitalisations référencent les établissements par \texttt{identifiant\_\allowbreak organisation}, alors que les fichiers de satisfaction utilisent le \textbf{FINESS}, presque jamais renseigné dans le fichier des établissements. Le rapprochement satisfaction--établissement demande donc une table de correspondance~;
+	\item le fichier des hospitalisations est complet et cohérent, mais petit (2\,479 séjours)~: il convient pour la maquette, pas pour des statistiques fines par établissement.
+\end{itemize}
+
+\noindent Le résultat de la qualification est consigné dans une fiche par source (volume, format, taux de complétude par colonne, anomalies, décision), mise à jour à chaque nouvelle livraison de données.
+
+\subsection{Contrôles de qualité}
+
+\noindent Avant toute conversion, chaque source est contrôlée. Les lignes qui échouent ne sont pas chargées mais écrites dans un fichier de rejets, pour être corrigées ou signalées~:
+
+\begin{center}
+\begin{tabularx}{\textwidth}{>{\bfseries}l >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+\toprule
+Contrôle & Vérification & Exemple CHU \\
+\midrule
+Complétude & Les champs obligatoires sont renseignés & Une hospitalisation sans date d'entrée est rejetée \\
+Unicité & Pas de doublon sur la clé & Un même \texttt{Num\_\allowbreak Hospitalisation} présent deux fois \\
+Format & Le type et le format sont respectés & Une date \texttt{31/02/2017} ou un âge négatif \\
+Cohérence & Les valeurs sont plausibles entre elles & Une date de décès antérieure à la date de naissance \\
+Intégrité & Les références existent & Un \texttt{identifiant\_\allowbreak organisation} absent du fichier des établissements \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\noindent Dans Talend, ces contrôles se font avec les composants \texttt{tSchemaComplianceCheck} (types et formats), \texttt{tUniqRow} (doublons) et \texttt{tMap} (règles et recherches dans les référentiels), dont la sortie de rejet alimente un fichier d'erreurs.
+
+\subsection{Conversion des dates}
+
+\noindent Hive impose ses formats~: le type \texttt{DATE} attend \texttt{yyyy-MM-dd} et le type \texttt{TIMESTAMP} attend \texttt{yyyy-MM-dd HH:mm:ss}. Une date dans un autre format n'est pas convertie~: Hive renvoie \texttt{NULL}, sans erreur. Or les sources fournies n'utilisent pas toutes le même format~:
+
+\begin{center}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X l l}
+\toprule
+\textbf{Source} & \textbf{Format d'origine} & \textbf{Format Hive} \\
+\midrule
+\texttt{Hospitalisations.csv} (\texttt{Date\_Entree}) & \texttt{27/09/2017} & \texttt{2017-09-27} \\
+\texttt{deces.csv} (\texttt{date\_naissance}, \texttt{date\_deces}) & \texttt{1903-11-11} & déjà conforme \\
+Table \texttt{Consultation} (\texttt{Date}, \texttt{Heure\_debut}) & type \texttt{date} et \texttt{time} & \texttt{TIMESTAMP} recomposé \\
+Table \texttt{Patient} (\texttt{Date}) & texte de 10 caractères & à analyser puis convertir \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\noindent La conversion peut se faire à deux endroits~:
+
+\begin{center}
+\begin{minipage}[t]{0.47\textwidth}
+\begin{tcolorbox}[colback=orange!6,colframe=orange!70!black,title=\textbf{Dans Talend} (avant chargement),fonttitle=\small,boxsep=2pt]
+\ttfamily\scriptsize
+TalendDate.formatDate("yyyy-MM-dd",\\
+\hspace*{1em}TalendDate.parseDate("dd/MM/yyyy",\\
+\hspace*{2em}row1.Date\_Entree))
+\end{tcolorbox}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.47\textwidth}
+\begin{tcolorbox}[colback=title2!6,colframe=title1,title=\textbf{Dans Hive} (après chargement),fonttitle=\small,boxsep=2pt]
+\ttfamily\scriptsize
+TO\_DATE(FROM\_UNIXTIME(\\
+\hspace*{1em}UNIX\_TIMESTAMP(date\_entree,\\
+\hspace*{2em}'dd/MM/yyyy')))
+\end{tcolorbox}
+\end{minipage}
+\end{center}
+
+\noindent On convertit dans Talend, au moment de l'extraction~: la date est contrôlée en même temps, et une date invalide part dans les rejets au lieu de devenir un \texttt{NULL} silencieux dans Hive. Une \textbf{dimension Temps} est ensuite générée une fois pour toutes (une ligne par jour, avec jour, mois, trimestre, année), et les faits la référencent par une clé \texttt{AAAAMMJJ}.
+
+\subsection{Données structurées}
+
+\noindent Les données structurées ont déjà un schéma, mais celui-ci varie d'une source à l'autre. Les fichiers fournis montrent les écarts à harmoniser~:
+\begin{itemize}
+	\item \textbf{encodage}~: \texttt{etablissement\_sante.csv} est en UTF-8, \texttt{professionnel\_sante.csv} en ISO-8859-1 et les résultats de satisfaction 2019 en Windows-1252. Lus sans précaution, les accents deviennent illisibles («~Auvergne-Rh\textbf{?}ne-Alpes~»). Tout est converti en UTF-8, l'encodage attendu par Hive~;
+	\item \textbf{séparateur}~: point-virgule pour les fichiers d'établissements et d'hospitalisations, virgule pour les décès~;
+	\item \textbf{fins de ligne}~: Windows (CRLF) pour certains fichiers, Unix (LF) pour d'autres~;
+	\item \textbf{types}~: identifiants à zéros initiaux (\texttt{010001717}) à garder en texte, nombres décimaux à virgule à convertir avec un point~;
+	\item \textbf{doublons de format}~: un fichier de satisfaction 2016 existe à la fois en CSV et en Excel, on n'en charge qu'un.
+\end{itemize}
+Les tables PostgreSQL sont lues avec \texttt{tPostgresqlInput}, les CSV avec \texttt{tFileInput\-Delimited}, en précisant pour chacun l'encodage, le séparateur et la ligne d'en-tête.
+
+\subsection{Données semi-structurées}
+
+\noindent Les données semi-structurées (JSON, XML) sont imbriquées~: un document peut contenir des listes et des sous-objets, alors qu'une table est plate. Les données de santé sont souvent échangées ainsi, par exemple au format JSON de la norme \textbf{FHIR}~:
+
+\begin{center}
+\begin{minipage}[t]{0.42\textwidth}
+\begin{tcolorbox}[colback=gray!5,colframe=gray!60,title=\textbf{Document JSON},fonttitle=\small,boxsep=2pt]
+\ttfamily\scriptsize
+\{ "id\_patient": 29620,\\
+\hspace*{1em}"sejours": [\\
+\hspace*{2em}\{"entree": "2017-09-27",\\
+\hspace*{2.6em}"diag": "S02800"\},\\
+\hspace*{2em}\{"entree": "2020-08-16",\\
+\hspace*{2.6em}"diag": "Q902"\} ] \}
+\end{tcolorbox}
+\end{minipage}\hspace{0.8cm}%
+\begin{minipage}[t]{0.42\textwidth}
+\begin{tcolorbox}[colback=title2!6,colframe=title1,title=\textbf{Après aplatissement},fonttitle=\small,boxsep=2pt]
+\scriptsize
+\begin{tabular}{@{}lll@{}}
+\textbf{id\_patient} & \textbf{entree} & \textbf{diag} \\
+29620 & 2017-09-27 & S02800 \\
+29620 & 2020-08-16 & Q902 \\
+\end{tabular}
+\end{tcolorbox}
+\end{minipage}
+\end{center}
+
+\noindent Chaque élément de la liste devient une ligne, et la clé du document est répétée. Dans Talend, \texttt{tExtractJSONFields} lit le document avec des chemins JSONPath (\texttt{\$.sejours[*]}). Dans Hive, on peut aussi charger le JSON brut avec un \textit{SerDe} JSON, puis l'aplatir avec \texttt{LATERAL VIEW explode(sejours)}.
+
+\subsection{Données non structurées}
+
+\noindent Les données non structurées (textes libres, PDF, images) ne peuvent pas être chargées telles quelles dans un modèle dimensionnel. On les traite en deux temps~:
+\begin{enumerate}
+	\item le fichier est conservé \textbf{brut dans le Data Lake}, avec un identifiant et un chemin~;
+	\item on en \textbf{extrait des informations structurées}, qui seules rejoignent l'entrepôt~: métadonnées (date, auteur, type), mots clés, codes reconnus dans le texte (codes CIM-10 d'un compte rendu), ou résultat d'un modèle d'analyse (classification d'une image).
+\end{enumerate}
+\noindent Dans les données fournies, les fiches descriptives des indicateurs de satisfaction sont des PDF~: on en retient les définitions des indicateurs pour documenter la dimension correspondante, et le PDF reste consultable dans le lac. Un texte libre peut aussi contenir des informations identifiantes (nom d'un patient dans un compte rendu)~: il doit être pseudonymisé avant toute exploitation.
+
+% --- CONFIDENTIALITE ---
+\newpage
+\section{Confidentialité des données}
+
+\subsection{Mécanismes de protection}
+
+\noindent La confidentialité repose sur deux familles de mécanismes~: ceux qui \textbf{transforment la donnée} pour qu'elle ne permette plus d'identifier une personne, et ceux qui \textbf{protègent l'accès} à la donnée.
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\bfseries\raggedright\arraybackslash}p{2.5cm} >{\raggedright\arraybackslash}X c >{\raggedright\arraybackslash}X}
+\toprule
+Technique & Principe & Réversible & Exemple CHU \\
+\midrule
+Suppression & Retirer la colonne & Non & Nom, prénom, e-mail, téléphone \\
+Masquage & Cacher une partie de la valeur & Non & \texttt{06 ** ** ** 12} \\
+Hachage salé & Remplacer par une empreinte (SHA-256 + clé secrète) & Non & \texttt{Id\_patient} $\rightarrow$ \texttt{a3f9\dots} \\
+Tokenisation & Remplacer par un jeton, avec une table de correspondance protégée & Oui & Numéro de sécurité sociale \\
+Généralisation & Rendre la valeur moins précise & Non & Date de naissance $\rightarrow$ tranche d'âge, adresse $\rightarrow$ département \\
+Agrégation & Ne publier que des totaux & Non & Nombre de séjours par service et par mois \\
+Bruit & Perturber légèrement les valeurs (confidentialité différentielle) & Non & Effectifs arrondis dans les tableaux publiés \\
+Chiffrement & Rendre la donnée illisible sans clé & Oui & Disques et échanges réseau du cluster \\
+Contrôle d'accès & Limiter qui voit quoi & -- & Zone brute réservée aux data engineers \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\noindent Le RGPD distingue deux résultats~:
+\begin{itemize}
+	\item la \textbf{pseudonymisation} remplace les identifiants, mais la personne reste réidentifiable avec une information complémentaire (la clé, la table de correspondance). Les données restent personnelles et soumises au RGPD~;
+	\item l'\textbf{anonymisation} rend la réidentification impossible, de façon irréversible. Les données sortent alors du champ du RGPD. Selon le G29 (devenu le CEPD), elle doit empêcher l'individualisation, la corrélation et l'inférence.
+\end{itemize}
+
+\subsection{Application aux données du CHU}
+
+\noindent La table \texttt{Patient} concentre les données identifiantes. Chaque colonne reçoit un traitement, appliqué dans Talend avant le dépôt dans HDFS~:
+
+\begin{center}
+\begin{tabularx}{\textwidth}{>{\ttfamily}l >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+\toprule
+\normalfont\textbf{Colonne} & \textbf{Traitement} & \textbf{Résultat dans le cluster} \\
+\midrule
+Id\_patient & Hachage salé (SHA-256) & Clé pseudonymisée, identique dans toutes les sources pour permettre les jointures \\
+Nom, Prenom & Suppression & -- \\
+EMail, Tel & Suppression & -- \\
+Num\_Secu & Suppression & -- \\
+Adresse, Ville & Suppression & -- \\
+Code\_postal & Généralisation & Département \\
+Date, Age & Généralisation & Tranche d'âge \\
+Sexe & Conservé & Utile à l'analyse \\
+Groupe\_sanguin, Poid, Taille & Minimisation & Chargés seulement si un indicateur les utilise \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\noindent Le hachage utilise un \textbf{sel secret}~: sans lui, un identifiant numérique se retrouverait en hachant toutes les valeurs possibles. Ce sel est conservé hors du cluster, et la même valeur est utilisée pour toutes les sources, ce qui garde les jointures possibles entre consultations, prescriptions et hospitalisations.
+
+\noindent Le fichier des décès contient lui aussi des noms, prénoms et dates de naissance. Il ne sert qu'à des statistiques de mortalité~: on ne garde que le sexe, l'âge au décès, la date et la commune du décès. Les noms ne sont jamais chargés.
+
+\noindent Enfin, les indicateurs publiés dans Power BI sont \textbf{agrégés}, et les cases portant sur de très petits effectifs (moins de 10 patients par exemple) sont masquées pour éviter qu'un patient soit reconnaissable.
+
+% --- DATA LAKE ---
+\newpage
+\section{Organisation du Data Lake}
+
+\subsection{Zones du lac}
+
+\noindent Un Data Lake sans organisation devient vite un «~marécage~» (\textit{data swamp})~: des fichiers dont on ne connaît plus l'origine, la qualité ni le propriétaire. On le découpe donc en zones, que les données traversent de gauche à droite en gagnant en qualité~:
+
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize,node distance=0.45cm,
+  z/.style={draw=#1,thick,rounded corners,fill=#1!10,align=center,text width=2.6cm,minimum height=2.6cm},
+  arr/.style={-{Latex},thick,title1}]
+  \node[z=gray] (l) {\textbf{Atterrissage}\\ \textit{landing}\\[0.1cm] fichiers reçus, conservés quelques jours};
+  \node[z=orange,right=of l] (b) {\textbf{Brute}\\ \textit{raw / bronze}\\[0.1cm] format d'origine, pseudonymisé, historisé};
+  \node[z=title2,right=of b] (p) {\textbf{Préparée}\\ \textit{staging / silver}\\[0.1cm] nettoyée, typée, UTF-8, ORC partitionné};
+  \node[z=green!60!black,right=of p] (c) {\textbf{Exploitation}\\ \textit{curated / gold}\\[0.1cm] tables du modèle dimensionnel};
+  \foreach \a/\b in {l/b,b/p,p/c} \draw[arr] (\a) -- (\b);
+  \node[draw=gray,dashed,rounded corners,fill=gray!5,text width=3.6cm,align=center,below=0.5cm of $(b)!0.5!(p)$] (s) {\textbf{Bac à sable}\\ \textit{sandbox}~: essais des analystes, sans impact sur la production};
+  \draw[arr,dashed] (p.south) -- (s);
+\end{tikzpicture}
+\end{center}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\bfseries}l >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X l}
+\toprule
+Zone & Contenu & Accès & Conservation \\
+\midrule
+Atterrissage & Fichiers tels que livrés & Jobs d'ingestion seulement & Quelques jours \\
+Brute & Copie fidèle, pseudonymisée, jamais modifiée & Data engineers & Durée légale définie \\
+Préparée & Données contrôlées et converties & Data engineers, data scientists & Selon les besoins \\
+Exploitation & Faits et dimensions & Analystes, Power BI (lecture) & Historique complet \\
+Bac à sable & Jeux de test, analyses exploratoires & Analystes & Purge régulière \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Arborescence et règles de nommage}
+
+\noindent Chaque zone suit la même arborescence dans HDFS~: zone, domaine, source, puis date de chargement. On retrouve ainsi l'origine de chaque fichier, et une partition par date permet de rejouer ou de supprimer un chargement précis.
+
+\begin{center}
+\begin{minipage}{0.72\textwidth}
+\begin{tcolorbox}[colback=title2!6,colframe=title1,title=\textbf{Arborescence HDFS du lac CHU},fonttitle=\small,boxsep=2pt]
+\ttfamily\scriptsize
+/data/chu/\\
+\hspace*{1em}landing/postgresql/consultation/2026-10-21/\\
+\hspace*{1em}raw/soins/hospitalisations/date\_chargement=2026-10-21/\\
+\hspace*{1em}raw/referentiel/etablissements/date\_chargement=2026-10-21/\\
+\hspace*{1em}raw/open\_data/deces/date\_chargement=2026-10-21/\\
+\hspace*{1em}staging/soins/hospitalisations/annee=2021/part-00000.orc\\
+\hspace*{1em}curated/dwh/fait\_hospitalisation/annee=2021/\\
+\hspace*{1em}sandbox/<analyste>/
+\end{tcolorbox}
+\end{minipage}
+\end{center}
+
+\subsection{Gouvernance}
+
+\begin{itemize}
+	\item \textbf{Catalogue de métadonnées}~: chaque jeu de données est décrit (source, propriétaire, date, schéma, fiche de qualification). Dans Cloudera, le métastore Hive et Navigator ou Atlas jouent ce rôle.
+	\item \textbf{Lignage}~: on sait de quel fichier brut provient chaque table de l'entrepôt, et par quel job.
+	\item \textbf{Droits par zone}~: les zones brute et préparée sont réservées aux équipes techniques, l'entrepôt est ouvert en lecture aux analystes (Sentry).
+	\item \textbf{Cycle de vie}~: chaque zone a une durée de conservation, appliquée en supprimant les partitions de date expirées.
+\end{itemize}
+
+% --- PLAN D'ALIMENTATION ---
+\newpage
+\section{Plan de mise en place de l'alimentation}
+
+\subsection{Récupérer les données avec Talend}
+
+\noindent Dans Talend Open Studio for Big Data, chaque source est récupérée par un \textbf{job}, assemblage graphique de composants reliés par des flux de lignes. Le job des hospitalisations enchaîne ainsi~:
+
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize,node distance=0.55cm,
+  c/.style={draw=orange!80!black,thick,rounded corners,fill=orange!12,align=center,text width=2.4cm,minimum height=1.35cm},
+  arr/.style={-{Latex},thick,gray!70!black}]
+  \node[c] (i) {\texttt{tFileInput\-Delimited}\\ lecture du CSV, \texttt{;}, ASCII};
+  \node[c,right=of i] (q) {\texttt{tSchema\-Compliance\-Check}\\ types et formats};
+  \node[c,right=of q] (m) {\texttt{tMap}\\ dates, hachage de l'identifiant, recherche de l'établissement};
+  \node[c,right=of m] (o) {\texttt{tHDFSOutput}\\ zone brute du lac};
+  \node[c,below=0.7cm of q,fill=red!8,draw=red!60!black] (r) {\texttt{tFileOutput\-Delimited}\\ fichier des rejets};
+  \node[c,below=0.7cm of m,fill=gray!8,draw=gray] (e) {\texttt{tFileInput\-Delimited}\\ référentiel des établissements};
+  \draw[arr] (i) -- (q); \draw[arr] (q) -- node[above,font=\tiny]{conformes} (m); \draw[arr] (m) -- (o);
+  \draw[arr] (q) -- node[left,font=\tiny]{rejets} (r);
+  \draw[arr,dashed] (e) -- node[right,font=\tiny]{lookup} (m);
+\end{tikzpicture}
+\end{center}
+
+\noindent Les tables PostgreSQL sont récupérées de la même façon avec \texttt{tPostgresqlInput} et une requête SQL qui ne sélectionne que les colonnes utiles (minimisation). Les paramètres (chemins, connexion, sel de hachage) sont placés dans des \textbf{variables de contexte}, différentes entre la maquette et la production, et jamais écrites en dur dans le job.
+
+\subsection{Étapes}
+
+\noindent L'alimentation suit un ordre imposé par les clés~: les dimensions sont chargées avant les faits, car chaque ligne de faits doit retrouver la clé de ses dimensions.
+
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize,node distance=0.32cm,
+  st/.style={draw=title1,thick,rounded corners,fill=#1,align=center,text width=2.05cm,minimum height=1.9cm},
+  st/.default={title2!12},
+  arr/.style={-{Latex},thick,title1}]
+  \node[st=gray!12] (a) {\textbf{1. Préparer}\\ bases Hive brute et entrepôt, tables externes};
+  \node[st=orange!15,right=of a] (b) {\textbf{2. Extraire}\\ Talend~: contrôle, dates, UTF-8, pseudonymisation};
+  \node[st,right=of b] (c) {\textbf{3. Déposer}\\ fichiers dans la zone brute HDFS};
+  \node[st,right=of c] (d) {\textbf{4. Dimensions}\\ Temps générée, puis Établissement, Diagnostic, Patient\dots};
+  \node[st=title1!20,right=of d] (e) {\textbf{5. Faits}\\ recherche des clés, calcul des mesures};
+  \node[st=green!15,right=of e] (f) {\textbf{6. Contrôler}\\ comptages source / cible, rejets};
+  \foreach \x/\y in {a/b,b/c,c/d,d/e,e/f} \draw[arr] (\x) -- (\y);
+\end{tikzpicture}
+\end{center}
+
+\begin{enumerate}
+	\item \textbf{Préparer la cible}~: créer dans Hive une base pour la zone brute (tables externes pointant sur les dossiers HDFS) et une base pour l'entrepôt (tables du modèle cible au format ORC).
+	\item \textbf{Extraire et préparer} avec Talend~: lecture de chaque source avec son encodage et son séparateur, contrôles de qualité, conversion des dates, pseudonymisation des identifiants, écriture des rejets.
+	\item \textbf{Déposer} les fichiers obtenus dans la zone brute de HDFS (\texttt{tHDFSOutput}), un dossier par source et par date de chargement.
+	\item \textbf{Charger les dimensions}~: la dimension Temps est générée par un script, les autres sont alimentées depuis la zone brute par des requêtes Hive (\texttt{INSERT OVERWRITE \dots\ SELECT DISTINCT}), avec une clé de substitution.
+	\item \textbf{Charger les faits}~: chaque ligne retrouve la clé de ses dimensions par jointure, les mesures sont calculées (durée de séjour, durée de consultation), puis les données sont insérées dans la partition de leur année.
+	\item \textbf{Contrôler}~: comparer les nombres de lignes entre source, rejets et cible, et vérifier qu'aucun fait n'a de clé de dimension vide.
+\end{enumerate}
+
+\subsection{Alimenter le modèle dimensionnel}
+
+\noindent Le modèle cible est la constellation définie au CER~1. Une fois les données préparées, le chargement se fait en SQL dans Hive~: d'abord les dimensions, puis les faits qui retrouvent leurs clés par jointure.
+
+\begin{center}
+\begin{minipage}{0.92\textwidth}
+\begin{tcolorbox}[colback=title2!6,colframe=title1,title=\textbf{Dimension Établissement}~: une ligne par établissement,fonttitle=\small,boxsep=2pt]
+\ttfamily\scriptsize
+INSERT OVERWRITE TABLE dwh.dim\_etablissement\\
+SELECT e.identifiant\_organisation, e.raison\_sociale\_site,\\
+\hspace*{3.2em}e.commune, SUBSTR(e.code\_postal, 1, 2) AS departement\\
+FROM staging.etablissement e;
+\end{tcolorbox}
+\begin{tcolorbox}[colback=title2!6,colframe=title1,title=\textbf{Fait Hospitalisation}~: clés des dimensions et mesures,fonttitle=\small,boxsep=2pt]
+\ttfamily\scriptsize
+SET hive.exec.dynamic.partition.mode=nonstrict;\\
+INSERT OVERWRITE TABLE dwh.fait\_hospitalisation PARTITION (annee)\\
+SELECT h.num\_hospitalisation,\\
+\hspace*{3.2em}h.id\_patient\_hash,\hspace*{2em}-{}- déjà pseudonymisé par Talend\\
+\hspace*{3.2em}e.identifiant\_organisation,\\
+\hspace*{3.2em}d.code\_diag,\\
+\hspace*{3.2em}CAST(REGEXP\_REPLACE(CAST(h.date\_entree AS STRING), '-', \textquotesingle\textquotesingle{}) AS INT)\\
+\hspace*{6.4em}AS id\_date\_entree,\\
+\hspace*{3.2em}h.jour\_hospitalisation AS duree\_sejour,\\
+\hspace*{3.2em}1 AS nb\_hospitalisations,\\
+\hspace*{3.2em}YEAR(h.date\_entree) AS annee\\
+FROM staging.hospitalisation h\\
+JOIN dwh.dim\_etablissement e ON e.identifiant\_organisation = h.identifiant\_organisation\\
+JOIN dwh.dim\_diagnostic d \hspace*{1.6em}ON d.code\_diag = h.code\_diagnostic;
+\end{tcolorbox}
+\end{minipage}
+\end{center}
+
+\noindent Les jointures internes écartent les faits dont une dimension est introuvable~: on les compte avant et après chargement, et l'écart doit correspondre aux rejets attendus. Une variante consiste à rattacher ces lignes à une ligne «~Inconnu~» de la dimension, pour ne perdre aucun fait.
+
+\subsection{Chargement initial et incrémental}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{>{\bfseries}l >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+\toprule
+ & Chargement initial & Chargement incrémental \\
+\midrule
+Quand & Une fois, à la mise en service & Chaque nuit, planifié \\
+Données & Tout l'historique des sources & Lignes nouvelles ou modifiées depuis le dernier passage \\
+Détection & -- & Date de modification, identifiant croissant (\texttt{Num\_consultation}) ou capture des changements \\
+Écriture Hive & \texttt{INSERT OVERWRITE} de toutes les partitions & Ajout dans la partition de l'année, ou réécriture de la seule partition concernée \\
+Dimensions & Création complète & Ajout des nouvelles valeurs, historisation des changements (SCD type~2) \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\noindent Les jobs Talend sont enchaînés par un job principal et planifiés la nuit, hors des heures d'utilisation de Power BI. Chaque exécution est journalisée (\texttt{tLogCatcher}, \texttt{tStatCatcher})~: date, nombre de lignes lues, chargées et rejetées. Un échec arrête la chaîne avant le chargement des faits, pour ne jamais laisser l'entrepôt dans un état partiel.
+
+% --- NOSQL ---
+\newpage
+\section{Intégration dans une base NoSQL}
+
+\subsection{Quand utiliser une base NoSQL}
+
+\noindent L'entrepôt Hive sert les agrégations. Pour lire très vite les données d'\textbf{un seul} élément, comme le parcours d'un patient, une base NoSQL est plus adaptée~: on la modélise selon la requête à servir.
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\bfseries}l >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+\toprule
+ & HBase (dans Cloudera) & MongoDB \\
+\midrule
+Modèle & Orienté colonnes~: clé de ligne, familles de colonnes & Documents JSON \\
+Stockage & Sur HDFS, dans le cluster existant & Serveur dédié \\
+Accès type & Lecture par clé ou par plage de clés & Requêtes sur les champs du document \\
+Composant Talend & \texttt{tHBaseConnection}, \texttt{tHBaseOutput} & \texttt{tMongoDBConnection}, \texttt{tMongoDBOutput} \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\noindent \textbf{HBase} est retenu~: fourni par Cloudera, il stocke ses données dans HDFS, sous les mêmes règles de sécurité que le lac.
+
+\subsection{Modélisation et chargement}
+
+\noindent La table \texttt{parcours\_patient} sert le \textbf{parcours de soins}~: toutes les consultations et hospitalisations d'un patient, de la plus récente à la plus ancienne~:
+\begin{itemize}
+	\item \textbf{clé de ligne}~: \texttt{<id\_patient\_hash>\#<date inversée>}. Toutes les lignes d'un patient sont contiguës et triées de la plus récente à la plus ancienne~;
+	\item \textbf{famille \texttt{evt}}~: type d'événement (consultation, hospitalisation), date, code diagnostic~;
+	\item \textbf{famille \texttt{lieu}}~: établissement et professionnel.
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize,node distance=0.55cm,
+  c/.style={draw=orange!80!black,thick,rounded corners,fill=orange!12,align=center,text width=2.5cm,minimum height=1.3cm},
+  arr/.style={-{Latex},thick,gray!70!black}]
+  \node[c,fill=gray!10,draw=gray] (s) {\texttt{tHiveInput}\\ zone préparée~: consultations, hospitalisations};
+  \node[c,right=of s] (u) {\texttt{tUnite}\\ réunion des deux flux};
+  \node[c,right=of u] (m) {\texttt{tMap}\\ construction de la clé de ligne};
+  \node[c,right=of m,fill=title2!12,draw=title1] (h) {\texttt{tHBaseOutput}\\ table \texttt{parcours\_patient}};
+  \foreach \a/\b in {s/u,u/m,m/h} \draw[arr] (\a) -- (\b);
+\end{tikzpicture}
+\end{center}
+
+\noindent Lire un parcours revient à balayer les clés de préfixe \texttt{<id\_patient\_hash>\#}, en quelques millisecondes quel que soit le volume. HBase ne reçoit que des identifiants pseudonymisés.
+
+% --- EXPLOITATION ---
+\newpage
+\section{Stratégie d'analyse et requêtes}
+
+\subsection{Proposer une stratégie d'analyse}
+
+\noindent Une stratégie d'analyse part des questions des décideurs, pas des données disponibles. Elle se construit en cinq étapes~:
+\begin{enumerate}
+	\item \textbf{recueillir les questions} métier auprès des utilisateurs (direction, chefs de service)~;
+	\item les \textbf{traduire en indicateurs} (KPI) avec leur définition exacte, leur axe d'analyse et leur fréquence de mise à jour~;
+	\item \textbf{vérifier les données}~: chaque indicateur doit être calculable à partir d'une source qualifiée~;
+	\item choisir le \textbf{type d'analyse}~: descriptive (que s'est-il passé~?), diagnostique (pourquoi~?), prédictive (que va-t-il se passer~?) ou prescriptive (que faire~?)~;
+	\item choisir la \textbf{restitution}~: tableau de bord Power BI, rapport périodique ou requête ponctuelle.
+\end{enumerate}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X l l}
+\toprule
+\textbf{Question métier} & \textbf{Indicateur} & \textbf{Type} & \textbf{Source} \\
+\midrule
+Quels établissements accueillent le plus de séjours~? & Nombre d'hospitalisations par établissement et par an & Descriptive & Fait Hospitalisation \\
+Les séjours s'allongent-ils~? & Durée moyenne de séjour par année & Descriptive & Fait Hospitalisation \\
+Quels diagnostics mènent aux séjours les plus longs~? & Durée moyenne par diagnostic & Diagnostique & Faits Hospitalisation et Diagnostic \\
+La satisfaction suit-elle la charge~? & Score de satisfaction et nombre de séjours par établissement & Diagnostique & Faits Satisfaction et Hospitalisation \\
+Combien de séjours l'an prochain~? & Prévision mensuelle du nombre de séjours & Prédictive & Historique des séjours \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\noindent Pour la maquette, on commence par les analyses \textbf{descriptives}~: elles sont directement calculables dans l'entrepôt et valident le chargement. Les analyses prédictives viendront ensuite, une fois l'historique suffisant.
+
+\subsection{Traduire une demande en requêtes}
+
+\noindent Pour passer d'une demande exprimée en français à une requête SQL, on identifie successivement~:
+\begin{itemize}
+	\item la \textbf{mesure} demandée et son agrégation (compter, sommer, faire une moyenne)~$\rightarrow$ \texttt{SELECT} et fonction d'agrégation~;
+	\item les \textbf{axes} («~par établissement~», «~par année~»)~$\rightarrow$ \texttt{GROUP BY}~;
+	\item les \textbf{filtres} («~en 2020~», «~en Bretagne~»)~$\rightarrow$ \texttt{WHERE}, ou \texttt{HAVING} s'ils portent sur un résultat agrégé~;
+	\item les \textbf{tables} qui portent ces informations~$\rightarrow$ la table de faits et les dimensions à joindre~;
+	\item l'\textbf{ordre} et la \textbf{limite} («~les 10 premiers~»)~$\rightarrow$ \texttt{ORDER BY} et \texttt{LIMIT}.
+\end{itemize}
+
+\needspace{14\baselineskip}
+\noindent \textbf{Demande 1}~: «~Quels sont les 10 établissements qui ont accueilli le plus de séjours en 2020~?~»
+
+\begin{center}
+\begin{minipage}{0.92\textwidth}
+\begin{tcolorbox}[colback=title2!6,colframe=title1,boxsep=2pt]
+\ttfamily\scriptsize
+SELECT e.raison\_sociale, COUNT(*) AS nb\_sejours\\
+FROM dwh.fait\_hospitalisation f\\
+JOIN dwh.dim\_etablissement e\\
+\hspace*{2em}ON e.identifiant\_organisation = f.identifiant\_organisation\\
+WHERE f.annee = 2020\hspace*{6em}-{}- filtre sur la partition~: seule 2020 est lue\\
+GROUP BY e.raison\_sociale\\
+ORDER BY nb\_sejours DESC\\
+LIMIT 10;
+\end{tcolorbox}
+\end{minipage}
+\end{center}
+
+\needspace{16\baselineskip}
+\noindent \textbf{Demande 2}~: «~Quelle est la durée moyenne de séjour par chapitre de diagnostic et par année, pour les chapitres d'au moins 50 séjours~?~»
+
+\begin{center}
+\begin{minipage}{0.92\textwidth}
+\begin{tcolorbox}[colback=title2!6,colframe=title1,boxsep=2pt]
+\ttfamily\scriptsize
+SELECT d.chapitre, t.annee,\\
+\hspace*{3.2em}ROUND(AVG(f.duree\_sejour), 1) AS duree\_moyenne,\\
+\hspace*{3.2em}COUNT(*) AS nb\_sejours\\
+FROM dwh.fait\_hospitalisation f\\
+JOIN dwh.dim\_diagnostic d ON d.code\_diag = f.code\_diag\\
+JOIN dwh.dim\_temps \hspace*{0.6em}t ON t.id\_date = f.id\_date\_entree\\
+GROUP BY d.chapitre, t.annee\\
+HAVING COUNT(*) >= 50\hspace*{5.6em}-{}- filtre sur un résultat agrégé\\
+ORDER BY t.annee, duree\_moyenne DESC;
+\end{tcolorbox}
+\end{minipage}
+\end{center}
+
+\needspace{16\baselineskip}
+\noindent \textbf{Demande 3}~: «~Les établissements qui accueillent le plus de séjours ont-ils une moins bonne satisfaction~?~»
+
+\begin{center}
+\begin{minipage}{0.92\textwidth}
+\begin{tcolorbox}[colback=title2!6,colframe=title1,boxsep=2pt]
+\ttfamily\scriptsize
+SELECT e.raison\_sociale, s.annee, s.score\_global,\\
+\hspace*{3.2em}COUNT(f.num\_hospitalisation) AS nb\_sejours\\
+FROM dwh.fait\_satisfaction s\\
+JOIN dwh.dim\_etablissement e\\
+\hspace*{2em}ON e.identifiant\_organisation = s.identifiant\_organisation\\
+LEFT JOIN dwh.fait\_hospitalisation f\\
+\hspace*{2em}ON f.identifiant\_organisation = s.identifiant\_organisation\\
+\hspace*{2em}AND f.annee = s.annee\\
+GROUP BY e.raison\_sociale, s.annee, s.score\_global\\
+ORDER BY nb\_sejours DESC;
+\end{tcolorbox}
+\end{minipage}
+\end{center}
+
+\noindent Cette troisième requête croise deux tables de faits par leurs dimensions communes (établissement et année)~: c'est l'intérêt de la constellation. La jointure externe (\texttt{LEFT JOIN}) garde les établissements évalués même sans séjour enregistré. Elle suppose la table de correspondance FINESS--\texttt{identifiant\_\allowbreak organisation} relevée lors de la qualification.
+
+% --- CONCLUSION ---
+\newpage
+\section*{Conclusion}
+\phantomsection
+\addcontentsline{toc}{section}{Conclusion}
+
+\noindent \textbf{En réponse à la problématique}, transformer des données hétérogènes pour l'entrepôt du CHU demande de traiter chaque type à part~: harmoniser l'encodage, le séparateur et les types des données structurées, aplatir les données semi-structurées, et n'extraire des données non structurées que des informations exploitables. Les dates sont toutes ramenées au format imposé par Hive (\texttt{yyyy-MM-dd}) dès l'extraction, pour qu'une date invalide soit rejetée plutôt que transformée en valeur vide.
+
+\vspace{0.2cm}
+
+\noindent Faut-il transformer avant ou après le chargement~? Ni l'un ni l'autre exclusivement. L'ELT exploite la puissance du cluster et conserve les données brutes, mais il déposerait des données identifiantes dans HDFS. L'ETL protège ces données, mais devient un goulot sur les gros volumes. On retient un \textbf{EtLT}~: Talend applique avant le chargement les transformations légères et celles qu'impose la confidentialité (pseudonymisation, suppression des identités), puis Hive réalise les transformations lourdes dans le cluster.
+
+\vspace{0.2cm}
+
+\noindent Avant toute transformation, chaque source est \textbf{qualifiée}~: le profilage des fichiers fournis a révélé un fichier de professionnels tronqué à la limite d'Excel et une clé FINESS presque absente du référentiel des établissements, deux points à régler avant de charger. Les données traversent ensuite un Data Lake organisé en zones (atterrissage, brute, préparée, exploitation), avec une arborescence et des droits propres à chaque zone.
+
+\vspace{0.2cm}
+
+\noindent Le plan d'alimentation charge d'abord les dimensions puis les faits, par des jobs Talend et des requêtes Hive, avec un contrôle à chaque étape, en chargement initial puis incrémental nocturne. Une base NoSQL HBase complète l'entrepôt pour un usage précis, la consultation rapide du parcours d'un patient. Enfin, la stratégie d'analyse part des questions métier pour définir les indicateurs, et chaque demande se traduit en requête SQL sur la constellation.
+
+% --- CAPITALISATION ---
+\newpage
+\section*{Capitalisation}
+\phantomsection
+\addcontentsline{toc}{section}{Capitalisation}
+
+\begin{center}
+\small
+\setlength{\tabcolsep}{8pt}
+\renewcommand{\arraystretch}{1.15}
+
+\begin{tabular}{|>{\raggedright\arraybackslash}p{0.30\textwidth}|>{\raggedright\arraybackslash}p{0.47\textwidth}|m{0.08\textwidth}|}
+\hline
+\textbf{AAV} & \textbf{Commentaire} & \textbf{Statut} \\ \hline
+
+Alimenter un modèle dimensionnel (Data Mart) &
+Ordre de chargement (dimensions puis faits), requêtes Hive d'alimentation d'une dimension et d'un fait partitionné, contrôle des lignes écartées. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Écrire des requêtes SQL utilisant plusieurs tables &
+Requêtes avec jointures internes et externes entre faits et dimensions, dont une qui croise deux tables de faits de la constellation. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Traduire une demande en requêtes &
+Méthode (mesure, axes, filtres, tables, ordre) appliquée à trois demandes métier, avec \texttt{GROUP BY}, \texttt{HAVING} et \texttt{LIMIT}. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Utiliser un ETL pour récupérer des données &
+Job Talend détaillé (lecture, contrôle, \texttt{tMap}, rejets, dépôt HDFS), variables de contexte, gestion des encodages et des séparateurs des sources. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Qualifier un jeu de données &
+Profilage de trois fichiers réels (volume, format, complétude, unicité, plages, liens), avec deux anomalies relevées~: fichier tronqué et clé FINESS absente. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Proposer une stratégie d'analyse de données &
+Démarche en cinq étapes, des questions métier aux indicateurs, types d'analyse et restitution, appliquée au CHU. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Réaliser un traitement de données prenant en compte les contraintes RGPD (anonymisation) &
+Techniques comparées, pseudonymisation et anonymisation distinguées, traitement colonne par colonne de la table Patient et du fichier des décès. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Proposer une organisation type Data Lake &
+Zones (atterrissage, brute, préparée, exploitation, bac à sable), arborescence HDFS, règles de nommage et gouvernance. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Utiliser un ETL pour intégrer des données dans une base NoSQL &
+Choix de HBase, conception de la clé de ligne pour le parcours patient et job Talend d'alimentation (\texttt{tHBaseOutput}). Non testé sur la machine Cloudera. &
+{\color{orange}Partiel} \\ \hline
+
+\end{tabular}
+\end{center}
+
+% --- RESSOURCES ---
+\newpage
+\section*{Ressources}
+\phantomsection
+\addcontentsline{toc}{section}{Ressources}
+
+\begin{itemize}
+	\item \textbf{Documentation Talend} : \url{https://help.talend.com/}
+	\item \textbf{Apache Hive, types de données} : \url{https://cwiki.apache.org/confluence/display/Hive/LanguageManual+Types}
+	\item \textbf{Apache Hive, fonctions de date} : \url{https://cwiki.apache.org/confluence/display/Hive/LanguageManual+UDF}
+	\item \textbf{CNIL, l'anonymisation des données personnelles} : \url{https://www.cnil.fr/fr/technologies/lanonymisation-de-donnees-personnelles}
+	\item \textbf{HL7 FHIR (échange de données de santé)} : \url{https://hl7.org/fhir/}
+	\item \textbf{Kimball Group, techniques ETL} : \url{https://www.kimballgroup.com/data-warehouse-business-intelligence-resources/kimball-techniques/etl-architecture-34-subsystems/}
+	\item \textbf{Apache HBase, guide de référence} : \url{https://hbase.apache.org/book.html}
+	\item \textbf{Apache Hive, jointures} : \url{https://cwiki.apache.org/confluence/display/Hive/LanguageManual+Joins}
+\end{itemize}
