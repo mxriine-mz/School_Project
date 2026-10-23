@@ -1,0 +1,90 @@
+\documentclass[a4paper,12pt]{article}
+
+% --- PACKAGES ---
+\input{../../../../_Template/preambule}
+
+% --- STYLES ---
+\input{../../../../_Template/styles}
+
+\usepackage{adjustbox}
+\usepackage{enumitem}
+\usepackage{pdflscape}
+\usetikzlibrary{arrows.meta, positioning, calc, shapes.multipart}
+
+% --- RÈGLES DE MISE EN PAGE ---
+% Paragraphes, listes et cases de tableau jamais coupés entre deux pages,
+% pas de ligne seule en haut ou en bas de page
+\interlinepenalty=10000
+\clubpenalty=10000
+\widowpenalty=10000
+\displaywidowpenalty=10000
+% Une liste reste attachée à la phrase qui l'introduit et n'est pas coupée
+\setlist{beginpenalty=10000}
+\makeatletter
+\@itempenalty=10000
+\makeatother
+% Un titre part à la page suivante s'il ne reste pas la place d'un vrai bloc.
+% \needspace redéfini sans son \penalty-100, qui faisait préférer une coupure
+% avant chaque titre et laissait de grands blancs en bas de page ;
+% pas de coupure forcée si la page est déjà pleine (elle se coupera d'elle-même)
+\makeatletter
+\renewcommand{\needspace}[1]{\par\begingroup\setlength{\dimen@}{#1}%
+  \dimen@ii\pagegoal\advance\dimen@ii-\pagetotal
+  \ifdim\dimen@>\dimen@ii\ifdim\dimen@ii>\z@\vfil\break\fi\fi\endgroup}
+\makeatother
+\usepackage{etoolbox}
+\pretocmd{\section}{\needspace{14\baselineskip}}{}{}
+\pretocmd{\subsection}{\needspace{10\baselineskip}}{}{}
+% Plus d'air autour des tableaux et des schémas centrés
+\AtBeginEnvironment{center}{\setlength{\topsep}{14pt plus 4pt minus 2pt}}
+
+% --- TABLES DE MODÉLISATION (TikZ) ---
+\definecolor{fait}{RGB}{214, 110, 30}
+\tikzset{
+	tbl/.style={rectangle split, rectangle split parts=2, draw=title1, line width=0.6pt,
+		rounded corners=1.5pt, font={\scriptsize\linespread{1.3}\selectfont}, align=left, text width=#1, inner sep=2.5pt,
+		rectangle split part fill={title1, white}},
+	tbl/.default=2.6cm,
+	sous/.style={tbl=#1, draw=title2, rectangle split part fill={title2, white}},
+	sous/.default=2.4cm,
+	fait/.style={tbl=#1, draw=fait, rectangle split part fill={fait, fait!7}},
+	fait/.default=3cm,
+	lien/.style={draw=black!55, line width=0.6pt},
+}
+% Composants Talend et flux entre composants
+\tikzset{
+	cmp/.style={draw=orange!80!black, thick, rounded corners, fill=orange!12, align=center,
+		text width=#1, minimum height=1.2cm, font=\scriptsize},
+	cmp/.default=2.3cm,
+	flux/.style={-{Latex}, thick, gray!70!black},
+}
+% Bloc de code ou d'expression Talend
+\newtcolorbox{code}[1][]{colback=title2!6, colframe=title1, boxsep=2pt, fonttitle=\small,
+	fontupper=\ttfamily\scriptsize, #1}
+% \tb{NOM}{attributs} : en-tête + liste des attributs
+\newcommand{\tb}[2]{\textcolor{white}{\textbf{#1}}\nodepart{second}#2}
+\newcommand{\pk}[1]{\underline{#1}}
+\newcommand{\fk}[1]{\##1}
+\newcommand{\mes}[1]{\textcolor{fait}{\textit{#1}}}
+% Colonnes nom | type du modèle physique
+\newenvironment{phys}{\renewcommand{\arraystretch}{1}\begin{tabular}{@{}l@{\hspace{6pt}}>{\color{black!60}\ttfamily}l@{}}}{\end{tabular}}
+\newcommand{\legende}{\par\vspace{0.1cm}{\centering\footnotesize
+	Légende~: \pk{clé primaire} \quad \fk{clé étrangère} \quad \mes{mesure}\par}}
+
+\begin{document}
+\sloppy
+
+% --- PAGE DE GARDE ---
+\input{contents/title}
+
+% --- TABLE DES MATIÈRES ---
+\newpage
+\tableofcontents
+
+% --- FOOTER ---
+\input{../../../../_Template/footer}
+
+% --- CONTENT ---
+\input{contents/workshop.tex}
+
+\end{document}

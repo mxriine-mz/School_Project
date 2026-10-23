@@ -1,0 +1,453 @@
+% =====================================================================
+\newpage
+\section*{Introduction}
+\phantomsection
+\addcontentsline{toc}{section}{Introduction}
+
+\noindent Ce workshop met en pratique l'ETL (\textit{Extract, Transform, Load}) avec \textbf{Talend Open Studio for Big Data}~: extraire des données hétérogènes, les nettoyer et les transformer, puis les charger dans une cible. Il comporte trois parties~:
+\begin{enumerate}
+	\item la prise en main de Talend sur des données générées (génération, tri, filtrage, export Excel et XML)~;
+	\item un ETL complet sur les données de ventes d'un client, de trois fichiers CSV vers une base PostgreSQL~;
+	\item la conception d'un modèle en étoile et son alimentation dans un Data Lake HDFS, sur la machine Cloudera.
+\end{enumerate}
+
+\noindent Les jeux de données des parties~2 et~3 ont été analysés avant de construire les jobs. Les anomalies relevées et les chiffres attendus sont donnés à chaque étape pour vérifier le résultat des jobs. Chaque partie correspond à un job du projet Talend~: \texttt{Job\_partie1}, \texttt{Job\_partie2\_ventes}, puis \texttt{Job\_partie3\_dimensions} et \texttt{Job\_partie3\_faits}.
+
+\vspace{0.3cm}
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\bfseries}l >{\raggedright\arraybackslash}X}
+\toprule
+Composant & Rôle \\
+\midrule
+\texttt{tRowGenerator} & Générer des lignes de test selon un schéma et des fonctions \\
+\texttt{tSortRow} & Trier les lignes \\
+\texttt{tMap} & Transformer, filtrer, joindre et répartir les lignes vers plusieurs sorties \\
+\texttt{tFileInputDelimited} & Lire un fichier délimité (CSV) \\
+\texttt{tUniqRow} & Supprimer les doublons sur une clé \\
+\texttt{tAggregateRow} & Regrouper et calculer des agrégats (somme, maximum) \\
+\texttt{tFileOutputExcel}, \texttt{tFileOutputXML} & Écrire un fichier Excel ou XML \\
+\texttt{tDBOutput} (PostgreSQL) & Créer et alimenter une table PostgreSQL \\
+\texttt{tHDFSOutput}, \texttt{tHDFSInput} & Écrire et lire un fichier dans HDFS \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+% =====================================================================
+\newpage
+\section*{Partie 1~: prise en main de Talend}
+\phantomsection
+\addcontentsline{toc}{section}{Partie 1~: prise en main de Talend}
+
+\subsection*{1. Le job}
+\phantomsection
+\addcontentsline{toc}{subsection}{1. Le job}
+
+\noindent Le job génère des personnes, les trie par date de naissance, puis les répartit vers trois fichiers~: toutes les personnes en Excel et en XML, et les seules personnes de 20 ans ou plus dans un second fichier Excel.
+
+\begin{center}
+\begin{adjustbox}{max width=\linewidth}
+\begin{tikzpicture}[node distance=0.7cm]
+	\node[cmp] (g) {\texttt{tRowGenerator}\\ 100 personnes};
+	\node[cmp, right=of g] (s) {\texttt{tSortRow}\\ tri par date};
+	\node[cmp, right=of s] (m) {\texttt{tMap}\\ e-mail, filtre};
+	\node[cmp=2.8cm, right=1.2cm of m, yshift=1.6cm] (o1) {\texttt{tFileOutputExcel}\\ Sortie\_Excel};
+	\node[cmp=2.8cm, right=1.2cm of m] (o2) {\texttt{tFileOutputExcel}\\ Sortie\_Excel\_20ans};
+	\node[cmp=2.8cm, right=1.2cm of m, yshift=-1.6cm] (o3) {\texttt{tFileOutputXML}\\ Sortie\_XML};
+	\draw[flux] (g) -- node[above, font=\tiny]{Main} (s);
+	\draw[flux] (s) -- (m);
+	\draw[flux] (m.east) -- (o1.west);
+	\draw[flux] (m) -- (o2);
+	\draw[flux] (m.east) -- (o3.west);
+\end{tikzpicture}
+\end{adjustbox}
+\end{center}
+
+\subsection*{2. Génération des données}
+\phantomsection
+\addcontentsline{toc}{subsection}{2. Génération des données}
+
+\noindent Le schéma du \texttt{tRowGenerator} (\textit{Edit schema}) et la fonction de génération de chaque colonne~:
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\bfseries}l l >{\ttfamily\raggedright\arraybackslash}X}
+\toprule
+Colonne & Type & \normalfont\textbf{Fonction} \\
+\midrule
+Id & Integer & Numeric.sequence("s1", 1, 1) \\
+Nom & String & TalendDataGenerator.getLastName() \\
+Prenom & String & TalendDataGenerator.getFirstName() \\
+Date & Date & TalendDate.getRandomDate("2000-01-01", "2010-12-31") \\
+Ville & String & TalendDataGenerator.getUsCity() \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\noindent \texttt{Numeric.sequence} numérote les lignes à partir de~1. Le motif de la colonne \texttt{Date} est \texttt{"dd-MM-yyyy"}~: c'est le format d'affichage dans les fichiers de sortie. Le \texttt{tSortRow} trie ensuite sur \texttt{Date}, en ordre croissant et en mode \textit{date}.
+
+\subsection*{3. Transformations du tMap}
+\phantomsection
+\addcontentsline{toc}{subsection}{3. Transformations du tMap}
+
+\noindent Le \texttt{tMap} reçoit le flux trié à gauche et alimente trois tables de sortie à droite. Les trois sorties reprennent toutes les colonnes d'entrée et ajoutent une colonne \texttt{Email}~:
+
+\begin{code}[title=\textbf{Colonne Email} (les trois sorties)]
+row5.Prenom + "." + row5.Nom + "@cesi.fr"
+\end{code}
+
+\noindent \texttt{row5} est le nom du flux entrant dans le \texttt{tMap}~: il change d'un job à l'autre et doit être adapté. On peut ajouter \texttt{.toLowerCase()} pour obtenir des adresses en minuscules (\texttt{claire.gute@cesi.fr}).
+
+\needspace{14\baselineskip}
+\noindent La sortie \texttt{Sortie\_Excel\_20ans} reçoit en plus un \textbf{filtre} (\textit{Expression Filter})~:
+
+\begin{code}[title=\textbf{Filtre du sujet}~: âge approché en jours]
+TalendDate.diffDate(TalendDate.getCurrentDate(), row5.Date) / 365 >= 20
+\end{code}
+
+\noindent Cette formule divise un nombre de jours par 365 et ignore les années bissextiles~: une personne qui fête ses 20~ans dans les jours qui viennent est déjà comptée. Le test exact compare la date des 20~ans à la date du jour~:
+
+\begin{code}[title=\textbf{Filtre exact}~: la personne a eu 20 ans aujourd'hui ou avant]
+TalendDate.addDate(row5.Date, 20, "yyyy").compareTo(TalendDate.getCurrentDate()) <= 0
+\end{code}
+
+\subsection*{4. Fichiers de sortie et résultat}
+\phantomsection
+\addcontentsline{toc}{subsection}{4. Fichiers de sortie et résultat}
+
+\noindent Les trois fichiers sont écrits dans \texttt{C:/Talend/WS2/sorties/}~:
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\ttfamily}l l >{\raggedright\arraybackslash}X}
+\toprule
+\normalfont\textbf{Composant} & \textbf{Fichier} & \textbf{Paramètres} \\
+\midrule
+tFileOutputExcel & \texttt{Sortie\_Excel.xlsx} & Format 2007 (\texttt{.xlsx}), \textit{Inclure l'en-tête} \\
+tFileOutputExcel & \texttt{Sortie\_Excel\_20ans.xlsx} & Idem, seules les lignes qui passent le filtre \\
+tFileOutputXML & \texttt{Sortie\_XML.xml} & Balise racine \texttt{root}, une balise \texttt{row} par personne \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\noindent Le sujet écrit \texttt{.xslx}~: l'extension correcte est \texttt{.xlsx}. \noindent À l'exécution, les 100~lignes générées traversent le job. Nées entre 2000 et 2010, les personnes ont de 15 à 26~ans au 22~octobre 2026~: lors de notre exécution, \textbf{68} passent le filtre (le tirage est aléatoire). Elles sont exactement celles du fichier complet nées avant le 22/10/2006, ce qui valide le filtre. Les deux autres fichiers contiennent les 100~lignes, triées du 01/04/2000 au 20/10/2010.
+
+% =====================================================================
+\newpage
+\section*{Partie 2~: ETL des données de ventes}
+\phantomsection
+\addcontentsline{toc}{section}{Partie 2~: ETL des données de ventes}
+
+\subsection*{1. Analyse des sources}
+\phantomsection
+\addcontentsline{toc}{subsection}{1. Analyse des sources}
+
+\noindent Le client fournit trois fichiers CSV (séparateur virgule, en-tête sur la première ligne)~:
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\ttfamily}l r >{\raggedright\arraybackslash}X}
+\toprule
+\normalfont\textbf{Fichier} & \textbf{Lignes} & \textbf{Colonnes} \\
+\midrule
+Features data set.csv & 8\,190 & Store, Date, Temperature, Fuel\_Price, MarkDown1 à 5, CPI, Unemployment, IsHoliday \\
+sales data-set.csv & 421\,570 & Store, Dept, Date, Weekly\_Sales, IsHoliday \\
+stores data-set.csv & 48 & Store, Type, Size \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\noindent Le client signale des factures erronées, des doublons et des enregistrements vides. L'analyse des fichiers les localise précisément~:
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\bfseries\raggedright\arraybackslash}p{2.6cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+\toprule
+Anomalie & Constat & Traitement \\
+\midrule
+Dates hétérogènes & 8\,189 dates en \texttt{dd/MM/yyyy}, une seule en \texttt{dd-MM-yyyy}~: la dernière ligne de Features (magasin 45, \texttt{26-07-2013}) & Unifier le format dans le \texttt{tMap} \\
+Valeurs \texttt{NA} & 585 lignes de Features sans CPI ni Unemployment (mai à juillet 2013)~; MarkDown1 à 5 absents sur 51 à 64~\% des lignes & Convertir \texttt{NA} en \texttt{NULL} \\
+Doublons & Stores~: 48 lignes pour 45 magasins (magasins 1 et 2 répétés) & \texttt{tUniqRow} sur \texttt{Store} \\
+Factures erronées & Sales~: 1\,285 ventes hebdomadaires négatives (jusqu'à $-4\,988,94$) & Écarter vers une table de rejets \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\noindent Les 73 ventes à zéro sont conservées~: une semaine sans vente dans un rayon est une information valide. Les MarkDown absents aussi~: ils signifient qu'aucune démarque n'a eu lieu cette semaine-là.
+
+\subsection*{2. Unifier les dates}
+\phantomsection
+\addcontentsline{toc}{subsection}{2. Unifier les dates}
+
+\noindent \textbf{Que remarque-t-on~?} Dans Features, toutes les dates sont au format \texttt{dd/MM/yyyy} sauf la dernière, écrite avec des tirets (\texttt{26-07-2013}). Si la colonne est lue comme une date de motif \texttt{dd/MM/yyyy}, cette ligne ne peut pas être convertie.
+
+\noindent La solution est de lire la colonne \texttt{Date} comme une chaîne (\texttt{String}) dans les métadonnées du fichier, puis de la convertir dans le \texttt{tMap} après avoir remplacé les tirets par des barres obliques~:
+
+\begin{code}[title=\textbf{Expression de la colonne Date} (sortie de type Date)]
+TalendDate.parseDate("dd/MM/yyyy", row1.Date.replace("-", "/"))
+\end{code}
+
+\noindent Les deux formats deviennent ainsi une même date. Le même traitement est appliqué au fichier Sales par précaution, même si toutes ses dates sont déjà au bon format.
+
+\subsection*{3. Récupérer tous les enregistrements}
+\phantomsection
+\addcontentsline{toc}{subsection}{3. Récupérer tous les enregistrements}
+
+\noindent \textbf{A-t-on récupéré l'ensemble des enregistrements~?} Non. L'assistant de métadonnées devine le type de chaque colonne à partir des premières lignes du fichier~: CPI et Unemployment y sont numériques, et sont donc proposés en \texttt{Float}. Les 585 lignes où ces colonnes valent \texttt{NA}, dont la ligne à la date mal formée, ne peuvent pas être converties et sont écartées à la lecture~: le \texttt{tLogRow} n'affiche alors que 7\,605 lignes sur 8\,190.
+
+\noindent \textbf{Comment le résoudre~?} Il faut lire ces colonnes comme du texte, puis faire la conversion soi-même~:
+\begin{enumerate}
+	\item dans les métadonnées de Features, passer \texttt{Date}, \texttt{CPI}, \texttt{Unemployment} et \texttt{MarkDown1} à \texttt{MarkDown5} en \texttt{String}~;
+	\item dans le \texttt{tMap}, convertir chaque colonne numérique en traitant \texttt{NA} comme une valeur absente~:
+\end{enumerate}
+
+\begin{code}[title=\textbf{Expression de la colonne CPI} (sortie Double nullable)]
+row1.CPI.trim().equals("NA") ? null : Double.parseDouble(row1.CPI.trim())
+\end{code}
+
+\noindent La même expression est appliquée à Temperature, Fuel\_Price, Unemployment et aux cinq MarkDown. Le type \texttt{Double} est préféré à \texttt{Float}, qui arrondirait le CPI (\texttt{211.0963582}) à sept chiffres significatifs. Le \texttt{tLogRow} affiche alors les \textbf{8\,190 lignes}. On peut aussi relier la sortie \textit{Rejects} du \texttt{tFileInputDelimited} à un \texttt{tLogRow} pour voir les lignes écartées et le message d'erreur de chaque ligne.
+
+\subsection*{4. Chargement dans PostgreSQL}
+\phantomsection
+\addcontentsline{toc}{subsection}{4. Chargement dans PostgreSQL}
+
+\noindent Dans pgAdmin~4, on crée la base \texttt{Ventes}. Dans Talend, la connexion est créée dans le Référentiel (\textit{Connexions aux bases de données}~$\rightarrow$ \textit{Créer une connexion}, type PostgreSQL), testée, puis exportée en \textbf{contexte}~: hôte, port, base, utilisateur et mot de passe deviennent des variables réutilisables, au lieu d'être écrits dans chaque composant. Dans le job \texttt{Job\_partie2\_ventes}, ce sont les variables \texttt{pg\_host}, \texttt{pg\_port}, \texttt{pg\_base}, \texttt{pg\_schema}, \texttt{pg\_user} et \texttt{pg\_password}, utilisées par les quatre \texttt{tDBOutput}.
+
+\noindent Chaque fichier est chargé par un flux de ce type~:
+
+\begin{center}
+\begin{adjustbox}{max width=\linewidth}
+\begin{tikzpicture}[node distance=0.6cm]
+	\node[cmp=2.8cm] (i) {\texttt{tFileInputDelimited}\\ fichier CSV};
+	\node[cmp, right=of i] (u) {\texttt{tUniqRow}\\ doublons};
+	\node[cmp, right=of u] (m) {\texttt{tMap}\\ dates, \texttt{NA}, filtres};
+	\node[cmp, right=of m, fill=title2!12, draw=title1] (o) {\texttt{tDBOutput}\\ table PostgreSQL};
+	\node[cmp, below=0.6cm of o, fill=red!8, draw=red!60!black] (r) {\texttt{tDBOutput}\\ table de rejets};
+	\draw[flux] (i) -- (u); \draw[flux] (u) -- (m); \draw[flux] (m) -- (o);
+	\draw[flux] (m) |- node[pos=0.75, below, font=\tiny]{lignes rejetées} (r);
+\end{tikzpicture}
+\end{adjustbox}
+\end{center}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\ttfamily}l >{\raggedright\arraybackslash}X r}
+\toprule
+\normalfont\textbf{Table} & \textbf{Traitement dans le job} & \textbf{Lignes attendues} \\
+\midrule
+features & Dates unifiées, \texttt{NA} convertis en \texttt{NULL} & 8\,190 \\
+stores & \texttt{tUniqRow} sur \texttt{Store} & 45 \\
+sales & Filtre \texttt{row1.Weekly\_Sales >= 0} sur la sortie principale & 420\,285 \\
+sales\_rejets & Filtre inverse \texttt{row1.Weekly\_Sales < 0} & 1\,285 \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\noindent Dans chaque \texttt{tDBOutput}, la table est \textit{supprimée si elle existe puis créée}, et les données \textit{insérées}~: le job peut être relancé sans doublons. Le sujet demande de passer la longueur de \texttt{Unemployment} de 5 à 11~: la longueur devinée par l'assistant est trop courte (\texttt{13.975})~; en lisant la colonne comme texte puis en la convertissant en \texttt{Double}, le problème ne se pose plus. Les ventes négatives sont écartées et non supprimées~: ce sont peut-être des retours de marchandise, et seul le client peut le dire. Dans pgAdmin, une requête vérifie les volumes chargés~:
+
+\begin{code}
+SELECT \textquotesingle{}features\textquotesingle{} AS table\_chargee, COUNT(*) FROM features\\
+UNION ALL SELECT \textquotesingle{}stores\textquotesingle{}, COUNT(*) FROM stores\\
+UNION ALL SELECT \textquotesingle{}sales\textquotesingle{}, COUNT(*) FROM sales\\
+UNION ALL SELECT \textquotesingle{}sales\_rejets\textquotesingle{}, COUNT(*) FROM sales\_rejets;
+\end{code}
+
+% =====================================================================
+\newpage
+\section*{Partie 3~: modèle en étoile dans HDFS}
+\phantomsection
+\addcontentsline{toc}{section}{Partie 3~: modèle en étoile dans HDFS}
+
+\subsection*{1. Besoin et analyse des sources}
+\phantomsection
+\addcontentsline{toc}{subsection}{1. Besoin et analyse des sources}
+
+\noindent Le second client veut le \textbf{chiffre d'affaires par produit et par client}, pour organiser ses produits par région, limiter les pertes et récompenser ses meilleurs clients. Il fournit deux fichiers (séparateur point-virgule, encodage ISO-8859-1), liés ligne à ligne par \texttt{Row\_ID}~:
+\begin{itemize}
+	\item \texttt{Customer.csv}~: 9\,800 lignes, une par ligne de commande (client, segment, ville, État, code postal, région)~;
+	\item \texttt{Product.csv}~: 9\,800 lignes (commande, dates de commande et d'expédition, mode de livraison, produit, catégorie, montant \texttt{Sales}).
+\end{itemize}
+
+\noindent L'analyse révèle trois points qui orientent le modèle~:
+\begin{itemize}
+	\item \textbf{2\,163 lignes de Product n'ont pas de montant}. Quand le nom du produit contenait un point-virgule, il a été placé entre guillemets et la colonne \texttt{Sales} a été perdue à l'export (\texttt{"Hon Deluxe Fabric Upholstered Stacking Chairs; Rounded Back"} sans montant). Ces lignes ne peuvent pas entrer dans le calcul du CA~: elles sont écartées et signalées au client~;
+	\item \textbf{un client a plusieurs adresses}~: 779 des 793 clients ont été livrés dans plusieurs villes. La ville n'est donc pas un attribut du client mais du lieu de livraison, d'où une dimension Géographie séparée~;
+	\item \textbf{un code produit peut porter plusieurs noms}~: 1\,861 codes pour 1\,893 couples (code, nom). La dimension Produit reçoit donc une clé de substitution par couple.
+\end{itemize}
+
+\subsection*{2. Schéma décisionnel}
+\phantomsection
+\addcontentsline{toc}{subsection}{2. Schéma décisionnel}
+
+\noindent Les données viennent d'un seul métier, la vente~: un \textbf{modèle en étoile} suffit. Le grain est \textbf{un produit dans une commande}, et la mesure principale est le chiffre d'affaires.
+
+\begin{center}
+\begin{adjustbox}{width=\linewidth}
+\begin{tikzpicture}
+	\node[fait] (F) {\tb{FAIT\_VENTE}{\pk{num\_commande}\\ \pk{\fk{id\_client}}\\ \pk{\fk{id\_produit}}\\ \pk{\fk{id\_date}}\\ \pk{\fk{id\_geo}}\\ \mes{chiffre\_affaires}\\ \mes{delai\_livraison}}};
+	\node[tbl, anchor=south east] (C) at ($(F.west)+(-1.2,0.2)$) {\tb{DIM\_CLIENT}{\pk{id\_client}\\ nom\_client\\ segment}};
+	\node[tbl, anchor=north east] (T) at ($(F.west)+(-1.2,-0.2)$) {\tb{DIM\_TEMPS}{\pk{id\_date}\\ date\\ jour\\ mois\\ trimestre\\ annee}};
+	\node[tbl=3cm, anchor=south west] (P) at ($(F.east)+(1.2,0.2)$) {\tb{DIM\_PRODUIT}{\pk{id\_produit}\\ code\_produit\\ nom\_produit\\ categorie\\ sous\_categorie}};
+	\node[tbl=3cm, anchor=north west] (G) at ($(F.east)+(1.2,-0.2)$) {\tb{DIM\_GEOGRAPHIE}{\pk{id\_geo}\\ ville\\ etat\\ code\_postal\\ region\\ pays}};
+	\foreach \d in {C, T, P, G} \draw[lien] (F) -- (\d);
+\end{tikzpicture}
+\end{adjustbox}
+\legende
+\end{center}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\ttfamily}l >{\raggedright\arraybackslash}X r}
+\toprule
+\normalfont\textbf{Table} & \textbf{Source et clé} & \textbf{Lignes attendues} \\
+\midrule
+dim\_client & Customer\_ID, nom, segment & 793 \\
+dim\_produit & Couples (Product\_ID, nom), clé de substitution & 1\,893 \\
+dim\_geographie & Couples (ville, État, code postal), clé de substitution & 628 \\
+dim\_temps & Dates de commande distinctes, clé \texttt{AAAAMMJJ} & 1\,230 \\
+fait\_vente & Lignes avec un montant, regroupées par commande et par clés & 7\,632 \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\noindent \texttt{num\_commande} est une dimension dégénérée~: il identifie la commande sans avoir de table propre, et fait partie de la clé de la table de faits. Le délai de livraison (date d'expédition moins date de commande, en jours) est une mesure complémentaire, utile pour comparer les modes de livraison.
+
+\subsection*{3. Alimenter les dimensions}
+\phantomsection
+\addcontentsline{toc}{subsection}{3. Alimenter les dimensions}
+
+\noindent Les deux fichiers sont d'abord déclarés en métadonnées (\textit{Fichier délimité}, séparateur \texttt{;}, encodage ISO-8859-1, en-tête d'une ligne). La connexion HDFS pointe sur la machine Cloudera (\texttt{hdfs://quickstart.cloudera:8020}, utilisateur \texttt{cloudera}, distribution Cloudera CDH~5.12)~; ces valeurs sont des variables de contexte, à modifier en un seul endroit si la machine a une autre adresse.
+
+\noindent \texttt{Product.csv} est lu \textbf{sans} l'option CSV~: avec elle, les guillemets jamais refermés de certains noms de produits feraient fusionner plusieurs lignes. Le schéma compte une onzième colonne, \texttt{Sales\_extra}~: quand un point-virgule coupe le nom du produit en deux, le montant glisse dans cette colonne et le \texttt{tMap} va l'y chercher. Un job alimente les quatre dimensions~:
+
+\begin{center}
+\begin{adjustbox}{max width=\linewidth}
+\begin{tikzpicture}[node distance=0.55cm]
+	\node[cmp=2.8cm] (c) {\texttt{tFileInputDelimited}\\ Customer};
+	\node[cmp=2.8cm, below=1.7cm of c] (p) {\texttt{tFileInputDelimited}\\ Product};
+	\node[cmp, right=of c, yshift=0.75cm] (m1) {\texttt{tMap}\\ colonnes client};
+	\node[cmp, right=of c, yshift=-0.75cm] (m2) {\texttt{tMap}\\ colonnes lieu};
+	\node[cmp, right=of p, yshift=0.75cm] (m3) {\texttt{tMap}\\ colonnes produit};
+	\node[cmp, right=of p, yshift=-0.75cm] (m4) {\texttt{tMap}\\ jour, mois, année};
+	\foreach \i in {1,2,3,4} {
+		\node[cmp, right=of m\i] (a\i) {\texttt{tAggregateRow}\\ valeurs distinctes};
+		\node[cmp, right=of a\i, fill=title2!12, draw=title1] (h\i) {\texttt{tHDFSOutput}};
+		\draw[flux] (m\i) -- (a\i); \draw[flux] (a\i) -- (h\i);
+	}
+	\draw[flux] (c) -- (m1.west); \draw[flux] (c) -- (m2.west);
+	\draw[flux] (p) -- (m3.west); \draw[flux] (p) -- (m4.west);
+	\node[right=0.1cm of h1, font=\scriptsize] {dim\_client};
+	\node[right=0.1cm of h2, font=\scriptsize] {dim\_geographie};
+	\node[right=0.1cm of h3, font=\scriptsize] {dim\_produit};
+	\node[right=0.1cm of h4, font=\scriptsize] {dim\_temps};
+\end{tikzpicture}
+\end{adjustbox}
+\end{center}
+
+\noindent Chaque \texttt{tAggregateRow} regroupe sur les colonnes de la dimension (sans opération)~: il ne garde qu'une ligne par valeur distincte. Un second \texttt{tMap} après l'agrégation ajoute la clé de substitution avec \texttt{Numeric.sequence("geo", 1, 1)} (une séquence par dimension). La dimension Temps se calcule à partir de \texttt{Order\_Date}, lue comme une date de motif \texttt{dd/MM/yyyy}~:
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\ttfamily}l >{\ttfamily\raggedright\arraybackslash}X}
+\toprule
+\normalfont\textbf{Colonne} & \normalfont\textbf{Expression du tMap} \\
+\midrule
+id\_date & Integer.parseInt(TalendDate.formatDate("yyyyMMdd", row1.Order\_Date)) \\
+jour & Integer.parseInt(TalendDate.formatDate("dd", row1.Order\_Date)) \\
+mois & Integer.parseInt(TalendDate.formatDate("MM", row1.Order\_Date)) \\
+trimestre & (Integer.parseInt(TalendDate.formatDate("MM", row1.Order\_Date)) - 1) / 3 + 1 \\
+annee & Integer.parseInt(TalendDate.formatDate("yyyy", row1.Order\_Date)) \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\noindent Chaque \texttt{tHDFSOutput} écrit un fichier dans \texttt{/user/cloudera/datalake/} (séparateur \texttt{;}, avec en-tête). Pour pouvoir relancer le job, l'action passe de \textit{Créer} à \textit{Écraser}~: sinon la deuxième exécution échoue car le fichier existe déjà.
+
+\subsection*{4. Créer la table de faits}
+\phantomsection
+\addcontentsline{toc}{subsection}{4. Créer la table de faits}
+
+\noindent Une fois les dimensions écrites, un second job construit la table de faits. Il relit les dimensions depuis HDFS pour retrouver leurs clés de substitution~:
+
+\begin{center}
+\begin{adjustbox}{max width=\linewidth}
+\begin{tikzpicture}[node distance=0.6cm]
+	\node[cmp=2.8cm] (p) {\texttt{tFileInputDelimited}\\ Product (principal)};
+	\node[cmp, right=1.1cm of p] (m) {\texttt{tMap}\\ jointures, CA, délai};
+	\node[cmp, above=0.5cm of m, fill=gray!8, draw=gray, text width=4.2cm] (l) {\texttt{tFileInputDelimited} Customer\\ \texttt{tHDFSInput} dim\_produit, dim\_geo};
+	\node[cmp, right=1.1cm of m] (a) {\texttt{tAggregateRow}\\ somme du CA};
+	\node[cmp, right=of a, fill=title2!12, draw=title1] (h) {\texttt{tHDFSOutput}\\ fait\_vente};
+	\node[cmp, below=0.5cm of m, fill=red!8, draw=red!60!black] (r) {\texttt{tFileOutput\-Delimited}\\ lignes sans montant};
+	\draw[flux] (p) -- (m); \draw[flux, dashed] (l) -- node[right, font=\tiny]{lookups} (m);
+	\draw[flux] (m) -- (a); \draw[flux] (a) -- (h); \draw[flux] (m) -- (r);
+\end{tikzpicture}
+\end{adjustbox}
+\end{center}
+
+\begin{itemize}
+	\item \textbf{Jointure client}~: Customer est joint à Product sur \texttt{Row\_ID}~; on récupère \texttt{Customer\_ID} et le lieu de livraison.
+	\item \textbf{Clés de substitution}~: \texttt{id\_produit} est trouvé dans \texttt{dim\_produit} sur le couple (code, nom), \texttt{id\_geo} dans \texttt{dim\_geographie} sur (ville, État, code postal). Les jointures sont en mode \textit{Inner Join}, avec une sortie de rejet pour les lignes sans correspondance.
+	\item \textbf{Mesures}~: \texttt{chiffre\_affaires} reprend \texttt{Sales} s'il est numérique, sinon \texttt{Sales\_extra}, sinon \texttt{null} (variable \texttt{Var.ca} du \texttt{tMap})~; \texttt{delai\_livraison} vaut \texttt{TalendDate.diffDate(row1.Ship\_Date, row1.Order\_Date)}.
+	\item \textbf{Filtre}~: la sortie principale ne garde que \texttt{Var.ca != null}~; les 2\,163 lignes sans montant partent dans \texttt{C:/Talend/WS2/sorties/lignes\_sans\_montant.csv}.
+\end{itemize}
+
+\noindent Le \texttt{tAggregateRow} regroupe sur la commande et les quatre clés, fait la somme du chiffre d'affaires et prend le maximum du délai. Cinq commandes contiennent deux fois le même produit pour le même client et le même lieu~: leurs lignes sont fusionnées, et le fichier \texttt{fait\_vente} contient \textbf{7\,632 lignes} pour les 7\,637 lignes avec montant.
+
+\subsection*{5. Vérification dans Cloudera}
+\phantomsection
+\addcontentsline{toc}{subsection}{5. Vérification dans Cloudera}
+
+\noindent Dans la machine Cloudera, les fichiers se vérifient en ligne de commande (le sujet écrit \texttt{dhfs}, la commande est bien \texttt{hdfs})~:
+
+\begin{code}
+hdfs dfs -ls /user/cloudera/datalake/\\
+hdfs dfs -cat /user/cloudera/datalake/fait\_vente.csv | head -5\\
+hdfs dfs -cat /user/cloudera/datalake/dim\_client.csv | wc -l\hspace*{3em}\# 794 avec l\textquotesingle{}en-tête
+\end{code}
+
+\noindent On peut aussi les parcourir dans \textbf{Hue} (\textit{Navigateur de fichiers}). Pour répondre directement à la demande du client, on déclare les fichiers comme tables Hive externes (sans en-tête grâce à \texttt{skip.header.line.count}), puis on interroge l'étoile~:
+
+\begin{code}[title=\textbf{CA par région et par catégorie}]
+SELECT g.region, p.categorie, ROUND(SUM(f.chiffre\_affaires), 2) AS ca\\
+FROM fait\_vente f\\
+JOIN dim\_geographie g ON g.id\_geo = f.id\_geo\\
+JOIN dim\_produit \hspace*{0.6em}p ON p.id\_produit = f.id\_produit\\
+GROUP BY g.region, p.categorie\\
+ORDER BY ca DESC;
+\end{code}
+
+\needspace{16\baselineskip}
+\noindent Les valeurs attendues, calculées sur les 7\,637 lignes avec montant, servent à contrôler le chargement~:
+
+\begin{center}
+\small
+\begin{tabular}{l r @{\hspace{1.2cm}} l r}
+\toprule
+\textbf{Région} & \textbf{CA} & \textbf{Catégorie} & \textbf{CA} \\
+\midrule
+West & 599\,187,75 & Technology & 799\,304,53 \\
+East & 538\,805,83 & Office Supplies & 579\,028,41 \\
+Central & 408\,773,37 & Furniture & 507\,209,06 \\
+South & 338\,775,06 & & \\
+\midrule
+\textbf{Total} & \textbf{1\,885\,542,01} & \textbf{Total} & \textbf{1\,885\,542,01} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent Les trois meilleurs clients, à récompenser en priorité, sont Sean Miller (24\,257,63), Tamara Chand (19\,017,85) et Raymond Buch (15\,117,34). Ces montants sont calculés hors des 2\,163 lignes sans montant~: le CA réel du client est donc plus élevé, et il faut lui demander un nouvel export de \texttt{Product.csv} pour le compléter.
+
+% =====================================================================
+\newpage
+\section*{Conclusion}
+\phantomsection
+\addcontentsline{toc}{section}{Conclusion}
+
+\noindent Ce workshop a couvert la chaîne ETL complète avec Talend~:
+\begin{enumerate}
+	\item \textbf{extraire}~: lire des fichiers délimités en précisant séparateur, encodage et types, en sachant que les types devinés par l'assistant peuvent faire perdre des lignes sans erreur visible~;
+	\item \textbf{transformer}~: unifier les dates, convertir les valeurs \texttt{NA}, supprimer les doublons, écarter les lignes erronées vers des rejets plutôt que de les supprimer~;
+	\item \textbf{charger}~: vers des fichiers Excel et XML, dans une base PostgreSQL, puis dans un Data Lake HDFS sous la forme d'un modèle en étoile (dimensions d'abord, faits ensuite).
+\end{enumerate}
+
+\noindent Le \texttt{tMap} est le composant central~: il réunit la transformation, le filtrage, les jointures et la répartition des lignes. Dans les deux jeux de données réels, l'analyse préalable a été décisive~: une date mal formée, des valeurs \texttt{NA} ou un point-virgule dans un nom de produit suffisent à fausser les volumes chargés. Contrôler le nombre de lignes à chaque étape est le seul moyen de s'en apercevoir.
