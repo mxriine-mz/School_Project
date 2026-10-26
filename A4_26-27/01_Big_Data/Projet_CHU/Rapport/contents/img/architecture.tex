@@ -1,0 +1,106 @@
+% Schéma de l'architecture cible : sources -> Talend -> HDFS -> Hive -> Power BI
+\begin{tikzpicture}[
+    font=\sffamily,
+    bloc/.style={draw=tabbordure, fill=tabentete!30, rounded corners=6pt, line width=0.9pt},
+    etape/.style={draw=tabbordure, fill=white, rounded corners=4pt, line width=0.7pt},
+    titre/.style={font=\sffamily\bfseries\small, text=archbleu},
+    legende/.style={font=\sffamily\scriptsize, text=archgris, align=center},
+    fleche/.style={-{Stealth[length=6pt,width=6pt]}, line width=1.6pt, draw=archbleu!70},
+    icone/.style={text=archbleu},
+]
+
+% --- Sources ---
+\draw[bloc] (0,0.4) rectangle (2.7,5.6);
+\node[titre] at (1.35,5.2) {Sources};
+\node[icone] at (1.35,4.35) {\fontsize{22}{22}\selectfont\faFileCsv};
+\node[legende] at (1.35,3.65) {Établissements};
+\node at (1.35,2.85) {\includegraphics[height=0.85cm]{contents/img/logos/postgresql.pdf}};
+\node[legende] at (1.35,2.15) {Base de soins};
+\node[icone] at (1.35,1.5) {\fontsize{20}{20}\selectfont\faServer};
+\node[legende] at (1.35,0.7) {FTP~: satisfaction\\décès};
+
+% --- Talend (extraction et transformation) ---
+\draw[bloc] (3.5,0.4) rectangle (10.7,5.6);
+\node at (6.6,5.05) {\includegraphics[height=0.55cm]{contents/img/logos/talend.pdf}};
+\node[titre, anchor=west] at (7.0,5.05) {Talend};
+\draw[etape] (3.9,0.8) rectangle (6.7,4.4);
+\node[icone] at (5.3,3.0) {\fontsize{26}{26}\selectfont\faDatabase};
+\node[titre] at (5.3,1.35) {Extraire};
+\draw[etape] (7.5,0.8) rectangle (10.3,4.4);
+\node[icone] at (8.9,3.0) {\fontsize{26}{26}\selectfont\faCogs};
+\node[titre] at (8.9,1.35) {Transformer};
+
+% --- HDFS (chargement) ---
+\draw[bloc] (11.5,0.4) rectangle (16,5.6);
+\node at (12.95,5.05) {\includegraphics[height=0.75cm]{contents/img/logos/hadoop.pdf}};
+\node[titre, anchor=west] at (13.5,5.05) {HDFS};
+\draw[etape] (11.9,0.8) rectangle (15.6,4.4);
+\node[icone] at (13.75,3.0) {\fontsize{26}{26}\selectfont\faCloudUpload*};
+\node[titre] at (13.75,1.35) {Chargement};
+
+% --- Hive (magasin de données analytiques) ---
+\draw[bloc] (11.5,-5.4) rectangle (16,-1.0);
+\node at (13.15,-1.45) {\includegraphics[height=0.6cm]{contents/img/logos/hive.pdf}};
+\node[titre, anchor=west] at (13.5,-1.45) {Hive};
+\node[legende] at (13.75,-1.95) {Magasin de données analytiques};
+\begin{scope}[shift={(13.75,0)}]
+  \def\rx{1.65}\def\ry{0.3}\def\haut{-2.5}\def\bas{-4.95}
+  % corps du cylindre
+  \path[top color=archbleu!8, bottom color=archbleu!22]
+    (-\rx,\haut) -- (-\rx,\bas) arc[start angle=180, end angle=360, x radius=\rx, y radius=\ry]
+    -- (\rx,\haut) arc[start angle=0, end angle=180, x radius=\rx, y radius=\ry] -- cycle;
+  % anneaux de séparation
+  \foreach \y in {-3.32,-4.14}
+    \draw[archbleu!45, line width=0.7pt] (-\rx,\y) arc[start angle=180, end angle=360, x radius=\rx, y radius=\ry];
+  % contour
+  \draw[archbleu!70, line width=0.9pt]
+    (-\rx,\haut) -- (-\rx,\bas) arc[start angle=180, end angle=360, x radius=\rx, y radius=\ry] -- (\rx,\haut);
+  % couvercle
+  \draw[archbleu!70, fill=archbleu!28, line width=0.9pt] (0,\haut) ellipse[x radius=\rx, y radius=\ry];
+  % textes posés sur la courbe des anneaux
+  \path[decorate, decoration={text along path, text align=center,
+        text={|\sffamily\bfseries\small\color{archbleu}|Data Warehouse}}]
+    (0,-3.02) ++(180:\rx and \ry) arc[start angle=180, end angle=360, x radius=\rx, y radius=\ry];
+  \node[icone] at (0,-3.98) {\fontsize{16}{16}\selectfont\faTable};
+  \path[decorate, decoration={text along path, text align=center,
+        text={|\sffamily\scriptsize\color{archgris}|4 faits, 6 dimensions}}]
+    (0,-4.62) ++(180:\rx and \ry) arc[start angle=180, end angle=360, x radius=\rx, y radius=\ry];
+\end{scope}
+
+% --- Power BI (analyse et visualisation) ---
+\draw[bloc] (6.3,-5.4) rectangle (10.7,-1.0);
+\node[titre] at (8.5,-1.45) {Power BI};
+\node[legende] at (8.5,-1.95) {Analyse et visualisation};
+\node at (8.5,-3.55) {\includegraphics[height=1.5cm]{contents/img/logos/powerbi.pdf}};
+
+% --- Tableau de bord ---
+\begin{scope}[shift={(0.2,-5.0)}]
+  \draw[draw=archbleu, fill=white, rounded corners=5pt, line width=1.0pt] (0,0) rectangle (5.0,3.6);
+  \fill[archbleu, rounded corners=5pt] (0,3.1) rectangle (5.0,3.6);
+  \fill[archbleu] (0,3.1) rectangle (5.0,3.3);
+  \foreach \x/\c in {0.3/white, 0.55/white, 0.8/white} \fill[\c] (\x,3.35) circle (0.08);
+  % camembert
+  \fill[archbleu!20] (1.15,2.15) circle (0.7);
+  \fill[archbleu!80] (1.15,2.15) -- (1.15,2.85) arc (90:-30:0.7) -- cycle;
+  % lignes de texte
+  \foreach \y in {2.6,2.3,2.0} \fill[archgris!50, rounded corners=1pt] (2.3,\y) rectangle (4.6,\y+0.12);
+  % histogramme
+  \draw[archgris!60, line width=0.6pt] (2.3,0.35) rectangle (4.7,1.7);
+  \foreach \x/\h/\c in {2.55/0.55/archbleu!35, 3.0/0.9/archbleu!55, 3.45/0.7/archbleu!45, 3.9/1.15/archbleu!85, 4.35/0.8/archbleu!65}
+    \fill[\c] (\x-0.13,0.45) rectangle (\x+0.13,0.45+\h);
+  % liste
+  \foreach \y in {1.25,0.85,0.45} {
+    \fill[archbleu!50, rounded corners=1pt] (0.35,\y) rectangle (0.55,\y+0.2);
+    \fill[archgris!50, rounded corners=1pt] (0.7,\y+0.04) rectangle (1.9,\y+0.16);
+  }
+\end{scope}
+\node[titre] at (2.7,-5.75) {Tableaux de bord};
+
+% --- Flux ---
+\draw[fleche] (2.7,3.0) -- (3.9,3.0);
+\draw[fleche] (6.7,2.6) -- (7.5,2.6);
+\draw[fleche] (10.3,2.6) -- (11.9,2.6);
+\draw[fleche] (13.75,0.8) -- (13.75,-1.0);
+\draw[fleche] (11.5,-3.2) -- (10.7,-3.2);
+\draw[fleche] (6.3,-3.2) -- (5.2,-3.2);
+\end{tikzpicture}

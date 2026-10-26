@@ -24,7 +24,7 @@
 
 \vspace{0.2cm}
 
-\noindent Ce premier livrable pose le \textbf{référentiel de données} et l'\textbf{architecture} de la solution. Il présente le modèle conceptuel et logique du schéma décisionnel avec son dictionnaire de données, l'architecture cible en couches Bronze, Silver et Gold avec les technologies retenues, les spécifications fonctionnelles des jobs ETL et le plan de gouvernance des données.
+\noindent Ce premier livrable pose le \textbf{référentiel de données} et l'\textbf{architecture} de la solution. Il présente le modèle conceptuel et logique du schéma décisionnel avec son dictionnaire de données, l'architecture cible de l'entrepôt avec les technologies retenues, les spécifications fonctionnelles des jobs ETL et le plan de gouvernance des données.
 
 % --- MODELISATION ---
 \newpage
@@ -432,31 +432,121 @@ Type\_\allowbreak Zone & VARCHAR(10) &  & Non & Métropole, DROM, COM, Étranger
 
 % --- ARCHITECTURE ---
 \newpage
-\section{Architecture cible}
+\section{Architecture cible}\label{sec:architecture}
 
-\noindent L'architecture doit répondre à trois exigences~: intégrer des sources hétérogènes, protéger des données de santé et suivre la hausse des volumes. Elle repose sur un \textbf{Lakehouse}, qui associe le stockage économique d'un Data Lake à la structure et aux performances d'un entrepôt de données.
+\noindent L'architecture doit répondre à trois exigences~: intégrer des sources hétérogènes, protéger des données de santé et suivre la hausse des volumes. Elle repose sur un \textbf{entrepôt de données} (\textit{Data Warehouse})~: une base unique, historisée et structurée selon le modèle dimensionnel de la partie~\ref{sec:modele}, conçue pour l'analyse et non pour la gestion quotidienne des soins.
 
 \vspace{0.2cm}
 
-\noindent Les données traversent trois couches successives, \textbf{Bronze}, \textbf{Silver} et \textbf{Gold}, qui les font passer de l'état brut à l'état prêt pour l'analyse. Cette partie décrit le rôle de chaque couche, le parcours des données depuis les sources jusqu'au tableau de bord, puis les technologies retenues et les raisons de ces choix.
+\noindent Les données passent par une \textbf{zone de transit}, où elles sont déposées telles qu'elles arrivent des sources, avant d'être nettoyées et chargées dans l'entrepôt. Cette partie décrit le rôle de chaque zone, le parcours des données depuis les sources jusqu'au tableau de bord, puis les technologies retenues et les raisons de ces choix.
 
-\subsection{Couches Bronze, Silver et Gold}
+\vspace{0.2cm}
 
-\subsection{Flux de données de bout en bout}
+\noindent La figure 3 présente l'architecture retenue.
 
-\subsection{Technologies retenues et justification}
+\begin{center}
+\resizebox{0.8\textwidth}{!}{\input{contents/img/architecture.tex}}
+\legende{Figure~3 -- Architecture cible de l'entrepôt du CHU}
+\end{center}
 
-\subsubsection*{ETL}
+\noindent L’architecture choisie se décompose en quatre parties clés, chacune essentielle pour le traitement et le stockage des données~:
 
-\subsubsection*{Stockage}
+\vspace{0.2cm}
 
-\subsubsection*{BI}
+\noindent — \textbf{La source des données~:} elle regroupe l’ensemble des informations collectées. Ces données peuvent provenir de différentes sources et formats, comme des fichiers Excel, CSV, ou encore de bases de données relationnelles (MySQL, PostgreSQL, etc.).
+
+\vspace{0.2cm}
+
+\noindent — \textbf{L’extraction, la transformation et le chargement (ETL)~:} cette étape est réalisée à l’aide de l’outil Talend et permet de préparer les données pour l’analyse. Les données sont nettoyées, standardisées et intégrées dans l’environnement HDFS.
+
+\vspace{0.2cm}
+
+\noindent — \textbf{Le magasin de données analytiques~:} les données sont stockées dans un environnement dit distribué, permettant de répartir la charge sur plusieurs machines plutôt que sur une seule. Une fois stockées, les données sont structurées pour alimenter le Data Warehouse et peuvent être interrogées à l’aide de Hive.
+
+\vspace{0.2cm}
+
+\noindent — \textbf{Analyse et visualisation~:} il est ensuite possible d'exploiter ces données à l’aide de Power BI pour concevoir des tableaux de bord (\textit{dashboards}) permettant de mettre en lumière des tendances (\textit{insights}) ou même des alertes en cas de traitement en continu. Cette brique offre à l’utilisateur une vision claire des informations importantes grâce à des tableaux, des courbes ou des graphiques sur les données traitées.
+
+\subsection{Zones de stockage}\label{sec:zones}
+
+\noindent Le stockage est découpé en deux zones de HDFS, chacune avec ses droits d'accès. Les données ne sont jamais modifiées dans la zone de transit~: l'entrepôt est produit à partir d'elle par les jobs Talend, ce qui permet de rejouer un chargement en cas d'erreur sans retourner aux sources.
+
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.16\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.28\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.30\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.26\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Zone} & \textbf{Contenu} & \textbf{Traitements appliqués} & \textbf{Format et accès} \\ \hline
+\textbf{Zone de transit} (\textit{staging}) & Copie fidèle des sources~: extractions PostgreSQL, CSV des établissements, fichiers de satisfaction et de décès & Aucune transformation~; ajout de la date de chargement et du nom de la source & Format d'origine (CSV, JSON), un dossier par source et par date de chargement~; accès réservé à l'équipe d'ingénierie \\ \hline
+\textbf{Entrepôt de données} & Constellation décrite en partie~\ref{sec:modele}~: quatre tables de faits et six dimensions & Contrôle des types, harmonisation des codes (INSEE, FINESS), suppression des doublons, rejet des lignes invalides, pseudonymisation des patients, calcul des clés de substitution et des mesures & Tables Hive au format ORC, faits partitionnés par année~; seule zone ouverte à Power BI \\ \hline
+\end{tableau}
+
+\noindent Les lignes rejetées lors du chargement sont écrites dans une zone de rejets, à part, pour être analysées puis corrigées. Les données identifiantes (nom, prénom, numéro de sécurité sociale, coordonnées) ne dépassent pas la zone de transit~: dans l'entrepôt, chaque patient n'est connu que par un identifiant pseudonyme.
+
+\subsection{Flux de données de bout en bout}\label{sec:flux}
+
+\noindent Le traitement est réalisé par lots (\textit{batch}). Les indicateurs du CHU portent sur des périodes (mois, trimestre, année)~: une actualisation quotidienne suffit et ne justifie pas le coût d'un traitement en continu. Le parcours d'une donnée suit quatre étapes~:
+\begin{enumerate}
+	\item \textbf{Collecte}~: Talend lit la base PostgreSQL par requêtes SQL (extraction incrémentale sur la date de modification) et récupère les fichiers déposés sur le serveur FTP~;
+	\item \textbf{Dépôt en zone de transit}~: les données sont écrites telles quelles dans HDFS, dans un dossier daté~;
+	\item \textbf{Transformation et chargement dans l'entrepôt}~: les règles de qualité sont appliquées et les patients sont pseudonymisés~; les dimensions sont chargées en premier, puis les faits, qui reçoivent les clés de substitution des dimensions~;
+	\item \textbf{Restitution}~: Power BI actualise ses jeux de données à partir des tables de l'entrepôt et met à jour les tableaux de bord.
+\end{enumerate}
+
+\noindent Le tableau suivant résume le parcours de chaque source.
+
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.22\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.20\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.20\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.38\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Source} & \textbf{Format} & \textbf{Acquisition} & \textbf{Tables alimentées} \\ \hline
+Base opérationnelle de soins & PostgreSQL & Connexion JDBC, extraction incrémentale & FAIT\_\allowbreak CONSULTATION, FAIT\_\allowbreak HOSPITALISATION, DIM\_\allowbreak Patient, DIM\_\allowbreak Diagnostic, DIM\_\allowbreak Professionnel \\ \hline
+Référentiel des établissements & CSV & Fichier déposé, chargement complet & DIM\_\allowbreak Etablissement \\ \hline
+Enquêtes de satisfaction & Fichiers plats (CSV ou JSON) & Serveur FTP & FAIT\_\allowbreak SATISFACTION \\ \hline
+Fichier des décès (INSEE) & Fichiers plats (CSV) & Serveur FTP & FAIT\_\allowbreak DECES, DIM\_\allowbreak Region\_\allowbreak INSEE \\ \hline
+\end{tableau}
+
+\noindent DIM\_Temps n'a pas de source~: elle est générée une seule fois par un job Talend, avec un jour par ligne sur toute la période couverte par les données.
+
+\subsection{Technologies retenues et justification}\label{sec:technologies}
+
+\subsubsection*{Pourquoi avoir choisi ces outils~?}
+
+\begin{itemize}
+	\item \textbf{Talend~:} Il a été choisi pour son rôle de chef d'orchestre des flux de données. Notre architecture repose sur un processus ETL (Extraire, Transformer, Charger), que Talend permet de mettre en œuvre facilement. Pour des données de santé, certaines étapes sont indispensables. Talend permet de se connecter à n'importe quel type de source sans avoir à coder des scripts manuels. Il gère également le nettoyage indispensable des données de santé (dates, lieux, motifs de consultation, etc.) tout en automatisant le chargement de ces données vers l'environnement Big Data.
+	\item \textbf{HDFS (Hadoop Distributed File System)~:} Le volume important des données nous a poussés à utiliser HDFS pour encaisser cette volumétrie. De plus, sa flexibilité à stocker des données provenant de n'importe quelle source constitue un atout majeur pour notre projet.
+	\item \textbf{Le Data Warehouse~:} Nous nous sommes tournés vers un entrepôt de données pour structurer notre architecture. Cela nous paraissait essentiel au vu de la finalité du projet~: analyser ces données à des fins décisionnelles. L'objectif est de produire des rapports et des tableaux de bord pour aider les utilisateurs (soignants et direction) à prendre des décisions dans les meilleures conditions.
+	\item \textbf{Hive~:} Pour mettre en forme ces données dans le Data Warehouse, nous avons utilisé Hive. Il nous permet de poser une couche relationnelle sur les fichiers stockés dans HDFS, afin de pouvoir interroger facilement les données en SQL.
+	\item \textbf{Power BI~:} C'est le dernier outil de notre chaîne. Il permet de se connecter facilement aux tables structurées de Hive pour interroger les données et générer des rapports lisibles ainsi que des graphiques adaptés à l'aide à la décision.
+\end{itemize}
+
+\subsubsection*{Alternatives écartées}
+
+\noindent Chaque outil a été comparé à au moins une alternative~:
+\begin{itemize}
+	\item \textbf{Apache NiFi} est adapté à l'acheminement de flux en continu, mais il est moins riche pour les transformations complexes. \textbf{dbt} ne transforme que des données déjà chargées dans l'entrepôt et ne gère pas l'extraction. Talend couvre seul les trois étapes de l'ETL~;
+	\item un SGBD relationnel comme \textbf{PostgreSQL} serait plus simple à administrer, mais il passe moins bien à l'échelle sur de gros volumes historiques. \textbf{BigQuery} supprimerait l'administration du cluster, mais il impose un hébergement cloud qui doit être certifié HDS et une facturation à la requête difficile à prévoir. Le couple HDFS et Hive peut être déployé chez un hébergeur certifié HDS et garde les données sous le contrôle du CHU~;
+	\item \textbf{Metabase} et \textbf{Apache Superset} sont gratuits, mais ils offrent moins de visuels et une gestion des droits moins fine que Power BI, qui permet par exemple de limiter un utilisateur aux données de son établissement.
+\end{itemize}
+
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.14\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.18\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.22\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.46\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Brique} & \textbf{Outil retenu} & \textbf{Alternatives écartées} & \textbf{Raison principale du choix} \\ \hline
+ETL & Talend & Apache NiFi, dbt & Couvre l'extraction, la transformation et le chargement, avec des connecteurs natifs vers PostgreSQL, FTP, HDFS et Hive \\ \hline
+Stockage & HDFS & PostgreSQL & Stockage distribué, extensible par ajout de nœuds, qui accepte tous les formats \\ \hline
+Entrepôt & Hive & PostgreSQL, BigQuery & Requêtes SQL sur HDFS, partitionnement et format colonne~; déployable chez un hébergeur HDS \\ \hline
+BI & Power BI & Metabase, Superset & Visuels riches, cartes, sécurité par ligne et prise en main rapide \\ \hline
+\end{tableau}
+
+\subsection*{En résumé}
+
+\noindent L'architecture cible est un \textbf{entrepôt de données} bâti sur l'écosystème Hadoop~:
+\begin{itemize}
+	\item \textbf{Talend} collecte les quatre sources et enchaîne les traitements par lots, une fois par jour~;
+	\item \textbf{HDFS} stocke les données en deux zones~: la \textbf{zone de transit}, copie brute des sources, et l'\textbf{entrepôt}, qui contient la constellation dimensionnelle~;
+	\item \textbf{Hive} expose l'entrepôt en SQL, avec des tables partitionnées au format colonne~;
+	\item \textbf{Power BI} restitue les indicateurs aux praticiens et à la direction à partir des seules tables de l'entrepôt.
+\end{itemize}
+
+\noindent Les données identifiantes restent confinées dans la zone de transit, et l'ensemble peut être hébergé chez un prestataire certifié HDS. Les règles détaillées des jobs Talend sont spécifiées dans la partie suivante.
 
 % --- ETL ---
 \newpage
 \section{Spécifications fonctionnelles des jobs ETL}
 
-\noindent Les jobs ETL (\textit{Extract, Transform, Load}) alimentent l'entrepôt~: ils extraient les données des sources, les transforment pour respecter le modèle cible, puis les chargent dans les couches du Lakehouse. Ce sont eux qui garantissent la qualité des données mises à disposition des utilisateurs.
+\noindent Les jobs ETL (\textit{Extract, Transform, Load}) alimentent l'entrepôt~: ils extraient les données des sources, les transforment pour respecter le modèle cible, puis les chargent dans l'entrepôt. Ce sont eux qui garantissent la qualité des données mises à disposition des utilisateurs.
 
 \vspace{0.2cm}
 
