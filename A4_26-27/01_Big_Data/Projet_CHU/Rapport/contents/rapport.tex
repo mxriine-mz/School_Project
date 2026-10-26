@@ -493,8 +493,9 @@ Type\_\allowbreak Zone & VARCHAR(10) &  & Non & Métropole, DROM, COM, Étranger
 
 \begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.22\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.20\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.20\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.38\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
 \rowcolor{tabentete}\textbf{Source} & \textbf{Format} & \textbf{Acquisition} & \textbf{Tables alimentées} \\ \hline
-Base opérationnelle de soins & PostgreSQL & Connexion JDBC, extraction incrémentale & FAIT\_\allowbreak CONSULTATION, FAIT\_\allowbreak HOSPITALISATION, DIM\_\allowbreak Patient, DIM\_\allowbreak Diagnostic, DIM\_\allowbreak Professionnel \\ \hline
+Base opérationnelle de soins & PostgreSQL & Connexion JDBC, extraction incrémentale & FAIT\_\allowbreak CONSULTATION, DIM\_\allowbreak Patient, DIM\_\allowbreak Diagnostic, DIM\_\allowbreak Professionnel \\ \hline
 Référentiel des établissements & CSV & Fichier déposé, chargement complet & DIM\_\allowbreak Etablissement \\ \hline
+Hospitalisations & CSV & Fichier déposé, chargement incrémental & FAIT\_\allowbreak HOSPITALISATION \\ \hline
 Enquêtes de satisfaction & Fichiers plats (CSV ou JSON) & Serveur FTP & FAIT\_\allowbreak SATISFACTION \\ \hline
 Fichier des décès (INSEE) & Fichiers plats (CSV) & Serveur FTP & FAIT\_\allowbreak DECES, DIM\_\allowbreak Region\_\allowbreak INSEE \\ \hline
 \end{tableau}
@@ -544,23 +545,127 @@ BI & Power BI & Metabase, Superset & Visuels riches, cartes, sécurité par lign
 
 % --- ETL ---
 \newpage
-\section{Spécifications fonctionnelles des jobs ETL}
+\section{Spécifications fonctionnelles des jobs ETL}\label{sec:etl}
 
 \noindent Les jobs ETL (\textit{Extract, Transform, Load}) alimentent l'entrepôt~: ils extraient les données des sources, les transforment pour respecter le modèle cible, puis les chargent dans l'entrepôt. Ce sont eux qui garantissent la qualité des données mises à disposition des utilisateurs.
 
 \vspace{0.2cm}
 
-\noindent Cette partie spécifie leur comportement attendu, indépendamment de l'outil qui les exécutera. Pour chaque source, elle précise les règles de transformation, le traitement des valeurs nulles et des doublons, la gestion des erreurs et des lignes rejetées, ainsi que la fréquence d'exécution.
+\noindent Cette partie spécifie leur comportement attendu. Pour chaque source, elle précise les règles de transformation, le traitement des valeurs nulles et des doublons, la gestion des erreurs et des lignes rejetées, ainsi que la fréquence d'exécution.
 
-\subsection{Sources}
+\noindent Les jobs sont développés dans \textbf{Talend Open Studio for Big Data} (version 7.3). Chaque table de l'entrepôt est alimentée par un job dédié~; un job maître les enchaîne dans l'ordre imposé par les clés étrangères. La dimension DIM\_Region\_INSEE est alimentée par le Code officiel géographique de l'INSEE, qui sert aussi de table de correspondance pour les lieux de décès et de naissance.
 
-\subsection{Règles de transformation}
+\subsection{Sources}\label{sec:etl-sources}
 
-\subsection{Valeurs nulles et doublons}
+\noindent Les sources ont été profilées avant la rédaction des règles~: les volumes, taux de remplissage et taux de rapprochement cités dans cette partie proviennent de ce profilage. La base opérationnelle est lue directement dans PostgreSQL~; les fichiers sont d'abord copiés tels quels dans la zone de transit de HDFS (partie~\ref{sec:zones}), puis lus depuis cette zone.
 
-\subsection{Erreurs et rejets}
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.13\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.25\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.20\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.16\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.26\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Job} & \textbf{Source} & \textbf{Format et lecture} & \textbf{Volume} & \textbf{Table alimentée} \\ \hline
+J01 & Aucune (calendrier généré) & tRowGenerator & 1 ligne par jour & DIM\_\allowbreak Temps \\ \hline
+J02 & etablissement\_\allowbreak sante.csv & CSV «~;~», UTF-8, tFileInputDelimited & 416\,665 lignes & DIM\_\allowbreak Etablissement \\ \hline
+J03 & Tables Professionnel\_\allowbreak de\_\allowbreak sante et Specialites (PostgreSQL), professionnel\_\allowbreak sante.csv & tPostgresqlInput, tFileInputDelimited & 1\,048\,575 professionnels & DIM\_\allowbreak Professionnel \\ \hline
+J04 & Table Diagnostic (PostgreSQL) & tPostgresqlInput & 15\,492 codes & DIM\_\allowbreak Diagnostic \\ \hline
+J05 & Table Patient (PostgreSQL) & tPostgresqlInput & 100\,000 patients & DIM\_\allowbreak Patient \\ \hline
+J06 & Code officiel géographique de l'INSEE (communes\_\allowbreak insee.csv) & CSV «~,~», UTF-8, tFileInputDelimited & 39\,521 codes & DIM\_\allowbreak Region\_\allowbreak INSEE \\ \hline
+J07 & Table Consultation (PostgreSQL), activite\_\allowbreak professionnel\_\allowbreak sante.csv & tPostgresqlInput, extraction incrémentale sur la date & 1\,027\,157 consultations (2015 à 2023) & FAIT\_\allowbreak CONSULTATION \\ \hline
+J08 & Hospitalisations.csv & CSV «~;~», tFileInputDelimited & 2\,479 séjours (2015 à 2021) & FAIT\_\allowbreak HOSPITALISATION \\ \hline
+J09 & Résultats e-Satis 48h MCO (serveur FTP) & CSV «~;~» en Latin-1 jusqu'en 2019, Excel en 2020~; tFTPGet puis tFileInputDelimited ou tFileInputExcel & Environ 1\,150 établissements par an & FAIT\_\allowbreak SATISFACTION \\ \hline
+J10 & deces.csv (serveur FTP) & CSV «~,~», UTF-8~; tFTPGet puis tFileInputDelimited & 25\,088\,208 lignes, 2 Go & FAIT\_\allowbreak DECES \\ \hline
+\end{tableau}
 
-\subsection{Fréquence d'exécution}
+\noindent La base opérationnelle n'indique pas l'établissement où a lieu une consultation. Il est retrouvé à partir du professionnel~: le fichier activite\_professionnel\_sante.csv associe chaque professionnel aux organisations où il exerce. Les enquêtes de satisfaction des années 2013 à 2016 portent sur d'autres indicateurs (tenue du dossier patient, délais d'envoi du courrier) et ne contiennent pas de score de satisfaction~; seuls les fichiers e-Satis, publiés à partir de 2017, sont chargés.
+
+\subsection{Règles de transformation}\label{sec:etl-transfo}
+
+\noindent Les transformations sont réalisées dans des composants \textbf{tMap}. Quatre règles s'appliquent à tous les jobs~:
+\begin{itemize}
+	\item les textes sont convertis en UTF-8, débarrassés de leurs espaces en début et en fin de chaîne, et les codes (FINESS, INSEE, diagnostic) sont mis en majuscules~;
+	\item les dates sont converties au type DATE, puis en clé de DIM\_Temps au format AAAAMMJJ~;
+	\item chaque clé métier est remplacée par la clé de substitution de sa dimension, lue dans un tMap en jointure de recherche (\textit{lookup})~;
+	\item chaque rejet et chaque erreur sont datés et enregistrés avec le nom du job, pour la traçabilité.
+\end{itemize}
+
+\noindent Les règles propres à chaque job sont les suivantes.
+
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.22\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.78\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Job} & \textbf{Règles de transformation} \\ \hline
+J01 DIM\_\allowbreak Temps & Une ligne par jour du 1\textsuperscript{er} janvier 1880 au 31 décembre 2030~: le plus ancien décès du fichier INSEE date de 1882. Jour, semaine ISO, mois, trimestre, semestre et année sont calculés à partir de la date. \\ \hline
+J02 DIM\_\allowbreak Etablissement & La clé de rapprochement est identifiant\_\allowbreak organisation, renseigné et unique sur toutes les lignes~; le numéro FINESS du site n'est renseigné que pour 200 lignes. Un identifiant qui commence par «~F~» est formé de la lettre F suivie du numéro FINESS~: ce numéro sert à rattacher les enquêtes de satisfaction. Les colonnes de contact (téléphone, télécopie, courriel) ne sont pas chargées. \\ \hline
+J03 DIM\_\allowbreak Professionnel & Le code spécialité est remplacé par son libellé (table Specialites). La commune d'exercice est reprise de professionnel\_\allowbreak sante.csv, en rapprochant les identifiants sans leurs zéros de tête (les 1\,048\,575 professionnels y sont retrouvés). Le nom est mis en majuscules. \\ \hline
+J04 DIM\_\allowbreak Diagnostic & Code et libellé repris tels quels, après nettoyage des espaces. \\ \hline
+J05 DIM\_\allowbreak Patient & Le patient reçoit un \textbf{pseudonyme}~: une empreinte HMAC-SHA256 de son identifiant source, calculée avec une clé secrète conservée hors de l'entrepôt. La table de correspondance entre identifiant source et pseudonyme reste dans la zone de transit. Le sexe est recodé (female $\rightarrow$ F, male $\rightarrow$ M, autre $\rightarrow$ I). La date de naissance, stockée en texte au format M/J/AAAA, est convertie en date pour recalculer l'âge le jour du chargement~; elle n'est pas chargée dans l'entrepôt. Poids et taille, stockés en texte, sont convertis en nombres. Nom, prénom, adresse, courriel, téléphone et numéro de sécurité sociale ne sont pas chargés. \\ \hline
+J06 DIM\_\allowbreak Region\_\allowbreak INSEE & Une ligne par code commune~: communes actuelles et anciennes, Corse (2A, 2B), départements et collectivités d'outre-mer, pays étrangers (codes 99xxx). Chaque commune porte son département et sa région~; le type de zone (Métropole, DROM, COM, Étranger) est calculé à partir du code. Le membre $-1$ \og Inconnu\fg{} est fourni par le référentiel. \\ \hline
+J07 FAIT\_\allowbreak CONSULTATION & Le patient, le professionnel et le diagnostic sont remplacés par leurs clés de substitution. L'établissement est déduit du professionnel~: s'il exerce dans une seule organisation, celle-ci est retenue~; s'il en a plusieurs, l'organisation où il exerce en tant que salarié est retenue, puis la plus petite par ordre d'identifiant, pour que la règle donne toujours le même résultat. Nombre\_\allowbreak de\_\allowbreak consultation vaut 1. Le motif et les heures ne sont pas chargés. \\ \hline
+J08 FAIT\_\allowbreak HOSPITALISATION & La date d'entrée (JJ/MM/AAAA) devient Id\_\allowbreak Date\_\allowbreak Entree. L'établissement est retrouvé par identifiant\_\allowbreak organisation (100~\% des séjours rapprochés), le diagnostic par son code (100~\%). Num\_\allowbreak Hospitalisation est conservé en dimension dégénérée~; Jour\_\allowbreak Hospitalisation est repris tel quel. Le libellé du diagnostic, déjà présent dans DIM\_\allowbreak Diagnostic, n'est pas chargé. \\ \hline
+J09 FAIT\_\allowbreak SATISFACTION & Les fichiers de chaque année sont alignés sur un même schéma. Le numéro FINESS géographique, préfixé de «~F~», donne l'établissement (97 à 99~\% des lignes rapprochées selon l'année). La période de mesure est le 1\textsuperscript{er} janvier de l'année du recueil. «~1- Obligatoire~» et «~1- Oui~» deviennent VRAI. Score reprend la note ajustée de satisfaction globale et Nb\_\allowbreak Reponses son nombre de réponses~; la virgule décimale est remplacée par un point. \\ \hline
+J10 FAIT\_\allowbreak DECES & Les dates incomplètes sont complétées au premier jour du mois ou de l'année («~1989-05~» $\rightarrow$ 1989-05-01) et Flag\_\allowbreak Date\_\allowbreak Partielle passe à VRAI. L'âge au décès est calculé à partir des deux dates. Seule l'année de naissance est conservée. Les codes de lieu de décès et de naissance sont rapprochés de DIM\_\allowbreak Region\_\allowbreak INSEE. Nom et prénom servent au dédoublonnage dans la zone de transit et ne sont pas chargés. \\ \hline
+\end{tableau}
+
+\subsection{Valeurs nulles et doublons}\label{sec:etl-nulls}
+
+\noindent Une valeur absente n'est jamais laissée à NULL dans une clé étrangère~: la ligne de faits est rattachée au membre \og Inconnu\fg{} (clé~$-1$) de la dimension, créé par le job de la dimension. La ligne reste ainsi comptée dans les totaux. Une mesure absente reste à NULL, car la remplacer par zéro fausserait les moyennes.
+
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.22\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.40\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.38\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Job} & \textbf{Valeurs nulles} & \textbf{Doublons} \\ \hline
+J02 DIM\_\allowbreak Etablissement & Commune et code commune vides sur un tiers des lignes~: laissés à NULL. Raison sociale toujours renseignée. & Aucun doublon sur identifiant\_\allowbreak organisation~; contrôle par tUniqRow à chaque chargement. \\ \hline
+J03 DIM\_\allowbreak Professionnel & Civilité (4 lignes) et prénom (18 lignes) vides~: laissés à NULL. & Unicité sur l'identifiant~; un doublon garde la ligne la plus récente. \\ \hline
+J04 DIM\_\allowbreak Diagnostic & Aucune valeur vide. Membre $-1$ \og Non renseigné\fg{} ajouté. & Unicité sur le code. \\ \hline
+J05 DIM\_\allowbreak Patient & Aucune valeur vide dans la source. Sexe inconnu $\rightarrow$ I~; date de naissance illisible $\rightarrow$ âge NULL. & Unicité sur l'identifiant source. \\ \hline
+J06 DIM\_\allowbreak Region\_\allowbreak INSEE & Département et région vides pour les pays étrangers et les collectivités d'outre-mer~: laissés à NULL. & Unicité sur le code commune. \\ \hline
+J07 FAIT\_\allowbreak CONSULTATION & Professionnel sans organisation connue (36~\% des consultations) $\rightarrow$ établissement $-1$. Diagnostic absent $\rightarrow$ $-1$. & Unicité sur Num\_\allowbreak Consultation~: une consultation déjà chargée est ignorée, ce qui rend le job rejouable. \\ \hline
+J08 FAIT\_\allowbreak HOSPITALISATION & Aucune valeur vide. Durée absente $\rightarrow$ NULL. & Unicité sur Num\_\allowbreak Hospitalisation. \\ \hline
+J09 FAIT\_\allowbreak SATISFACTION & Score vide quand l'établissement a moins de 30 réponses, n'a pas répondu ou n'est pas validé (classes DI, NR, NV~: 25~\% des lignes en 2019)~: la ligne est chargée avec Score et Nb\_\allowbreak Reponses à NULL, et exclue des moyennes. FINESS inconnu $\rightarrow$ établissement $-1$. & Une ligne par établissement et par année~; un fichier rechargé remplace l'année entière. \\ \hline
+J10 FAIT\_\allowbreak DECES & Lieu de décès vide (10\,934 lignes) $\rightarrow$ $-1$. Numéro d'acte vide $\rightarrow$ NULL. Date de naissance absente $\rightarrow$ âge et année NULL. & 161\,112 doublons exacts (0,64~\%) supprimés, puis un seul décès gardé par nom, prénom, date de naissance, date et lieu de décès. \\ \hline
+\end{tableau}
+
+\subsection{Erreurs et rejets}\label{sec:etl-rejets}
+
+\noindent Une ligne qui ne respecte pas une règle n'arrête pas le job~: elle est écartée par la sortie de rejet du composant (tFilterRow, tSchemaComplianceCheck ou tMap) et écrite dans la \textbf{zone de rejets} de HDFS, dans un fichier par job et par date. Chaque rejet garde la ligne d'origine, le nom du job, la date et un code motif~:
+
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.18\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.52\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.30\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Code motif} & \textbf{Cas} & \textbf{Exemple} \\ \hline
+FORMAT & Valeur qui ne respecte pas le type attendu (date, nombre) & Date de décès «~2015~» illisible même après complétion \\ \hline
+OBLIGATOIRE & Champ obligatoire vide & Consultation sans numéro ou sans date \\ \hline
+INCOHERENT & Valeur hors des bornes métier & Naissance après le décès ou âge supérieur à 120 ans (78 lignes)~; heure de fin avant l'heure de début (10 consultations) \\ \hline
+REFERENCE & Clé métier absente de sa dimension alors qu'elle est obligatoire & Patient d'une consultation absent de DIM\_\allowbreak Patient \\ \hline
+\end{tableau}
+
+\noindent Les rejets sont analysés par l'équipe d'ingénierie, corrigés dans la source quand c'est possible, puis rechargés au passage suivant. Les erreurs techniques (base PostgreSQL ou serveur FTP inaccessible, fichier absent, HDFS plein) sont traitées autrement~:
+\begin{itemize}
+	\item un composant \textbf{tLogCatcher} intercepte l'erreur et l'enregistre dans une table de journal, avec le job, l'heure et le message~;
+	\item le job s'arrête sans rien écrire dans l'entrepôt~: les données y sont chargées dans une table temporaire, qui ne remplace la table finale qu'en fin de job~;
+	\item un courriel est envoyé à l'équipe (\textbf{tSendMail})~;
+	\item si plus de 5~\% des lignes d'un fichier sont rejetées, le job est aussi arrêté (\textbf{tDie})~: un tel taux signale plutôt un changement de format de la source qu'une erreur de saisie.
+\end{itemize}
+
+\noindent Les composants \textbf{tStatCatcher} et \textbf{tFlowMeterCatcher} enregistrent pour chaque exécution la durée, le nombre de lignes lues, chargées et rejetées. Ces chiffres servent au contrôle de complétude du livrable~2.
+
+\subsection{Fréquence d'exécution}\label{sec:etl-frequence}
+
+\noindent Les jobs sont regroupés dans un \textbf{job maître} (composants tRunJob) qui les lance dans l'ordre suivant~: d'abord les dimensions, ensuite les faits, qui ont besoin des clés de substitution. Un job ne démarre que si le précédent a réussi. Le job maître est exporté depuis Talend en script autonome et planifié chaque nuit à 2~h, en dehors des heures d'activité de la base de soins.
+
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.26\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.22\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.52\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Job} & \textbf{Fréquence} & \textbf{Mode de chargement} \\ \hline
+J01 DIM\_\allowbreak Temps & Une seule fois & Complet, prolongé si les données dépassent 2030 \\ \hline
+J02 à J06 (dimensions) & Quotidienne & Complet pour les référentiels CSV~; les lignes nouvelles ou modifiées sont ajoutées, les clés de substitution existantes ne changent pas \\ \hline
+J07 FAIT\_\allowbreak CONSULTATION & Quotidienne & Incrémental~: consultations dont la date est postérieure au dernier chargement \\ \hline
+J08 FAIT\_\allowbreak HOSPITALISATION & Quotidienne & Incrémental sur Num\_\allowbreak Hospitalisation \\ \hline
+J09 FAIT\_\allowbreak SATISFACTION & Annuelle, à la publication des résultats e-Satis & Remplacement de l'année concernée \\ \hline
+J10 FAIT\_\allowbreak DECES & Mensuelle, à la publication du fichier INSEE & Premier chargement complet, puis ajout des nouveaux décès~; partition par année \\ \hline
+\end{tableau}
+
+\noindent Les jobs quotidiens ne relisent que les données nouvelles et durent quelques minutes. Le chargement initial des 25 millions de décès est le plus long~: il est lancé une seule fois, avant la mise en service.
+
+\subsection*{En résumé}
+
+\noindent L'alimentation de l'entrepôt repose sur dix jobs Talend, lancés par un job maître~:
+\begin{itemize}
+	\item chaque job lit une source, PostgreSQL ou un fichier de la zone de transit, et alimente une seule table~;
+	\item les règles de transformation convertissent les types, remplacent les clés métier par des clés de substitution et pseudonymisent les patients~;
+	\item une valeur absente est rattachée au membre \og Inconnu\fg{} dans les clés et laissée à NULL dans les mesures~; les doublons sont éliminés sur la clé métier, ce qui permet de rejouer un job sans risque~;
+	\item les lignes invalides partent dans la zone de rejets avec un code motif, et une erreur technique arrête le job sans altérer l'entrepôt~;
+	\item les dimensions et les faits de la base de soins sont chargés chaque nuit, la satisfaction chaque année et les décès chaque mois.
+\end{itemize}
 
 % --- GOUVERNANCE ---
 \newpage
