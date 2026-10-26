@@ -1,0 +1,34 @@
+Jobs Talend du projet CHU (Talend Open Studio for Big Data 7.3.1)
+
+Contenu
+  talend/PROJET_BIGDATA/   jobs à importer dans Talend (J00 à J10 + job maître PROJET_CHU)
+  entrepot.sql        création des schémas transit et entrepot et des tables du modèle
+  referentiel/communes_insee.csv   Code officiel géographique de l'INSEE (alimente DIM_Region_INSEE)
+
+1. Base PostgreSQL (version 14)
+  - Créer la base : CREATE DATABASE chu ENCODING 'UTF8' TEMPLATE template0;
+  - Restaurer la base de soins dans le schéma public :
+      pg_restore --no-owner --no-privileges -d chu "chemin\vers\BDD PostgreSQL\DATA2023"
+  - Créer l'entrepôt : psql -d chu -f entrepot.sql
+
+2. Référentiel
+  - Copier referentiel/communes_insee.csv dans C:/Talend/CHU/referentiel/
+  - Créer le dossier C:/Talend/CHU/rejets/
+
+3. Import dans Talend
+  - Clic droit sur Jobs > Importer des éléments > Sélectionner le fichier d'archive > choisir un zip du dossier talend/
+  - Tout cocher, puis Terminer. Les jobs arrivent dans Jobs/Jobs_CHU, le job maître est PROJET_CHU.
+
+4. Paramètres à adapter (onglet Contexts de chaque job, ou du job maître qui les transmet)
+  - pg_password : votre mot de passe PostgreSQL (laissé vide dans l'archive)
+  - dossier_donnees : dossier qui contient les sources (DECES EN FRANCE, Etablissement de SANTE, Hospitalisation, Satisfaction)
+  - pg_host, pg_port, pg_base, pg_user si différents de localhost, 5432, chu, postgres
+
+5. Exécution
+  - Lancer chaque job une première fois, dans l'ordre J00 à J10 (Talend les compile à ce moment-là).
+  - Ensuite, PROJET_CHU enchaîne tout. J00 vide l'entrepôt au début de chaque exécution.
+  - J10 (25 millions de décès) dure environ une heure.
+  - Les lignes rejetées sont écrites dans C:/Talend/CHU/rejets/ avec leur code motif.
+
+Dans ce dépôt, pg_password et cle_pseudo (clé de pseudonymisation des patients) sont vides :
+les renseigner dans l'onglet Contexts avant d'exécuter. La clé doit être la même pour toute l'équipe.
