@@ -1,6 +1,0 @@
-# Cache du COG INSEE (re-telechargeable) et donnees brutes
-cog/
-.venv/
-__pycache__/
-*.parquet
-deces*.csv
