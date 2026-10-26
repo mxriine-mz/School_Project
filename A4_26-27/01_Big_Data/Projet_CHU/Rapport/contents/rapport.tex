@@ -1,0 +1,527 @@
+% --- INTRODUCTION ---
+\newpage
+\section*{Introduction}
+\phantomsection
+\addcontentsline{toc}{section}{Introduction}
+
+\noindent Un groupe hospitalier universitaire (CHU) souhaite se doter d'un \textbf{entrepôt de données décisionnel}. Ses données sont aujourd'hui dispersées entre une base opérationnelle, des fichiers de référence et des fichiers déposés sur un serveur FTP. Elles ne permettent pas de suivre l'activité des établissements dans le temps ni de les comparer entre eux.
+
+\vspace{0.2cm}
+
+\noindent L'entrepôt doit servir deux publics~: les \textbf{praticiens} (médecins, infirmiers), qui suivent l'activité de soins, et la \textbf{direction} des établissements, qui pilote l'offre et la qualité. Il doit permettre de calculer huit indicateurs, dont six obligatoires~: les taux de consultation, d'hospitalisation, de décès et de satisfaction, croisés par établissement, période, diagnostic, professionnel, sexe, âge ou région.
+
+\vspace{0.2cm}
+
+\noindent Quatre sources alimentent l'entrepôt~:
+\begin{itemize}
+	\item la \textbf{base opérationnelle} PostgreSQL (patients, consultations, hospitalisations, diagnostics, professionnels)~;
+	\item le \textbf{référentiel des établissements} de santé, au format CSV~;
+	\item les \textbf{enquêtes de satisfaction} des patients, déposées sur le serveur FTP~;
+	\item le \textbf{fichier des décès} publié par l'INSEE, déposé sur le serveur FTP.
+\end{itemize}
+
+\noindent Ces données concernent la santé de personnes identifiables. Leur traitement doit respecter le RGPD, les recommandations de la CNIL et l'obligation d'hébergement certifié HDS. La solution doit aussi rester élastique face à la hausse des volumes et justifier chaque outil par son rapport coût-efficacité.
+
+\vspace{0.2cm}
+
+\noindent Ce premier livrable pose le \textbf{référentiel de données} et l'\textbf{architecture} de la solution. Il présente le modèle conceptuel et logique du schéma décisionnel avec son dictionnaire de données, l'architecture cible en couches Bronze, Silver et Gold avec les technologies retenues, les spécifications fonctionnelles des jobs ETL et le plan de gouvernance des données.
+
+% --- MODELISATION ---
+\newpage
+\section{Modèle conceptuel et logique}\label{sec:modele}
+
+\noindent Le modèle décisionnel est le socle de l'entrepôt~: il fixe ce que l'on mesure et selon quels axes. Il suit l'approche de \textbf{Kimball}, qui organise les données en \textbf{tables de faits}, contenant les mesures, et en \textbf{tables de dimensions}, contenant les axes d'analyse. Chaque fait correspond à un processus métier du CHU~: une consultation, une hospitalisation, une réponse à une enquête de satisfaction ou un décès.
+
+\vspace{0.2cm}
+
+\noindent Plusieurs faits partagent les mêmes dimensions, comme le temps ou l'établissement. Le modèle forme donc une \textbf{constellation} de schémas en étoile, reliés par des dimensions communes, dites \textbf{conformes}. Cette partie présente d'abord le modèle dimensionnel conceptuel, puis sa traduction en schéma en constellation, qui constitue le modèle logique, et enfin le dictionnaire de données qui décrit chaque table et chaque attribut.
+
+\subsection{Modèle dimensionnel conceptuel}\label{sec:conceptuel}
+
+\noindent Le modèle dimensionnel conceptuel suit la démarche de Kimball~: choisir les processus métier à analyser, fixer leur grain, puis identifier les dimensions qui les décrivent et les faits qu'ils mesurent. Il est indépendant de toute technologie et a été construit à partir de l'analyse des quatre sources. Quatre processus métier donnent les tables de faits~: Consultations, Hospitalisations, Satisfaction et Décès. Six dimensions servent d'axes d'analyse~: Temps, Établissement, Patient anonymisé, Diagnostic, Professionnel et Région INSEE.
+
+\vspace{0.2cm}
+
+\noindent La figure 1 présente le modèle dimensionnel conceptuel. Une version agrandie, en format paysage, est donnée en Annexe A.
+
+\begin{center}
+\includegraphics[width=\textwidth]{contents/img/modele_conceptuel.png}
+\legende{Figure~1 -- Modèle dimensionnel conceptuel du CHU}
+\end{center}
+
+\subsubsection*{Tables de faits et dimensions}
+
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.2697\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.3527\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.3775\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Élément} & \textbf{Type} & \textbf{Table du modèle logique} \\ \hline
+Consultations & Table de faits (processus métier) & FAIT\_\allowbreak CONSULTATION \\ \hline
+Hospitalisations & Table de faits (processus métier) & FAIT\_\allowbreak HOSPITALISATION \\ \hline
+Satisfaction & Table de faits (processus métier) & FAIT\_\allowbreak SATISFACTION \\ \hline
+Décès & Table de faits (processus métier) & FAIT\_\allowbreak DECES \\ \hline
+Temps & Dimension conforme (Jour $\rightarrow$ Mois $\rightarrow$ Trimestre $\rightarrow$ Année) & DIM\_\allowbreak Temps \\ \hline
+Établissement & Dimension conforme & DIM\_\allowbreak Etablissement \\ \hline
+Patient anonymisé & Dimension & DIM\_\allowbreak Patient \\ \hline
+Diagnostic & Dimension & DIM\_\allowbreak Diagnostic \\ \hline
+Professionnel & Dimension & DIM\_\allowbreak Professionnel \\ \hline
+Région INSEE & Dimension (Commune $\rightarrow$ Département $\rightarrow$ Région) & DIM\_\allowbreak Region\_\allowbreak INSEE \\ \hline
+\end{tableau}
+
+\subsubsection*{Relations entre faits et dimensions}
+
+\noindent Chaque relation relie une table de faits à une dimension et se lit dans les deux sens~: \og une consultation est réalisée par exactement un professionnel (1,1)~; un professionnel réalise zéro, une ou plusieurs consultations (0,n)\fg{}. Toutes les relations sont de ce type, ce qui permet de les traduire en clés étrangères de la table de faits. La dimension Région INSEE joue deux rôles pour les décès (lieu de décès et lieu de naissance).
+
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.2075\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.2594\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1037\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.2697\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1597\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Rôle} & \textbf{Table de faits} & \textbf{Card.} & \textbf{Dimension} & \textbf{Card.} \\ \hline
+Auteur & Consultations & 1,1 & Professionnel & 0,n \\ \hline
+Patient & Consultations & 1,1 & Patient anonymisé & 0,n \\ \hline
+Diagnostic posé & Consultations & 1,1 & Diagnostic & 0,n \\ \hline
+Lieu & Consultations & 1,1 & Établissement & 0,n \\ \hline
+Date & Consultations & 1,1 & Temps & 0,n \\ \hline
+Patient & Hospitalisations & 1,1 & Patient anonymisé & 0,n \\ \hline
+Motif & Hospitalisations & 1,1 & Diagnostic & 0,n \\ \hline
+Lieu d'accueil & Hospitalisations & 1,1 & Établissement & 0,n \\ \hline
+Date d'entrée & Hospitalisations & 1,1 & Temps & 0,n \\ \hline
+Établissement évalué & Satisfaction & 1,1 & Établissement & 0,n \\ \hline
+Période de l'enquête & Satisfaction & 1,1 & Temps & 0,n \\ \hline
+Lieu de décès & Décès & 1,1 & Région INSEE & 0,n \\ \hline
+Lieu de naissance & Décès & 1,1 & Région INSEE & 0,n \\ \hline
+Date de décès & Décès & 1,1 & Temps & 0,n \\ \hline
+\end{tableau}
+
+\noindent Les hiérarchies sont portées à l'intérieur des dimensions~: Commune $\rightarrow$ Département $\rightarrow$ Région dans la dimension Région INSEE, Jour $\rightarrow$ Mois $\rightarrow$ Trimestre $\rightarrow$ Année dans la dimension Temps. L'établissement et le professionnel sont situés par leur commune, qui reste un attribut de leur dimension. Au passage au modèle logique, ces hiérarchies sont dénormalisées dans leur dimension, ce qui évite un schéma en flocon~: les requêtes par région ne nécessitent qu'une seule jointure, au prix d'une légère redondance des libellés de département et de région.
+
+\subsection{Schéma en constellation (modèle logique)}\label{sec:logique}
+
+\noindent Le schéma en étoile constitue le \textbf{modèle logique} de l'entrepôt~: il traduit le modèle conceptuel (partie~\ref{sec:conceptuel}) en tables relationnelles, avec leurs attributs et leurs clés, sans dépendre du moteur de stockage. Il compte \textbf{quatre tables de faits} et \textbf{six dimensions}~; chaque table de faits forme une étoile avec ses dimensions, et les étoiles se rejoignent sur DIM\_Temps et DIM\_Etablissement.
+
+\subsubsection*{Granularité des faits}
+
+\noindent La granularité (le \og grain\fg{}) définit ce que représente une ligne de la table de faits. Elle est fixée au niveau le plus fin disponible dans les sources, afin de pouvoir agréger ensuite sans perte d'information.
+
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.2385\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.4189\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.3426\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Table de faits} & \textbf{Grain (1 ligne =)} & \textbf{Mesures} \\ \hline
+FAIT\_\allowbreak CONSULTATION & 1 consultation d'un patient par un professionnel, dans un établissement, à une date & Nombre\_\allowbreak de\_\allowbreak consultation \\ \hline
+FAIT\_\allowbreak HOSPITALISATION & 1 séjour hospitalier d'un patient dans un établissement & Jour\_\allowbreak Hospitalisation (durée) \\ \hline
+FAIT\_\allowbreak SATISFACTION & 1 résultat d'enquête pour un établissement et une période & Nb\_\allowbreak Reponses, Score \\ \hline
+FAIT\_\allowbreak DECES & 1 décès du fichier INSEE & Age\_\allowbreak Deces (et comptage des lignes) \\ \hline
+\end{tableau}
+
+\subsubsection*{Matrice faits $\times$ dimensions}
+
+\noindent La matrice ci-dessous (dite \og matrice en bus\fg{} chez Kimball) indique quelles dimensions chaque fait utilise. Une dimension présente dans plusieurs colonnes est une dimension conforme~: elle a la même structure et les mêmes clés pour tous les faits, ce qui permet de croiser les indicateurs.
+
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.2385\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1908\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1900\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1901\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1905\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Dimension} & \textbf{Consultation} & \textbf{Hospitalisation} & \textbf{Satisfaction} & \textbf{Décès} \\ \hline
+DIM\_\allowbreak Temps & X & X (date d'entrée) & X & X (date de décès) \\ \hline
+DIM\_\allowbreak Etablissement & X & X & X &  \\ \hline
+DIM\_\allowbreak Patient & X & X &  &  \\ \hline
+DIM\_\allowbreak Diagnostic & X & X &  &  \\ \hline
+DIM\_\allowbreak Professionnel & X &  &  &  \\ \hline
+DIM\_\allowbreak Region\_\allowbreak INSEE &  &  &  & X (décès + naissance) \\ \hline
+\end{tableau}
+
+\noindent La figure 2 réunit ces éléments en une vue d'ensemble de la constellation~: les quatre faits, les six dimensions et leurs clés. Une version agrandie, en format paysage, est donnée en Annexe B.
+
+\begin{center}
+\includegraphics[width=\textwidth]{contents/img/schema_constellation.png}
+\legende{Figure~2 -- Schéma logique en constellation du CHU}
+\end{center}
+
+\subsubsection*{Couverture des besoins}
+
+\noindent Chaque besoin exprimé par le CHU se calcule à partir d'une seule table de faits et de ses dimensions, sans jointure entre faits.
+
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.0622\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.3735\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.2490\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.3154\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{N°} & \textbf{Besoin} & \textbf{Fait} & \textbf{Dimensions utilisées} \\ \hline
+1 & Taux de consultation par établissement et par période & FAIT\_\allowbreak CONSULTATION & DIM\_\allowbreak Etablissement, DIM\_\allowbreak Temps \\ \hline
+2 & Taux de consultation par diagnostic et par période & FAIT\_\allowbreak CONSULTATION & DIM\_\allowbreak Diagnostic, DIM\_\allowbreak Temps \\ \hline
+3 & Taux global d'hospitalisation par période & FAIT\_\allowbreak HOSPITALISATION & DIM\_\allowbreak Temps \\ \hline
+4 & Taux d'hospitalisation par diagnostic et par période & FAIT\_\allowbreak HOSPITALISATION & DIM\_\allowbreak Diagnostic, DIM\_\allowbreak Temps \\ \hline
+5 & Taux d'hospitalisation par sexe et par âge & FAIT\_\allowbreak HOSPITALISATION & DIM\_\allowbreak Patient \\ \hline
+6 & Taux de consultation par professionnel & FAIT\_\allowbreak CONSULTATION & DIM\_\allowbreak Professionnel \\ \hline
+7 & Nombre de décès par région en 2019 (optionnel) & FAIT\_\allowbreak DECES & DIM\_\allowbreak Region\_\allowbreak INSEE (rôle décès), DIM\_\allowbreak Temps \\ \hline
+8 & Taux global de satisfaction par région en 2020 (optionnel) & FAIT\_\allowbreak SATISFACTION & DIM\_\allowbreak Etablissement ($\rightarrow$ région), DIM\_\allowbreak Temps \\ \hline
+\end{tableau}
+
+\subsubsection*{Règles de passage}
+
+\noindent Trois règles ont permis de passer du modèle conceptuel (partie~\ref{sec:conceptuel}) aux tables~:
+
+\begin{enumerate}
+	\item chaque processus métier devient une table de faits~; ses relations vers les dimensions deviennent des \textbf{clés étrangères}~;
+	\item chaque dimension devient une table identifiée par une \textbf{clé de substitution} (entier sans signification métier), la clé de la source étant conservée comme \textbf{clé métier} (BK)~;
+	\item les hiérarchies (commune, département, région~; jour, mois, trimestre, année) sont \textbf{aplaties} dans leur dimension.
+\end{enumerate}
+
+\vspace{0.2cm}
+
+\noindent Notation~: \textbf{PK} désigne une clé primaire, \textbf{FK} une clé étrangère, \textbf{BK} une clé métier et \textbf{DD} une dimension dégénérée (identifiant de la source conservé dans le fait sans table de dimension).
+
+\subsubsection*{Schéma relationnel}
+
+\noindent Le schéma relationnel reprend la figure 2 sous forme textuelle. La clé primaire est soulignée et les clés étrangères sont précédées d'un \#.
+
+{\small\raggedright
+\noindent \textbf{FAIT\_\allowbreak CONSULTATION} (\underline{Num\_\allowbreak Consultation}, \#Id\_\allowbreak Patient, \#Id\_\allowbreak Temps, \#Id\_\allowbreak Professionnel, \#Id\_\allowbreak Diagnostic, \#Id\_\allowbreak Etablissement, Nombre\_\allowbreak de\_\allowbreak consultation)
+
+\noindent \textbf{FAIT\_\allowbreak HOSPITALISATION} (\underline{Id\_\allowbreak Hospitalisation}, \#Id\_\allowbreak Patient, \#Id\_\allowbreak Etablissement, \#Id\_\allowbreak Diagnostic, \#Id\_\allowbreak Date\_\allowbreak Entree, Num\_\allowbreak Hospitalisation, Jour\_\allowbreak Hospitalisation)
+
+\noindent \textbf{FAIT\_\allowbreak SATISFACTION} (\underline{Id\_\allowbreak Satisfaction}, \#Id\_\allowbreak Temps, \#Id\_\allowbreak Etablissement, Participation\_\allowbreak Obligatoire, Depot\_\allowbreak Valide, Nb\_\allowbreak Reponses, Score)
+
+\noindent \textbf{FAIT\_\allowbreak DECES} (\underline{Id\_\allowbreak Deces}, \#Id\_\allowbreak Temps, \#Id\_\allowbreak Region\_\allowbreak Deces, \#Id\_\allowbreak Region\_\allowbreak Naissance, Age\_\allowbreak Deces, Annee\_\allowbreak Naissance, Numero\_\allowbreak Acte\_\allowbreak Deces, Flag\_\allowbreak Date\_\allowbreak Partielle, Date\_\allowbreak Chargement)
+
+\noindent \textbf{DIM\_\allowbreak Temps} (\underline{Id\_\allowbreak Temps}, Date, Jour, Semaine, Mois, Trimestre, Semestre, Annee)
+
+\noindent \textbf{DIM\_\allowbreak Patient} (\underline{Id\_\allowbreak Patient}, Nom, Prenom, Sexe, Adresse, Ville, Code\_\allowbreak Postal, Pays, Email, Tel, Date\_\allowbreak Naissance, Age, Num\_\allowbreak Secu, Groupe\_\allowbreak Sanguin, Poids, Taille)
+
+\noindent \textbf{DIM\_\allowbreak Diagnostic} (\underline{Id\_\allowbreak Diagnostic}, Code\_\allowbreak Diagnostic, Diagnostic)
+
+\noindent \textbf{DIM\_\allowbreak Etablissement} (\underline{Id\_\allowbreak Etablissement}, Finess\_\allowbreak Site, Finess\_\allowbreak Etablissement\_\allowbreak Juridique, Identifiant\_\allowbreak Organisation, Raison\_\allowbreak Sociale\_\allowbreak Site, Enseigne\_\allowbreak Commerciale\_\allowbreak Site, Adresse, Code\_\allowbreak Commune, Code\_\allowbreak Postal, Commune, Pays)
+
+\noindent \textbf{DIM\_\allowbreak Professionnel} (\underline{Id\_\allowbreak Professionnel}, Identifiant, Type\_\allowbreak Identifiant, Civilite, Nom, Prenom, Categorie\_\allowbreak Professionnelle, Profession, Specialite, Commune)
+
+\noindent \textbf{DIM\_\allowbreak Region\_\allowbreak INSEE} (\underline{Id\_\allowbreak Region}, Code\_\allowbreak Commune\_\allowbreak INSEE, Code\_\allowbreak Departement, Nom\_\allowbreak Departement, Code\_\allowbreak Region, Nom\_\allowbreak Region, Pays, Type\_\allowbreak Zone)
+\par}
+
+\subsubsection*{Clés étrangères et cardinalités}
+
+\noindent Toutes les relations du schéma sont de type \textbf{un-à-plusieurs}~: une ligne de dimension est référencée par zéro, une ou plusieurs lignes de faits, et chaque ligne de faits référence exactement une ligne de dimension. Les clés étrangères des faits sont donc \textbf{non nulles}~; une valeur absente dans la source est rattachée à un membre \og Inconnu\fg{} (clé~$-1$) de la dimension plutôt que laissée à NULL, pour ne perdre aucune ligne dans les agrégats.
+
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.2594\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.2178\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.2425\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1348\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1455\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Table de faits} & \textbf{Clé étrangère} & \textbf{Dimension référencée} & \textbf{Côté dimension} & \textbf{Côté fait} \\ \hline
+FAIT\_\allowbreak CONSULTATION & Id\_\allowbreak Patient & DIM\_\allowbreak Patient & 1 & 0..n \\ \hline
+FAIT\_\allowbreak CONSULTATION & Id\_\allowbreak Temps & DIM\_\allowbreak Temps & 1 & 0..n \\ \hline
+FAIT\_\allowbreak CONSULTATION & Id\_\allowbreak Professionnel & DIM\_\allowbreak Professionnel & 1 & 0..n \\ \hline
+FAIT\_\allowbreak CONSULTATION & Id\_\allowbreak Diagnostic & DIM\_\allowbreak Diagnostic & 1 & 0..n \\ \hline
+FAIT\_\allowbreak CONSULTATION & Id\_\allowbreak Etablissement & DIM\_\allowbreak Etablissement & 1 & 0..n \\ \hline
+FAIT\_\allowbreak HOSPITALISATION & Id\_\allowbreak Patient & DIM\_\allowbreak Patient & 1 & 0..n \\ \hline
+FAIT\_\allowbreak HOSPITALISATION & Id\_\allowbreak Etablissement & DIM\_\allowbreak Etablissement & 1 & 0..n \\ \hline
+FAIT\_\allowbreak HOSPITALISATION & Id\_\allowbreak Diagnostic & DIM\_\allowbreak Diagnostic & 1 & 0..n \\ \hline
+FAIT\_\allowbreak HOSPITALISATION & Id\_\allowbreak Date\_\allowbreak Entree & DIM\_\allowbreak Temps & 1 & 0..n \\ \hline
+FAIT\_\allowbreak SATISFACTION & Id\_\allowbreak Temps & DIM\_\allowbreak Temps & 1 & 0..n \\ \hline
+FAIT\_\allowbreak SATISFACTION & Id\_\allowbreak Etablissement & DIM\_\allowbreak Etablissement & 1 & 0..n \\ \hline
+FAIT\_\allowbreak DECES & Id\_\allowbreak Temps & DIM\_\allowbreak Temps & 1 & 0..n \\ \hline
+FAIT\_\allowbreak DECES & Id\_\allowbreak Region\_\allowbreak Deces & DIM\_\allowbreak Region\_\allowbreak INSEE & 1 & 0..n \\ \hline
+FAIT\_\allowbreak DECES & Id\_\allowbreak Region\_\allowbreak Naissance & DIM\_\allowbreak Region\_\allowbreak INSEE & 1 & 0..n \\ \hline
+\end{tableau}
+
+\subsubsection*{Choix de modélisation}
+
+\begin{itemize}
+	\item \textbf{Clés de substitution}~: les dimensions sont identifiées par un entier généré par l'ETL. Elles isolent l'entrepôt des changements de codification des sources et accélèrent les jointures.
+	\item \textbf{Dimensions conformes}~: DIM\_Temps et DIM\_Etablissement sont uniques et partagées, ce qui garantit que \og mars 2019\fg{} ou \og tel établissement\fg{} ont le même sens pour tous les indicateurs.
+	\item \textbf{Dimension à rôles multiples}~: DIM\_Region\_INSEE est jouée deux fois par FAIT\_DECES (lieu de décès et lieu de naissance), via deux clés étrangères distinctes.
+	\item \textbf{Dimensions dégénérées}~: Num\_Hospitalisation et Numero\_Acte\_Deces restent dans les faits pour le dédoublonnage et la traçabilité vers la source.
+	\item \textbf{Mesures}~: les mesures additives (Nombre\_de\_consultation, Jour\_Hospitalisation, Nb\_Reponses) se somment sur tous les axes~; Score est non additif et s'agrège en moyenne pondérée par Nb\_Reponses.
+\end{itemize}
+
+\subsection{Dictionnaire de données}\label{sec:dictionnaire}
+
+\noindent Le dictionnaire décrit chaque table et chaque attribut du modèle. Les types sont exprimés en SQL standard (compatibles PostgreSQL)~; ils seront ajustés au moteur retenu lors de l'implémentation physique (livrable 2).
+
+\vspace{0.2cm}
+
+\noindent Légende de la colonne \og Clé\fg{}~: \textbf{PK} clé primaire, \textbf{FK} clé étrangère, \textbf{BK} clé métier (identifiant de la source, unique dans la dimension), \textbf{DD} dimension dégénérée.
+
+\needspace{18\baselineskip}
+\subsubsection*{FAIT\_CONSULTATION}
+
+\noindent \textbf{Type}~: Table de faits. \textbf{Grain}~: 1 ligne = 1 consultation réalisée par un professionnel pour un patient, dans un établissement, à une date.\\
+\textbf{Source}~: base opérationnelle PostgreSQL (consultations, diagnostics, patients, professionnels).\\
+\textbf{Besoins couverts}~: 1, 2 et 6.
+
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.2594\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1653\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.0674\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.0674\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.4407\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Attribut} & \textbf{Type} & \textbf{Clé} & \textbf{Null} & \textbf{Description} \\ \hline
+Num\_\allowbreak Consultation & BIGINT & PK & Non & Identifiant de la consultation (numéro issu de la source). \\ \hline
+Id\_\allowbreak Patient & INTEGER & FK & Non & Patient consulté $\rightarrow$ DIM\_\allowbreak Patient. \\ \hline
+Id\_\allowbreak Temps & INTEGER & FK & Non & Date de la consultation $\rightarrow$ DIM\_\allowbreak Temps. \\ \hline
+Id\_\allowbreak Professionnel & INTEGER & FK & Non & Professionnel qui réalise la consultation $\rightarrow$ DIM\_\allowbreak Professionnel. \\ \hline
+Id\_\allowbreak Diagnostic & INTEGER & FK & Non & Diagnostic posé $\rightarrow$ DIM\_\allowbreak Diagnostic (membre \og Non renseigné\fg{} si absent). \\ \hline
+Id\_\allowbreak Etablissement & INTEGER & FK & Non & Établissement où se tient la consultation $\rightarrow$ DIM\_\allowbreak Etablissement. \\ \hline
+Nombre\_\allowbreak de\_\allowbreak consultation & SMALLINT &  & Non & Mesure additive, vaut 1 par ligne. Sa somme donne le nombre de consultations. \\ \hline
+\end{tableau}
+
+\needspace{18\baselineskip}
+\subsubsection*{FAIT\_HOSPITALISATION}
+
+\noindent \textbf{Type}~: Table de faits. \textbf{Grain}~: 1 ligne = 1 séjour hospitalier d'un patient dans un établissement.\\
+\textbf{Source}~: base opérationnelle PostgreSQL (séjours, admissions, diagnostics).\\
+\textbf{Besoins couverts}~: 3, 4 et 5.
+
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.2594\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1653\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.0674\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.0674\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.4407\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Attribut} & \textbf{Type} & \textbf{Clé} & \textbf{Null} & \textbf{Description} \\ \hline
+Id\_\allowbreak Hospitalisation & BIGINT & PK & Non & Clé de substitution du séjour. \\ \hline
+Id\_\allowbreak Patient & INTEGER & FK & Non & Patient hospitalisé $\rightarrow$ DIM\_\allowbreak Patient. \\ \hline
+Id\_\allowbreak Etablissement & INTEGER & FK & Non & Établissement d'accueil $\rightarrow$ DIM\_\allowbreak Etablissement. \\ \hline
+Id\_\allowbreak Diagnostic & INTEGER & FK & Non & Diagnostic à l'origine du séjour $\rightarrow$ DIM\_\allowbreak Diagnostic. \\ \hline
+Id\_\allowbreak Date\_\allowbreak Entree & INTEGER & FK & Non & Date d'entrée du séjour $\rightarrow$ DIM\_\allowbreak Temps (rôle \og date d'entrée\fg{}). \\ \hline
+Num\_\allowbreak Hospitalisation & VARCHAR(20) & DD & Non & Dimension dégénérée~: numéro du séjour dans la source, conservé pour la traçabilité. \\ \hline
+Jour\_\allowbreak Hospitalisation & SMALLINT &  & Oui & Mesure additive~: durée du séjour en jours. \\ \hline
+\end{tableau}
+
+\needspace{17\baselineskip}
+\subsubsection*{FAIT\_SATISFACTION}
+
+\noindent \textbf{Type}~: Table de faits. \textbf{Grain}~: 1 ligne = 1 résultat d'enquête de satisfaction pour un établissement et une période de mesure.\\
+\textbf{Source}~: fichiers plats déposés sur le serveur FTP (enquêtes de satisfaction).\\
+\textbf{Besoins couverts}~: 8.
+
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.2594\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1653\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.0674\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.0674\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.4407\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Attribut} & \textbf{Type} & \textbf{Clé} & \textbf{Null} & \textbf{Description} \\ \hline
+Id\_\allowbreak Satisfaction & BIGINT & PK & Non & Clé de substitution du résultat d'enquête. \\ \hline
+Id\_\allowbreak Temps & INTEGER & FK & Non & Période de mesure $\rightarrow$ DIM\_\allowbreak Temps. \\ \hline
+Id\_\allowbreak Etablissement & INTEGER & FK & Non & Établissement évalué $\rightarrow$ DIM\_\allowbreak Etablissement. \\ \hline
+Participation\_\allowbreak Obligatoire & BOOLEAN &  & Oui & Indique si l'établissement était tenu de participer à l'enquête. \\ \hline
+Depot\_\allowbreak Valide & BOOLEAN &  & Oui & Indique si le dépôt des résultats a été validé. \\ \hline
+Nb\_\allowbreak Reponses & INTEGER &  & Oui & Mesure additive~: nombre de questionnaires exploitables. \\ \hline
+Score & NUMERIC(5,2) &  & Oui & Mesure non additive~: score global de satisfaction. Agrégé en moyenne pondérée par Nb\_\allowbreak Reponses. \\ \hline
+\end{tableau}
+
+\needspace{19\baselineskip}
+\subsubsection*{FAIT\_DECES}
+
+\noindent \textbf{Type}~: Table de faits. \textbf{Grain}~: 1 ligne = 1 décès enregistré dans le fichier INSEE (deces.csv, environ 25 millions de lignes).\\
+\textbf{Source}~: fichier des personnes décédées de l'INSEE (open data), déposé sur le serveur FTP.\\
+\textbf{Besoins couverts}~: 7.
+
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.2594\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1653\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.0674\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.0674\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.4407\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Attribut} & \textbf{Type} & \textbf{Clé} & \textbf{Null} & \textbf{Description} \\ \hline
+Id\_\allowbreak Deces & BIGINT & PK & Non & Clé de substitution du décès. \\ \hline
+Id\_\allowbreak Temps & INTEGER & FK & Non & Date du décès $\rightarrow$ DIM\_\allowbreak Temps (rôle \og date de décès\fg{}). \\ \hline
+Id\_\allowbreak Region\_\allowbreak Deces & INTEGER & FK & Non & Lieu du décès $\rightarrow$ DIM\_\allowbreak Region\_\allowbreak INSEE (rôle \og lieu de décès\fg{}). Membre~$-1$ \og Inconnu\fg{} si le code est vide. \\ \hline
+Id\_\allowbreak Region\_\allowbreak Naissance & INTEGER & FK & Non & Lieu de naissance $\rightarrow$ DIM\_\allowbreak Region\_\allowbreak INSEE (rôle \og lieu de naissance\fg{}). \\ \hline
+Age\_\allowbreak Deces & SMALLINT &  & Oui & Âge au décès en années, calculé à partir des dates de naissance et de décès. \\ \hline
+Annee\_\allowbreak Naissance & SMALLINT &  & Oui & Année de naissance. Seule l'année est conservée (minimisation RGPD). \\ \hline
+Numero\_\allowbreak Acte\_\allowbreak Deces & VARCHAR(10) & DD & Oui & Dimension dégénérée~: numéro de l'acte de décès, utile au dédoublonnage. \\ \hline
+Flag\_\allowbreak Date\_\allowbreak Partielle & BOOLEAN &  & Non & Vrai si la date de naissance ou de décès est incomplète dans la source (ex. \og 1930\fg{}, \og 1989-05\fg{}). \\ \hline
+Date\_\allowbreak Chargement & TIMESTAMP &  & Non & Horodatage du chargement de la ligne (traçabilité ETL). \\ \hline
+\end{tableau}
+
+\needspace{17\baselineskip}
+\subsubsection*{DIM\_Temps}
+
+\noindent \textbf{Type}~: Dimension conforme. \textbf{Grain}~: 1 ligne = 1 jour calendaire.\\
+\textbf{Source}~: générée par l'ETL (calendrier), partagée par les quatre tables de faits.\\
+\textbf{Besoins couverts}~: tous (axe \og période\fg{}).
+
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.2594\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1653\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.0674\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.0674\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.4407\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Attribut} & \textbf{Type} & \textbf{Clé} & \textbf{Null} & \textbf{Description} \\ \hline
+Id\_\allowbreak Temps & INTEGER & PK & Non & Clé au format AAAAMMJJ (ex. 20190315), lisible et triable. \\ \hline
+Date & DATE &  & Non & Date complète. \\ \hline
+Jour & SMALLINT &  & Non & Jour du mois (1 à 31). \\ \hline
+Semaine & SMALLINT &  & Non & Numéro de semaine ISO (1 à 53). \\ \hline
+Mois & SMALLINT &  & Non & Mois (1 à 12). \\ \hline
+Trimestre & SMALLINT &  & Non & Trimestre (1 à 4). \\ \hline
+Semestre & SMALLINT &  & Non & Semestre (1 ou 2). \\ \hline
+Annee & SMALLINT &  & Non & Année civile. \\ \hline
+\end{tableau}
+
+\needspace{25\baselineskip}
+\subsubsection*{DIM\_Patient}
+
+\noindent \textbf{Type}~: Dimension. \textbf{Grain}~: 1 ligne = 1 patient.\\
+\textbf{Source}~: base opérationnelle PostgreSQL (table des patients).\\
+\textbf{Besoins couverts}~: 5 (sexe, âge).
+
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.2594\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1653\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.0674\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.0674\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.4407\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Attribut} & \textbf{Type} & \textbf{Clé} & \textbf{Null} & \textbf{Description} \\ \hline
+Id\_\allowbreak Patient & INTEGER & PK & Non & Clé de substitution du patient. \\ \hline
+Nom & VARCHAR(100) &  & Oui & Nom du patient. Donnée identifiante. \\ \hline
+Prenom & VARCHAR(100) &  & Oui & Prénom du patient. Donnée identifiante. \\ \hline
+Sexe & CHAR(1) &  & Non & Sexe (M, F, I pour inconnu). \\ \hline
+Adresse & VARCHAR(255) &  & Oui & Adresse postale. Donnée identifiante. \\ \hline
+Ville & VARCHAR(100) &  & Oui & Ville de résidence. \\ \hline
+Code\_\allowbreak Postal & CHAR(5) &  & Oui & Code postal de résidence. \\ \hline
+Pays & VARCHAR(50) &  & Oui & Pays de résidence. \\ \hline
+Email & VARCHAR(255) &  & Oui & Adresse électronique. Donnée identifiante. \\ \hline
+Tel & VARCHAR(20) &  & Oui & Téléphone. Donnée identifiante. \\ \hline
+Date\_\allowbreak Naissance & DATE &  & Oui & Date de naissance (attribut \og Date\fg{} du schéma). \\ \hline
+Age & SMALLINT &  & Oui & Âge du patient en années. \\ \hline
+Num\_\allowbreak Secu & CHAR(15) &  & Oui & Numéro de sécurité sociale (NIR). Donnée identifiante. \\ \hline
+Groupe\_\allowbreak Sanguin & VARCHAR(3) &  & Oui & Groupe sanguin (A+, O-\ldots{}). \\ \hline
+Poids & NUMERIC(5,1) &  & Oui & Poids en kg. \\ \hline
+Taille & NUMERIC(4,1) &  & Oui & Taille en cm. \\ \hline
+\end{tableau}
+
+\needspace{8\baselineskip}
+\subsubsection*{DIM\_Diagnostic}
+
+\noindent \textbf{Type}~: Dimension. \textbf{Grain}~: 1 ligne = 1 code diagnostic.\\
+\textbf{Source}~: base opérationnelle PostgreSQL (table des diagnostics).\\
+\textbf{Besoins couverts}~: 2 et 4.
+
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.2594\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1653\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.0674\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.0674\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.4407\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Attribut} & \textbf{Type} & \textbf{Clé} & \textbf{Null} & \textbf{Description} \\ \hline
+Id\_\allowbreak Diagnostic & INTEGER & PK & Non & Clé de substitution du diagnostic. \\ \hline
+Code\_\allowbreak Diagnostic & VARCHAR(10) & BK & Non & Code du diagnostic dans la source (clé métier). \\ \hline
+Diagnostic & VARCHAR(255) &  & Non & Libellé du diagnostic. \\ \hline
+\end{tableau}
+
+\needspace{20\baselineskip}
+\subsubsection*{DIM\_Etablissement}
+
+\noindent \textbf{Type}~: Dimension conforme. \textbf{Grain}~: 1 ligne = 1 site géographique d'établissement (FINESS site).\\
+\textbf{Source}~: fichier CSV de gestion administrative des établissements (référentiel FINESS).\\
+\textbf{Besoins couverts}~: 1 et 8~; partagée par Consultation, Hospitalisation et Satisfaction.
+
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.2594\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1653\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.0674\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.0674\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.4407\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Attribut} & \textbf{Type} & \textbf{Clé} & \textbf{Null} & \textbf{Description} \\ \hline
+Id\_\allowbreak Etablissement & INTEGER & PK & Non & Clé de substitution de l'établissement. \\ \hline
+Finess\_\allowbreak Site & CHAR(9) & BK & Non & Numéro FINESS du site géographique (clé métier). \\ \hline
+Finess\_\allowbreak Etablissement\_\allowbreak Juridique & CHAR(9) & BK & Oui & Numéro FINESS de l'entité juridique de rattachement. \\ \hline
+Identifiant\_\allowbreak Organisation & VARCHAR(30) &  & Oui & Identifiant de l'organisation dans le référentiel. \\ \hline
+Raison\_\allowbreak Sociale\_\allowbreak Site & VARCHAR(255) &  & Non & Raison sociale du site. \\ \hline
+Enseigne\_\allowbreak Commerciale\_\allowbreak Site & VARCHAR(255) &  & Oui & Enseigne commerciale du site. \\ \hline
+Adresse & VARCHAR(255) &  & Oui & Adresse du site. \\ \hline
+Code\_\allowbreak Commune & CHAR(5) &  & Oui & Code commune INSEE du site (permet le rattachement à la région). \\ \hline
+Code\_\allowbreak Postal & CHAR(5) &  & Oui & Code postal du site. \\ \hline
+Commune & VARCHAR(100) &  & Oui & Nom de la commune. \\ \hline
+Pays & VARCHAR(50) &  & Oui & Pays. \\ \hline
+\end{tableau}
+
+\needspace{19\baselineskip}
+\subsubsection*{DIM\_Professionnel}
+
+\noindent \textbf{Type}~: Dimension. \textbf{Grain}~: 1 ligne = 1 professionnel de santé.\\
+\textbf{Source}~: référentiel des professionnels de santé.\\
+\textbf{Besoins couverts}~: 6.
+
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.2594\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1653\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.0674\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.0674\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.4407\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Attribut} & \textbf{Type} & \textbf{Clé} & \textbf{Null} & \textbf{Description} \\ \hline
+Id\_\allowbreak Professionnel & INTEGER & PK & Non & Clé de substitution du professionnel. \\ \hline
+Identifiant & VARCHAR(20) & BK & Non & Identifiant national du professionnel (clé métier). \\ \hline
+Type\_\allowbreak Identifiant & VARCHAR(10) &  & Non & Nature de l'identifiant (ex. RPPS, ADELI). \\ \hline
+Civilite & VARCHAR(10) &  & Oui & Civilité. \\ \hline
+Nom & VARCHAR(100) &  & Non & Nom d'exercice. \\ \hline
+Prenom & VARCHAR(100) &  & Oui & Prénom d'exercice. \\ \hline
+Categorie\_\allowbreak Professionnelle & VARCHAR(50) &  & Oui & Catégorie (civil, militaire, étudiant\ldots{}). \\ \hline
+Profession & VARCHAR(100) &  & Oui & Profession exercée (médecin, infirmier\ldots{}). \\ \hline
+Specialite & VARCHAR(150) &  & Oui & Spécialité ou savoir-faire. \\ \hline
+Commune & VARCHAR(100) &  & Oui & Commune d'exercice. \\ \hline
+\end{tableau}
+
+\needspace{17\baselineskip}
+\subsubsection*{DIM\_Region\_INSEE}
+
+\noindent \textbf{Type}~: Dimension (à rôles multiples). \textbf{Grain}~: 1 ligne = 1 commune INSEE, avec son département et sa région. Membre~$-1$ \og Inconnu\fg{} pour les codes vides.\\
+\textbf{Source}~: Code officiel géographique de l'INSEE, construit à partir des codes lieu du fichier des décès.\\
+\textbf{Besoins couverts}~: 7~; jouée deux fois par FAIT\_DECES (lieu de décès, lieu de naissance).
+
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.2594\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1653\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.0674\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.0674\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.4407\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Attribut} & \textbf{Type} & \textbf{Clé} & \textbf{Null} & \textbf{Description} \\ \hline
+Id\_\allowbreak Region & INTEGER & PK & Non & Clé de substitution de la commune. \\ \hline
+Code\_\allowbreak Commune\_\allowbreak INSEE & CHAR(5) & BK & Oui & Code commune INSEE (2A/2B pour la Corse, 99xxx pour l'étranger). Clé métier. \\ \hline
+Code\_\allowbreak Departement & VARCHAR(3) &  & Oui & Code du département (3 caractères pour les DROM~: 971 à 976). \\ \hline
+Nom\_\allowbreak Departement & VARCHAR(100) &  & Oui & Nom du département. \\ \hline
+Code\_\allowbreak Region & VARCHAR(3) &  & Oui & Code de la région (ex. 84). \\ \hline
+Nom\_\allowbreak Region & VARCHAR(100) &  & Oui & Nom de la région (ex. Auvergne-Rhône-Alpes). \\ \hline
+Pays & VARCHAR(50) &  & Oui & Pays (France ou pays étranger). \\ \hline
+Type\_\allowbreak Zone & VARCHAR(10) &  & Non & Métropole, DROM, COM, Étranger ou Inconnu. \\ \hline
+\end{tableau}
+
+\subsection*{En résumé}
+
+\noindent Le modèle décisionnel du CHU est une \textbf{constellation} construite selon l'approche de Kimball~:
+\begin{itemize}
+	\item \textbf{quatre tables de faits}, une par processus métier (Consultations, Hospitalisations, Satisfaction, Décès), chacune au grain le plus fin disponible dans les sources~;
+	\item \textbf{six dimensions} (Temps, Établissement, Patient anonymisé, Diagnostic, Professionnel, Région INSEE), dont deux \textbf{conformes}, Temps et Établissement, partagées par plusieurs faits pour croiser les indicateurs~;
+	\item des relations toutes \textbf{un-à-plusieurs}, traduites en clés étrangères non nulles vers des dimensions identifiées par des \textbf{clés de substitution}~;
+	\item des hiérarchies (Commune $\rightarrow$ Département $\rightarrow$ Région, Jour $\rightarrow$ Mois $\rightarrow$ Trimestre $\rightarrow$ Année) dénormalisées dans leur dimension, sans schéma en flocon.
+\end{itemize}
+
+\noindent Chaque besoin du CHU se calcule à partir d'une seule table de faits et de ses dimensions. Le dictionnaire de données décrit les dix tables, leurs attributs, leurs types et leurs clés~; il sert de référence aux jobs ETL et à l'implémentation physique du livrable~2.
+
+% --- ARCHITECTURE ---
+\newpage
+\section{Architecture cible}
+
+\noindent L'architecture doit répondre à trois exigences~: intégrer des sources hétérogènes, protéger des données de santé et suivre la hausse des volumes. Elle repose sur un \textbf{Lakehouse}, qui associe le stockage économique d'un Data Lake à la structure et aux performances d'un entrepôt de données.
+
+\vspace{0.2cm}
+
+\noindent Les données traversent trois couches successives, \textbf{Bronze}, \textbf{Silver} et \textbf{Gold}, qui les font passer de l'état brut à l'état prêt pour l'analyse. Cette partie décrit le rôle de chaque couche, le parcours des données depuis les sources jusqu'au tableau de bord, puis les technologies retenues et les raisons de ces choix.
+
+\subsection{Couches Bronze, Silver et Gold}
+
+\subsection{Flux de données de bout en bout}
+
+\subsection{Technologies retenues et justification}
+
+\subsubsection*{ETL}
+
+\subsubsection*{Stockage}
+
+\subsubsection*{BI}
+
+% --- ETL ---
+\newpage
+\section{Spécifications fonctionnelles des jobs ETL}
+
+\noindent Les jobs ETL (\textit{Extract, Transform, Load}) alimentent l'entrepôt~: ils extraient les données des sources, les transforment pour respecter le modèle cible, puis les chargent dans les couches du Lakehouse. Ce sont eux qui garantissent la qualité des données mises à disposition des utilisateurs.
+
+\vspace{0.2cm}
+
+\noindent Cette partie spécifie leur comportement attendu, indépendamment de l'outil qui les exécutera. Pour chaque source, elle précise les règles de transformation, le traitement des valeurs nulles et des doublons, la gestion des erreurs et des lignes rejetées, ainsi que la fréquence d'exécution.
+
+\subsection{Sources}
+
+\subsection{Règles de transformation}
+
+\subsection{Valeurs nulles et doublons}
+
+\subsection{Erreurs et rejets}
+
+\subsection{Fréquence d'exécution}
+
+% --- GOUVERNANCE ---
+\newpage
+\section{Plan de gouvernance des données}
+
+\noindent Les données du CHU sont des \textbf{données de santé}, classées parmi les données sensibles par le RGPD. Leur traitement est encadré par le RGPD, par les recommandations de la CNIL et par l'obligation de les confier à un hébergeur certifié \textbf{HDS} (Hébergeur de Données de Santé).
+
+\vspace{0.2cm}
+
+\noindent Le plan de gouvernance définit les règles qui assurent cette conformité tout au long du cycle de vie des données. Il précise les mesures d'anonymisation et de pseudonymisation, les exigences d'hébergement, les rôles et les droits d'accès de chaque utilisateur, et la traçabilité des flux, du chargement de la source jusqu'au tableau de bord.
+
+\subsection{Conformité RGPD}
+
+\subsection{Conformité HDS}
+
+\subsection{Rôles et droits d'accès}
+
+\subsection{Traçabilité des flux}
+
+% --- CONCLUSION ---
+\newpage
+\section*{Conclusion}
+\phantomsection
+\addcontentsline{toc}{section}{Conclusion}
+
+% --- ANNEXES ---
+\begin{landscape}
+\thispagestyle{fancy}
+\section*{Annexes}
+\phantomsection
+\addcontentsline{toc}{section}{Annexes}
+
+\subsection*{Annexe A -- Modèle dimensionnel conceptuel}
+\phantomsection
+\addcontentsline{toc}{subsection}{Annexe A -- Modèle dimensionnel conceptuel}
+
+\noindent Tables de faits et dimensions du CHU et leurs relations. Ce modèle est décrit en partie~\ref{sec:conceptuel}.
+
+\begin{center}
+\includegraphics[width=\linewidth,height=0.62\textwidth,keepaspectratio]{contents/img/modele_conceptuel.png}
+\end{center}
+
+\newpage
+\thispagestyle{fancy}
+\subsection*{Annexe B -- Schéma logique en constellation}
+\phantomsection
+\addcontentsline{toc}{subsection}{Annexe B -- Schéma logique en constellation}
+
+\noindent Constellation des quatre tables de faits et des six dimensions, avec leurs clés primaires (PK), étrangères (FK) et métier (BK). Ce schéma est décrit en partie~\ref{sec:logique}.
+
+\begin{center}
+\includegraphics[width=\linewidth,height=0.62\textwidth,keepaspectratio]{contents/img/schema_constellation.png}
+\end{center}
+\end{landscape}
