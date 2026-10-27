@@ -8,6 +8,8 @@
 
 \usetikzlibrary{arrows.meta,positioning,calc,shapes.geometric,decorations.text}
 \usepackage{fontawesome5}
+\usepackage{adjustbox}
+\usepackage{xurl}
 % Couleurs du schéma d'architecture
 \definecolor{archbleu}{HTML}{1F4E79}
 \definecolor{archgris}{HTML}{404040}
@@ -28,7 +30,23 @@
 \newcommand{\separateur}{\par\needspace{8\baselineskip}\vskip0.4cm%
   \cleaders\hbox to\linewidth{\hss\rule{5cm}{0.4pt}\hss}\vskip0.5pt\nobreak}
 \newcommand{\source}[1]{\par\nobreak\vspace{-0.2cm}\nobreak{\centering\footnotesize\textit{Source~: #1}\par}}
-\newcommand{\legende}[1]{\par\nobreak\vspace{-0.2cm}\nobreak{\centering\footnotesize\textit{#1}\par}}
+\newcommand{\legende}[1]{\par\nobreak\vspace{0.25cm}\nobreak{\centering\footnotesize\textit{#1}\par}}
+% Capture d'un job Talend (contents/img/jobs/<nom>.png), cadre provisoire si l'image manque
+\newcounter{figjob}\setcounter{figjob}{3}
+\newcommand{\capturejob}[2]{\stepcounter{figjob}%
+  \begin{center}\IfFileExists{contents/img/jobs/#1.png}%
+    {\adjustbox{max width=\linewidth,max height=8cm}{\includegraphics{contents/img/jobs/#1.png}}}%
+    {\fbox{\parbox[c][2.2cm][c]{0.8\linewidth}{\centering\footnotesize\textit{Capture à venir}}}}%
+  \legende{Figure~\thefigjob{} -- #2}\end{center}}
+% Fiche d'un job : nom de l'image, titre, source, traitement, valeurs nulles et doublons
+% Une fiche n'est jamais coupée entre deux pages : si elle ne tient pas, elle passe entière à la page suivante.
+\newcommand{\fichejob}[5]{\par\vspace{0.6cm}\noindent\begin{minipage}{\linewidth}
+  \subsubsection*{#2}
+  \capturejob{#1}{Job #2}
+  \noindent\textbf{Source~:} #3\par\vspace{0.1cm}
+  \noindent\textbf{Traitement~:} #4\par\vspace{0.1cm}
+  \noindent\textbf{Valeurs nulles et doublons~:} #5\par
+  \end{minipage}\par}
 
 % --- RÈGLES DE MISE EN PAGE ---
 % Paragraphes, listes et cases de tableau jamais coupés entre deux pages,
