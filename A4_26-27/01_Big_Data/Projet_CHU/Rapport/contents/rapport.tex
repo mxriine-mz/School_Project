@@ -154,7 +154,7 @@ Commune, Département, Région & Dimension conforme, sous forme de hiérarchie (
 
 \subsubsection*{Relations entre processus métier et dimensions}
 
-\noindent Le tableau reprend chaque relation du schéma avec son nom et ses cardinalités. Côté processus métier, la cardinalité est toujours (1,1)~: chaque consultation, chaque séjour, chaque résultat d'enquête et chaque décès est rattaché à une seule valeur de chaque dimension. Ces relations deviennent les clés étrangères des tables de faits.
+\noindent Le tableau reprend chaque relation du schéma avec son nom et ses cardinalités. Côté processus métier, la cardinalité est (1,1) pour presque toutes les relations~: chaque consultation, chaque séjour, chaque résultat d'enquête et chaque décès est rattaché à une seule valeur de chaque dimension. Seule la relation REPRÉSENTER est en (1,n)~: une enquête de satisfaction représente au moins une commune, celle de l'établissement évalué. Ces relations deviennent les clés étrangères des tables de faits.
 
 \begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.2075\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.2594\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1037\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.2697\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1597\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
 \rowcolor{tabentete}\textbf{Relation} & \textbf{Processus métier} & \textbf{Card.} & \textbf{Dimension} & \textbf{Card.} \\ \hline
@@ -169,7 +169,7 @@ ACCUEILLIR & Hospitalisation & 1,1 & Établissement & 0,n \\ \hline
 ENTRER LE & Hospitalisation & 1,1 & Temps & 0,n \\ \hline
 ÉVALUER & Enquête de satisfaction & 1,1 & Établissement & 0,n \\ \hline
 MESURER LE & Enquête de satisfaction & 1,1 & Temps (année) & 0,n \\ \hline
-REPRÉSENTER & Enquête de satisfaction & 1,1 & Commune & 0,n \\ \hline
+REPRÉSENTER & Enquête de satisfaction & 1,n & Commune & 0,n \\ \hline
 DÉCÉDER LE & Décès & 1,1 & Temps & 0,n \\ \hline
 DÉCÉDER DANS & Décès & 1,1 & Région INSEE (lieu de décès) & 0,n \\ \hline
 NAÎTRE DANS & Décès & 1,1 & Région INSEE (lieu de naissance) & 0,n \\ \hline
@@ -197,7 +197,7 @@ NAÎTRE DANS & Décès & 1,1 & Région INSEE (lieu de naissance) & 0,n \\ \hline
 \rowcolor{tabentete}\textbf{Table de faits} & \textbf{Grain (1 ligne =)} & \textbf{Mesures} \\ \hline
 FAIT\_\allowbreak CONSULTATION & 1 consultation d'un patient par un professionnel, dans un établissement, à une date & Nombre\_\allowbreak de\_\allowbreak consultation \\ \hline
 FAIT\_\allowbreak HOSPITALISATION & 1 séjour hospitalier d'un patient dans un établissement & Jour\_\allowbreak Hospitalisation (durée) \\ \hline
-FAIT\_\allowbreak SATISFACTION & 1 résultat d'enquête pour un établissement et une année & Nb\_\allowbreak Reponses, Score \\ \hline
+FAIT\_\allowbreak SATISFACTION & 1 résultat d'enquête pour un établissement et une année & NbReponses, Score \\ \hline
 FAIT\_\allowbreak DECES & 1 décès du fichier INSEE & Age\_\allowbreak Deces (et comptage des lignes) \\ \hline
 \end{tableau}
 
@@ -262,11 +262,11 @@ DIM\_\allowbreak Region\_\allowbreak INSEE &  &  & X (région de l'établissemen
 {\small\raggedright
 \noindent \textbf{FAIT\_\allowbreak CONSULTATION} (\underline{Num\_\allowbreak Consultation}, \#Id\_\allowbreak Patient, \#Id\_\allowbreak Temps, \#Id\_\allowbreak Professionnel, \#Id\_\allowbreak Diagnostic, \#Id\_\allowbreak Etablissement, Nombre\_\allowbreak de\_\allowbreak consultation)
 
-\noindent \textbf{FAIT\_\allowbreak HOSPITALISATION} (\underline{Id\_\allowbreak Hospitalisation}, \#Id\_\allowbreak Patient, \#Id\_\allowbreak Etablissement, \#Id\_\allowbreak Diagnostic, \#Id\_\allowbreak Date\_\allowbreak Entree, Num\_\allowbreak Hospitalisation, Jour\_\allowbreak Hospitalisation)
+\noindent \textbf{FAIT\_\allowbreak HOSPITALISATION} (\underline{Id\_\allowbreak Hospitalisation}, \#Id\_\allowbreak Patient, \#Id\_\allowbreak Etablissement, \#Id\_\allowbreak Diagnostique, \#Id\_\allowbreak Date\_\allowbreak Entree, Num\_\allowbreak Hospitalisation, Jour\_\allowbreak Hospitalisation)
 
-\noindent \textbf{FAIT\_\allowbreak SATISFACTION} (\underline{Id\_\allowbreak Satisfaction}, \#Id\_\allowbreak Etablissement, \#Id\_\allowbreak Region, Participation\_\allowbreak Obligatoire, Depot\_\allowbreak Valide, Nb\_\allowbreak Reponses, Score, Annee)
+\noindent \textbf{FAIT\_\allowbreak SATISFACTION} (\underline{Id\_\allowbreak Satisfaction}, \#Id\_\allowbreak Etablissement, \#Id\_\allowbreak Region, ParticipationObligatoire, DepotValide, NbReponses, Score, Annee)
 
-\noindent \textbf{FAIT\_\allowbreak DECES} (\underline{Id\_\allowbreak Deces}, \#Id\_\allowbreak Temps, \#Id\_\allowbreak Region\_\allowbreak Deces, \#Id\_\allowbreak Region\_\allowbreak Naissance, Age\_\allowbreak Deces, Annee\_\allowbreak Naissance, Numero\_\allowbreak Acte\_\allowbreak Deces, Flag\_\allowbreak Date\_\allowbreak Partielle, Date\_\allowbreak Chargement)
+\noindent \textbf{FAIT\_\allowbreak DECES} (\underline{Id\_\allowbreak Deces}, \#Id\_\allowbreak Temps, \#Id\_\allowbreak Region\_\allowbreak Deces, \#Id\_\allowbreak Region\_\allowbreak Naissance, Age\_\allowbreak Deces, Annee\_\allowbreak Naissance, Numero\_\allowbreak Actes\_\allowbreak Deces, Flag\_\allowbreak Date\_\allowbreak Partielle, Date\_\allowbreak Chargement)
 
 \noindent \textbf{DIM\_\allowbreak Temps} (\underline{Id\_\allowbreak Temps}, Date, Jour, Semaine, Mois, Trimestre, Semestre, Annee)
 
@@ -294,7 +294,7 @@ FAIT\_\allowbreak CONSULTATION & Id\_\allowbreak Diagnostic & DIM\_\allowbreak D
 FAIT\_\allowbreak CONSULTATION & Id\_\allowbreak Etablissement & DIM\_\allowbreak Etablissement & 1 & 0..n \\ \hline
 FAIT\_\allowbreak HOSPITALISATION & Id\_\allowbreak Patient & DIM\_\allowbreak Patient & 1 & 0..n \\ \hline
 FAIT\_\allowbreak HOSPITALISATION & Id\_\allowbreak Etablissement & DIM\_\allowbreak Etablissement & 1 & 0..n \\ \hline
-FAIT\_\allowbreak HOSPITALISATION & Id\_\allowbreak Diagnostic & DIM\_\allowbreak Diagnostic & 1 & 0..n \\ \hline
+FAIT\_\allowbreak HOSPITALISATION & Id\_\allowbreak Diagnostique & DIM\_\allowbreak Diagnostic & 1 & 0..n \\ \hline
 FAIT\_\allowbreak HOSPITALISATION & Id\_\allowbreak Date\_\allowbreak Entree & DIM\_\allowbreak Temps & 1 & 0..n \\ \hline
 FAIT\_\allowbreak SATISFACTION & Id\_\allowbreak Etablissement & DIM\_\allowbreak Etablissement & 1 & 0..n \\ \hline
 FAIT\_\allowbreak SATISFACTION & Id\_\allowbreak Region & DIM\_\allowbreak Region\_\allowbreak INSEE & 1 & 0..n \\ \hline
@@ -310,8 +310,8 @@ FAIT\_\allowbreak DECES & Id\_\allowbreak Region\_\allowbreak Naissance & DIM\_\
 	\item \textbf{Dimensions conformes}~: DIM\_Temps, DIM\_Etablissement et DIM\_Region\_INSEE sont uniques et partagées, ce qui garantit que \og mars 2019\fg{}, \og tel établissement\fg{} ou \og telle région\fg{} ont le même sens pour tous les indicateurs.
 	\item \textbf{Dimension à rôles multiples}~: DIM\_Region\_INSEE est jouée deux fois par FAIT\_DECES (lieu de décès et lieu de naissance), via deux clés étrangères distinctes, et une fois par FAIT\_SATISFACTION (région de l'établissement).
 	\item \textbf{Année de l'enquête}~: les résultats de satisfaction sont publiés une fois par an~; FAIT\_SATISFACTION porte donc une simple colonne Annee plutôt qu'une clé vers DIM\_Temps, dont le grain est le jour.
-	\item \textbf{Dimensions dégénérées}~: Num\_Hospitalisation et Numero\_Acte\_Deces restent dans les faits pour le dédoublonnage et la traçabilité vers la source.
-	\item \textbf{Mesures}~: les mesures additives (Nombre\_de\_consultation, Jour\_Hospitalisation, Nb\_Reponses) se somment sur tous les axes~; Score est non additif et s'agrège en moyenne pondérée par Nb\_Reponses.
+	\item \textbf{Dimensions dégénérées}~: Num\_Hospitalisation et Numero\_Actes\_Deces restent dans les faits pour le dédoublonnage et la traçabilité vers la source.
+	\item \textbf{Mesures}~: les mesures additives (Nombre\_de\_consultation, Jour\_Hospitalisation, NbReponses) se somment sur tous les axes~; Score est non additif et s'agrège en moyenne pondérée par NbReponses.
 \end{itemize}
 
 \subsection{Dictionnaire de données}\label{sec:dictionnaire}
@@ -352,7 +352,7 @@ Nombre\_\allowbreak de\_\allowbreak consultation & INT &  & Non & Mesure additiv
 Id\_\allowbreak Hospitalisation & INT & PK & Non & Clé de substitution du séjour. \\ \hline
 Id\_\allowbreak Patient & INT & FK & Non & Patient hospitalisé $\rightarrow$ DIM\_\allowbreak Patient. \\ \hline
 Id\_\allowbreak Etablissement & INT & FK & Non & Établissement d'accueil $\rightarrow$ DIM\_\allowbreak Etablissement. \\ \hline
-Id\_\allowbreak Diagnostic & INT & FK & Non & Diagnostic à l'origine du séjour $\rightarrow$ DIM\_\allowbreak Diagnostic. \\ \hline
+Id\_\allowbreak Diagnostique & INT & FK & Non & Diagnostic à l'origine du séjour $\rightarrow$ DIM\_\allowbreak Diagnostic. \\ \hline
 Id\_\allowbreak Date\_\allowbreak Entree & INT & FK & Non & Date d'entrée du séjour $\rightarrow$ DIM\_\allowbreak Temps (rôle \og date d'entrée\fg{}). \\ \hline
 Num\_\allowbreak Hospitalisation & VARCHAR(20) & DD & Non & Dimension dégénérée~: numéro du séjour dans la source, conservé pour la traçabilité. \\ \hline
 Jour\_\allowbreak Hospitalisation & INT &  & Oui & Mesure additive~: durée du séjour en jours. \\ \hline
@@ -370,10 +370,10 @@ Jour\_\allowbreak Hospitalisation & INT &  & Oui & Mesure additive~: durée du s
 Id\_\allowbreak Satisfaction & INT & PK & Non & Clé de substitution du résultat d'enquête. \\ \hline
 Id\_\allowbreak Etablissement & INT & FK & Non & Établissement évalué $\rightarrow$ DIM\_\allowbreak Etablissement. \\ \hline
 Id\_\allowbreak Region & INT & FK & Non & Région de l'établissement, retrouvée par sa commune $\rightarrow$ DIM\_\allowbreak Region\_\allowbreak INSEE. Membre~$-1$ \og Inconnu\fg{} si la commune est absente. \\ \hline
-Participation\_\allowbreak Obligatoire & BOOLEAN &  & Oui & Indique si l'établissement était tenu de participer à l'enquête. \\ \hline
-Depot\_\allowbreak Valide & BOOLEAN &  & Oui & Indique si le dépôt des résultats a été validé. \\ \hline
-Nb\_\allowbreak Reponses & INT &  & Oui & Mesure additive~: nombre de questionnaires exploitables. \\ \hline
-Score & NUMERIC(5,2) &  & Oui & Mesure non additive~: score global de satisfaction. Agrégé en moyenne pondérée par Nb\_\allowbreak Reponses. \\ \hline
+ParticipationObligatoire & BOOLEAN &  & Oui & Indique si l'établissement était tenu de participer à l'enquête. \\ \hline
+DepotValide & BOOLEAN &  & Oui & Indique si le dépôt des résultats a été validé. \\ \hline
+NbReponses & INT &  & Oui & Mesure additive~: nombre de questionnaires exploitables. \\ \hline
+Score & NUMERIC(5,2) &  & Oui & Mesure non additive~: score global de satisfaction. Agrégé en moyenne pondérée par NbReponses. \\ \hline
 Annee & INT &  & Non & Année de l'enquête (2017, 2019 ou 2020), ajoutée par le job J09. \\ \hline
 \end{tableau}
 
@@ -392,7 +392,7 @@ Id\_\allowbreak Region\_\allowbreak Deces & INT & FK & Non & Lieu du décès $\r
 Id\_\allowbreak Region\_\allowbreak Naissance & INT & FK & Non & Lieu de naissance $\rightarrow$ DIM\_\allowbreak Region\_\allowbreak INSEE (rôle \og lieu de naissance\fg{}). \\ \hline
 Age\_\allowbreak Deces & INT &  & Oui & Âge au décès en années, calculé à partir des dates de naissance et de décès. \\ \hline
 Annee\_\allowbreak Naissance & INT &  & Oui & Année de naissance. Seule l'année est conservée (minimisation RGPD). \\ \hline
-Numero\_\allowbreak Acte\_\allowbreak Deces & VARCHAR(10) & DD & Oui & Dimension dégénérée~: numéro de l'acte de décès, utile au dédoublonnage. \\ \hline
+Numero\_\allowbreak Actes\_\allowbreak Deces & VARCHAR(10) & DD & Oui & Dimension dégénérée~: numéro de l'acte de décès, utile au dédoublonnage. \\ \hline
 Flag\_\allowbreak Date\_\allowbreak Partielle & BOOLEAN &  & Non & Vrai si la date de naissance ou de décès est incomplète dans la source (ex. \og 1930\fg{}, \og 1989-05\fg{}). \\ \hline
 Date\_\allowbreak Chargement & TIMESTAMP &  & Non & Horodatage du chargement de la ligne (traçabilité ETL). \\ \hline
 \end{tableau}
@@ -447,16 +447,16 @@ Diagnostic & VARCHAR(255) &  & Non & Libellé du diagnostic. \\ \hline
 \needspace{20\baselineskip}
 \subsubsection*{DIM\_Etablissement}
 
-\noindent \textbf{Type}~: Dimension conforme. \textbf{Grain}~: 1 ligne = 1 organisation du référentiel des établissements.\\
+\noindent \textbf{Type}~: Dimension conforme. \textbf{Grain}~: 1 ligne = 1 site géographique d'établissement (FINESS site).\\
 \textbf{Source}~: fichier CSV de gestion administrative des établissements (référentiel FINESS).\\
 \textbf{Besoins couverts}~: 1 et 8~; partagée par Consultation, Hospitalisation et Satisfaction.
 
 \begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.2594\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1653\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.0674\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.0674\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.4407\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
 \rowcolor{tabentete}\textbf{Attribut} & \textbf{Type} & \textbf{Clé} & \textbf{Null} & \textbf{Description} \\ \hline
 Id\_\allowbreak Etablissement & INT & PK & Non & Clé de substitution de l'établissement. \\ \hline
-Finess\_\allowbreak Site & CHAR(9) &  & Oui & Numéro FINESS du site géographique (renseigné pour 200 organisations seulement). \\ \hline
-Finess\_\allowbreak Etablissement\_\allowbreak Juridique & CHAR(9) &  & Oui & Numéro FINESS de l'entité juridique de rattachement. \\ \hline
-Identifiant\_\allowbreak Organisation & VARCHAR(30) & BK & Non & Identifiant de l'organisation dans le référentiel (clé métier, toujours renseignée et unique). Pour un établissement de santé, il vaut \og F\fg{} suivi du numéro FINESS. \\ \hline
+Finess\_\allowbreak Site & CHAR(9) & BK & Non & Numéro FINESS du site géographique (clé métier). \\ \hline
+Finess\_\allowbreak Etablissement\_\allowbreak Juridique & CHAR(9) & BK & Oui & Numéro FINESS de l'entité juridique de rattachement (clé métier). \\ \hline
+Identifiant\_\allowbreak Organisation & VARCHAR(30) &  & Oui & Identifiant de l'organisation dans le référentiel~; pour un établissement de santé, il vaut \og F\fg{} suivi du numéro FINESS. \\ \hline
 Raison\_\allowbreak Sociale\_\allowbreak Site & VARCHAR(255) &  & Non & Raison sociale du site. \\ \hline
 Enseigne\_\allowbreak Commerciale\_\allowbreak Site & VARCHAR(255) &  & Oui & Enseigne commerciale du site. \\ \hline
 Adresse & VARCHAR(255) &  & Oui & Adresse du site. \\ \hline
