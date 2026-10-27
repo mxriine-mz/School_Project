@@ -28,7 +28,6 @@ Contenu
   - Lancer chaque job une première fois, dans l'ordre J00 à J10 (Talend les compile à ce moment-là).
   - Ensuite, PROJET_CHU enchaîne tout. J00 vide l'entrepôt au début de chaque exécution.
   - J10 (25 millions de décès) dure environ une heure.
-  - Les lignes rejetées sont écrites dans C:/Talend/CHU/rejets/ avec leur code motif.
+  - Les lignes invalides sont écartées par le tMap ; les erreurs techniques sont inscrites dans C:/Talend/CHU/rejets/journal_erreurs.csv.
 
-Dans ce dépôt, pg_password et cle_pseudo (clé de pseudonymisation des patients) sont vides :
-les renseigner dans l'onglet Contexts avant d'exécuter. La clé doit être la même pour toute l'équipe.
+Dans ce dépôt, pg_password est vide : le renseigner dans l'onglet Contexts avant d'exécuter.
