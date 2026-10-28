@@ -10,3 +10,14 @@ Compte-rendu du workshop de la Boucle 3 (Big Data) : bases et tables Hive (exter
 | `data/` | Les six fichiers de données (UTF-8, fins de ligne LF) |
 
 Compilation : `make` (nécessite `-shell-escape` pour minted, déjà configuré).
+
+## Logos (page de garde)
+
+Dans `contents/img/logos/`, convertis en PNG à fond transparent (ImageMagick) :
+
+| Logo | Source |
+| :--- | :--- |
+| Apache Hive | Wikimedia Commons, `Apache_Hive_logo.svg` (Apache Software Foundation, Apache 2.0) |
+| Apache Hadoop | Wikimedia Commons, `Hadoop_logo.svg` (Apache Software Foundation, Apache 2.0) |
+| Cloudera | Wikimedia Commons, `Cloudera_logo.svg` (marque Cloudera) |
+| Hue | Dépôt officiel `cloudera/hue` sur GitHub, `docs/gethue/static/img/hue-logo.svg` |
