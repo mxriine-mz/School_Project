@@ -1,0 +1,16 @@
+Q2 netflix 8807 restaurants 25357
+Q4 Movie 2016 658 tous types 902
+Q5 6131
+Q6 2676
+Q7 contient 6 exact 0
+Q8 265
+Q9 cuisines 85
+Q10 5656
+Q11 ['Bronx', 'Brooklyn', 'Manhattan', 'Missing', 'Queens', 'Staten Island']
+Q12 Movie 117 tous 122
+Q13 173.09 173.08904522613065
+Q14 160.94 160.9429145728643
+Q15 Timor-Leste 160.13 199
+Q16 Netherlands 170.36
+min ex aequo H ['Timor-Leste']
+max ex aequo F ['Netherlands']

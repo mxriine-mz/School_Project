@@ -1,0 +1,9 @@
+2026-10-28T16:48:35.270+0100	connected to: mongodb://localhost:27017
+2026-10-28T16:48:35.368+0100	dropping: `corbeille.netflix`
+2026-10-28T16:48:35.711+0100	8807 document(s) imported successfully. 0 document(s) failed to import.
+2026-10-28T16:48:35.762+0100	connected to: mongodb://localhost:27017
+2026-10-28T16:48:35.857+0100	dropping: `corbeille.height`
+2026-10-28T16:48:35.868+0100	199 document(s) imported successfully. 0 document(s) failed to import.
+2026-10-28T16:48:35.918+0100	connected to: mongodb://localhost:27017
+2026-10-28T16:48:36.016+0100	dropping: `corbeille.restaurants`
+2026-10-28T16:48:37.094+0100	25357 document(s) imported successfully. 0 document(s) failed to import.
