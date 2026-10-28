@@ -34,5 +34,5 @@ clean:
 # ==========================
 mrproper: clean
 	@echo "Suppression de tous les fichiers générés..."
-	rm -f  $(MAIN).nav $(MAIN).snm $(MAIN).vrb $(MAIN).xwm $(MAIN).swo $(MAIN).swp $(MAIN).acn $(MAIN).glo $(MAIN).glsdefs $(MAIN).ist $(MAIN).alg $(MAIN).bbl $(MAIN).blg $(MAIN).fdb_latexmk $(MAIN).fls $(MAIN).synctex.gz $(MAIN).aux $(MAIN).log $(MAIN).out $(MAIN).toc $(MAIN).lof $(MAIN).lot $(MAIN).bcf $(MAIN).run.xml \
+	rm -f  $(MAIN).nav $(MAIN).snm $(MAIN).vrb $(MAIN).xwm $(MAIN).swo $(MAIN).swp $(MAIN).acn $(MAIN).glo $(MAIN).glsdefs $(MAIN).ist $(MAIN).alg $(MAIN).bbl $(MAIN).blg $(MAIN).fdb_latexmk $(MAIN).fls $(MAIN).synctex.gz $(MAIN).aux $(MAIN).log $(MAIN).out $(MAIN).toc $(MAIN).lof $(MAIN).lot $(MAIN).bcf $(MAIN).run.xml
 	@echo "Tous les fichiers générés ont été supprimés."
