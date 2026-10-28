@@ -1,0 +1,206 @@
+
+Logging initialized using configuration in jar:file:/usr/lib/hive/lib/hive-common-1.1.0-cdh5.12.0.jar!/hive-log4j.properties
+OK
+Time taken: 2.164 seconds
+OK
+Time taken: 0.139 seconds
+OK
+Time taken: 0.116 seconds
+OK
+Time taken: 0.054 seconds
+tab_name
+OK
+Time taken: 0.256 seconds
+OK
+db_name	comment	location	owner_name	owner_type	parameters
+htables	Base de donn??es du WS Hive	hdfs://quickstart.cloudera:8020/user/hive/data/htables	cloudera	USER	{owner=A3, date=2022-02-03}
+Time taken: 0.027 seconds, Fetched: 1 row(s)
+OK
+Time taken: 0.159 seconds
+OK
+col_name	data_type	comment
+# col_name            	data_type           	comment             
+	 	 
+genre               	string              	                    
+date_naissance      	date                	                    
+fonction            	string              	                    
+salaire             	string              	                    
+code_postal         	string              	                    
+id                  	int                 	                    
+	 	 
+# Detailed Table Information	 	 
+Database:           	htables             	 
+Owner:              	cloudera            	 
+CreateTime:         	Wed Oct 28 06:39:19 PDT 2026	 
+LastAccessTime:     	UNKNOWN             	 
+Protect Mode:       	None                	 
+Retention:          	0                   	 
+Location:           	hdfs://quickstart.cloudera:8020/user/hive/data/emploi_population	 
+Table Type:         	EXTERNAL_TABLE      	 
+Table Parameters:	 	 
+	COLUMN_STATS_ACCURATE	false               
+	EXTERNAL            	TRUE                
+	comment             	table intermediaire 
+	numFiles            	0                   
+	numRows             	-1                  
+	rawDataSize         	-1                  
+	totalSize           	0                   
+	transient_lastDdlTime	1793194759          
+	 	 
+# Storage Information	 	 
+SerDe Library:      	org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe	 
+InputFormat:        	org.apache.hadoop.mapred.TextInputFormat	 
+OutputFormat:       	org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat	 
+Compressed:         	No                  	 
+Num Buckets:        	-1                  	 
+Bucket Columns:     	[]                  	 
+Sort Columns:       	[]                  	 
+Storage Desc Params:	 	 
+	field.delim         	;                   
+	serialization.format	;                   
+Time taken: 0.212 seconds, Fetched: 39 row(s)
+OK
+log_emploi_population.genre	log_emploi_population.date_naissance	log_emploi_population.fonction	log_emploi_population.salaire	log_emploi_population.code_postal	log_emploi_population.id
+Feminin	1989-03-03	Aide-soignant	20000euro/an	59000	1
+Masculin	1982-02-15	Informaticien	35000euro/an	80000	2
+Feminin	1968-04-26	Infermiere	22000euro/an	77000	3
+Feminin	1956-12-02	Professeur	30000euro/an	95000	4
+Masculin	2001-01-01	Mecanicien	45000euro/an	80200	5
+Masculin	1988-09-17	Avocat	70000euro/an	59000	6
+Masculin	1997-07-23	Veterinaire	45000euro/an	75780	7
+Feminin	1955-12-01	Pericultrice	38000euro/an	76000	8
+Feminin	1972-05-05	Informaticienne	45000euro/an	91000	9
+Masculin	1970-02-25	Agriculture	30000euro/an	14000	10
+Masculin	1984-10-28	Coach sportif	55000euro/an	78000	11
+Feminin	1996-03-20	Musicienne	41000euro/an	6000	12
+Time taken: 0.322 seconds, Fetched: 12 row(s)
+OK
+prpt_name	prpt_value
+COLUMN_STATS_ACCURATE	false
+EXTERNAL	TRUE
+comment	table intermediaire
+numFiles	0
+numRows	-1
+rawDataSize	-1
+totalSize	0
+transient_lastDdlTime	1793194759
+Time taken: 0.056 seconds, Fetched: 8 row(s)
+OK
+Time taken: 0.177 seconds
+Found 1 items
+-rw-r--r--   1 cloudera supergroup        634 2026-10-28 06:38 /user/hive/data/emploi_population/emploi_population.txt
+OK
+Time taken: 0.086 seconds
+Query ID = cloudera_20261028063939_b6fde1ba-b288-4df9-9d0b-c0820f70275e
+Total jobs = 1
+Launching Job 1 out of 1
+Number of reduce tasks determined at compile time: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1793191475690_0029, Tracking URL = http://quickstart.cloudera:8088/proxy/application_1793191475690_0029/
+Kill Command = /usr/lib/hadoop/bin/hadoop job  -kill job_1793191475690_0029
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 1
+2026-10-28 06:39:28,973 Stage-1 map = 0%,  reduce = 0%
+2026-10-28 06:39:35,325 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 1.03 sec
+2026-10-28 06:46:13,559 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 1.03 sec
+2026-10-28 06:47:14,229 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 1.03 sec
+2026-10-28 06:48:14,411 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 1.03 sec
+2026-10-28 06:49:15,274 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 1.03 sec
+2026-10-28 06:50:16,098 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 1.03 sec
+2026-10-28 06:51:17,023 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 1.03 sec
+2026-10-28 06:52:18,042 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 1.03 sec
+2026-10-28 06:52:50,064 Stage-1 map = 100%,  reduce = 100%, Cumulative CPU 2.98 sec
+MapReduce Total cumulative CPU time: 2 seconds 980 msec
+Ended Job = job_1793191475690_0029
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1  Reduce: 1   Cumulative CPU: 2.98 sec   HDFS Read: 7925 HDFS Write: 3 SUCCESS
+Total MapReduce CPU Time Spent: 2 seconds 980 msec
+OK
+nb_lignes
+12
+Time taken: 814.592 seconds, Fetched: 1 row(s)
+Query ID = cloudera_20261028065252_37718156-ea5c-409b-a3f4-4a6d01582505
+Total jobs = 3
+Launching Job 1 out of 3
+Number of reduce tasks is set to 0 since there's no reduce operator
+Starting Job = job_1793191475690_0030, Tracking URL = http://quickstart.cloudera:8088/proxy/application_1793191475690_0030/
+Kill Command = /usr/lib/hadoop/bin/hadoop job  -kill job_1793191475690_0030
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 0
+2026-10-28 06:53:04,102 Stage-1 map = 0%,  reduce = 0%
+2026-10-28 06:53:10,453 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 1.81 sec
+MapReduce Total cumulative CPU time: 1 seconds 810 msec
+Ended Job = job_1793191475690_0030
+Stage-4 is selected by condition resolver.
+Stage-3 is filtered out by condition resolver.
+Stage-5 is filtered out by condition resolver.
+Moving data to: hdfs://quickstart.cloudera:8020/user/hive/data/htables/.hive-staging_hive_2026-10-28_06-52-55_315_237869813078389322-1/-ext-10001
+Moving data to: hdfs://quickstart.cloudera:8020/user/hive/data/htables/emploi_population
+Table htables.emploi_population stats: [numFiles=1, numRows=12, totalSize=484, rawDataSize=472]
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1   Cumulative CPU: 1.81 sec   HDFS Read: 5344 HDFS Write: 566 SUCCESS
+Total MapReduce CPU Time Spent: 1 seconds 810 msec
+OK
+sexe	age	fonction	salaire	code_postal	id_empl
+Time taken: 16.578 seconds
+OK
+col_name	data_type	comment
+sexe                	string              	                    
+age                 	double              	                    
+fonction            	string              	                    
+salaire             	string              	                    
+code_postal         	string              	                    
+id_empl             	int                 	                    
+	 	 
+Detailed Table Information	Table(tableName:emploi_population, dbName:htables, owner:cloudera, createTime:1793195591, lastAccessTime:0, retention:0, sd:StorageDescriptor(cols:[FieldSchema(name:sexe, type:string, comment:null), FieldSchema(name:age, type:double, comment:null), FieldSchema(name:fonction, type:string, comment:null), FieldSchema(name:salaire, type:string, comment:null), FieldSchema(name:code_postal, type:string, comment:null), FieldSchema(name:id_empl, type:int, comment:null)], location:hdfs://quickstart.cloudera:8020/user/hive/data/htables/emploi_population, inputFormat:org.apache.hadoop.mapred.TextInputFormat, outputFormat:org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat, compressed:false, numBuckets:-1, serdeInfo:SerDeInfo(name:null, serializationLib:org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe, parameters:{serialization.format=1}), bucketCols:[], sortCols:[], parameters:{}, skewedInfo:SkewedInfo(skewedColNames:[], skewedColValues:[], skewedColValueLocationMaps:{}), storedAsSubDirectories:false), partitionKeys:[], parameters:{numFiles=1, transient_lastDdlTime=1793195591, COLUMN_STATS_ACCURATE=true, totalSize=484, numRows=12, rawDataSize=472}, viewOriginalText:null, viewExpandedText:null, tableType:MANAGED_TABLE)	
+Time taken: 0.197 seconds, Fetched: 8 row(s)
+OK
+emploi_population.sexe	emploi_population.age	emploi_population.fonction	emploi_population.salaire	emploi_population.code_postal	emploi_population.id_empl
+F	38.0	Aide-soignant	20000euro/an	59000	1
+M	45.0	Informaticien	35000euro/an	80000	2
+F	59.0	Infermiere	22000euro/an	77000	3
+F	70.0	Professeur	30000euro/an	95000	4
+M	26.0	Mecanicien	45000euro/an	80200	5
+M	38.0	Avocat	70000euro/an	59000	6
+M	29.0	Veterinaire	45000euro/an	75780	7
+F	71.0	Pericultrice	38000euro/an	76000	8
+F	54.0	Informaticienne	45000euro/an	91000	9
+M	57.0	Agriculture	30000euro/an	14000	10
+M	42.0	Coach sportif	55000euro/an	78000	11
+F	31.0	Musicienne	41000euro/an	6000	12
+Time taken: 0.113 seconds, Fetched: 12 row(s)
+OK
+Time taken: 0.205 seconds
+Found 2 items
+drwxrwxrwx   - cloudera supergroup          0 2026-10-28 06:27 /user/hive/warehouse/analyse_salaires.db
+-rw-r--r--   1 cloudera supergroup        310 2026-10-28 06:38 /user/hive/warehouse/personne.txt
+Loading data to table htables.personne
+Table htables.personne stats: [numFiles=1, numRows=0, totalSize=310, rawDataSize=0]
+OK
+Time taken: 0.716 seconds
+OK
+personne.id	personne.nom
+1	RAU
+2	ABGRALL
+3	CHEVET
+4	TODORIS
+5	VANDENDRIESSCHE
+6	WACCUS
+7	CHARPENTIER
+8	DEKYDTSPOTTER
+9	SOLEYMIEUX
+10	FAVRAUD
+11	TERZIS
+12	HOUMADI OILI
+Time taken: 0.255 seconds, Fetched: 12 row(s)
+Found 1 items
+-rwxrwxrwx   1 cloudera supergroup        310 2026-10-28 06:38 /user/hive/data/htables/personne/personne.txt
+OK
+Time taken: 0.21 seconds
+Found 1 items
+drwxrwxrwx   - cloudera supergroup          0 2026-10-28 06:53 /user/hive/data/htables/emploi_population
+WARN: The method class org.apache.commons.logging.impl.SLF4JLogFactory#release() was invoked.
+WARN: Please see http://www.slf4j.org/codes.html#release for an explanation.

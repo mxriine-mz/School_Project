@@ -197,7 +197,7 @@ NAÎTRE DANS & Décès & 1,1 & Région INSEE (lieu de naissance) & 0,n \\ \hline
 \rowcolor{tabentete}\textbf{Table de faits} & \textbf{Grain (1 ligne =)} & \textbf{Mesures} \\ \hline
 FAIT\_\allowbreak CONSULTATION & 1 consultation d'un patient par un professionnel, dans un établissement, à une date & Nombre\_\allowbreak de\_\allowbreak consultation \\ \hline
 FAIT\_\allowbreak HOSPITALISATION & 1 séjour hospitalier d'un patient dans un établissement & Jour\_\allowbreak Hospitalisation (durée) \\ \hline
-FAIT\_\allowbreak SATISFACTION & 1 résultat d'enquête pour un établissement et une année & NbReponses, Score \\ \hline
+FAIT\_\allowbreak SATISFACTION & 1 résultat d'une enquête e-Satis pour un établissement et une année & NbReponses, Score \\ \hline
 FAIT\_\allowbreak DECES & 1 décès du fichier INSEE & Age\_\allowbreak Deces (et comptage des lignes) \\ \hline
 \end{tableau}
 
@@ -361,8 +361,8 @@ Jour\_\allowbreak Hospitalisation & INT &  & Oui & Mesure additive~: durée du s
 \needspace{17\baselineskip}
 \subsubsection*{FAIT\_SATISFACTION}
 
-\noindent \textbf{Type}~: Table de faits. \textbf{Grain}~: 1 ligne = 1 résultat d'enquête de satisfaction pour un établissement et une année.\\
-\textbf{Source}~: résultats e-Satis 48h MCO de 2017, 2019 et 2020, fichiers déposés sur le serveur FTP.\\
+\noindent \textbf{Type}~: Table de faits. \textbf{Grain}~: 1 ligne = 1 résultat d'une enquête e-Satis pour un établissement et une année. Un établissement peut avoir deux lignes la même année~: une pour les séjours de plus de 48~h, une pour la chirurgie ambulatoire.\\
+\textbf{Source}~: résultats e-Satis 2020 (hospitalisation de plus de 48~h en MCO et chirurgie ambulatoire), fichiers déposés sur le serveur FTP.\\
 \textbf{Besoins couverts}~: 8.
 
 \begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.2594\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1653\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.0674\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.0674\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.4407\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
@@ -374,7 +374,7 @@ ParticipationObligatoire & BOOLEAN &  & Oui & Indique si l'établissement était
 DepotValide & BOOLEAN &  & Oui & Indique si le dépôt des résultats a été validé. \\ \hline
 NbReponses & INT &  & Oui & Mesure additive~: nombre de questionnaires exploitables. \\ \hline
 Score & NUMERIC(5,2) &  & Oui & Mesure non additive~: score global de satisfaction. Agrégé en moyenne pondérée par NbReponses. \\ \hline
-Annee & INT &  & Non & Année de l'enquête (2017, 2019 ou 2020), ajoutée par le job J09. \\ \hline
+Annee & INT &  & Non & Année de l'enquête (2020), ajoutée par le job J09. \\ \hline
 \end{tableau}
 
 \needspace{19\baselineskip}
@@ -547,7 +547,7 @@ J05 & Base de soins (patients) & DIM\_\allowbreak Patient & Quotidienne \\ \hlin
 J06 & Code officiel géographique de l'INSEE & DIM\_\allowbreak Region\_\allowbreak INSEE & Annuelle \\ \hline
 J07 & Base de soins (consultations) et activite\_\allowbreak professionnel\_\allowbreak sante.csv & FAIT\_\allowbreak CONSULTATION & Quotidienne \\ \hline
 J08 & Hospitalisations.csv & FAIT\_\allowbreak HOSPITALISATION & Quotidienne \\ \hline
-J09 & Résultats e-Satis (serveur FTP) & FAIT\_\allowbreak SATISFACTION & Annuelle \\ \hline
+J09 & Résultats e-Satis 2020 (serveur FTP) & FAIT\_\allowbreak SATISFACTION & Annuelle \\ \hline
 J10 & Fichier des décès de l'INSEE (serveur FTP) & FAIT\_\allowbreak DECES & Mensuelle \\ \hline
 \end{tableau}
 
@@ -671,15 +671,21 @@ J10 & Fichier des décès de l'INSEE (serveur FTP) & FAIT\_\allowbreak DECES & M
   {aucune valeur absente~; durée absente $\rightarrow$ NULL.}
 
 \fichejob{J09_FAIT_Satisfaction}{J09 -- FAIT\_SATISFACTION}
-  {résultats e-Satis 48h MCO de 2017 et 2019 (CSV) et de 2020 (Excel), environ 1\,150 établissements par an.}
+  {les deux enquêtes e-Satis 2020 de la Haute Autorité de santé, au format Excel~:
+  \begin{itemize}
+	\item \textbf{esatis48h-mco}~: satisfaction des patients hospitalisés plus de 48~h en médecine, chirurgie ou obstétrique (1\,150 établissements)~;
+	\item \textbf{esatisca-mco}~: satisfaction des patients opérés en chirurgie ambulatoire (931 établissements).
+  \end{itemize}
+  \vspace{0.1cm}\noindent Le dossier 2020 contient un troisième fichier, \textbf{iqss}~: il porte sur des indicateurs de qualité en chirurgie orthopédique (complications, infections) et ne contient pas de score de satisfaction~; il n'est donc pas chargé dans ce fait.}
   {
   \begin{enumerate}
-	\item les fichiers n'indiquent pas leur année~: un tMap par fichier ajoute une colonne \textbf{annee} (2017, 2019 ou 2020)~;
-	\item le tUnite réunit les trois fichiers en un seul flux~;
-	\item le tMap principal retrouve l'établissement par son numéro FINESS, puis sa région par sa commune dans DIM\_Region\_INSEE~;
-	\item \og 1- Obligatoire\fg{} devient VRAI, la virgule décimale devient un point, et l'année est chargée dans la colonne Annee.
+	\item chaque fichier passe dans son propre tMap, car les deux enquêtes n'ont pas les mêmes noms de colonnes~;
+	\item dans chaque tMap, le lookup DIM\_Etablissement retrouve l'établissement par son numéro FINESS géographique, précédé de \og F\fg{}, et récupère sa commune~;
+	\item le lookup DIM\_Region (la table DIM\_Region\_INSEE) retrouve ensuite la région à partir de cette commune~;
+	\item le tMap ajoute l'année (2020), convertit \og 1- Obligatoire\fg{} et \og 1- Oui\fg{} en VRAI et reprend le score et le nombre de réponses~;
+	\item le tUnite réunit les deux flux, qui sont chargés dans FAIT\_SATISFACTION.
   \end{enumerate}}
-  {score vide quand l'établissement a moins de 30 réponses ou n'a pas répondu (environ un tiers des lignes)~: la ligne est chargée avec un score NULL, exclu des moyennes~; établissement introuvable $\rightarrow$ établissement et région $-1$.}
+  {score vide quand l'établissement a moins de 30 réponses ou n'a pas répondu (313 lignes pour l'enquête 48~h, 143 pour la chirurgie ambulatoire)~: la ligne est chargée avec un score NULL, exclu des moyennes~; établissement introuvable (9 lignes) $\rightarrow$ établissement et région $-1$.}
 
 \fichejob{J10_FAIT_Deces}{J10 -- FAIT\_DECES}
   {fichier des personnes décédées de l'INSEE (25\,088\,208 lignes, 2~Go).}
@@ -763,7 +769,7 @@ J10 & Fichier des décès de l'INSEE (serveur FTP) & FAIT\_\allowbreak DECES & M
 
 \vspace{0.2cm}
 
-\noindent Les \textbf{jobs ETL} ont été développés et exécutés sur les données réelles~: ils chargent plus d'un million de consultations, les séjours, trois années d'enquêtes de satisfaction et 25 millions de décès, en écartant les lignes invalides et sans charger de données identifiantes sur les patients.
+\noindent Les \textbf{jobs ETL} ont été développés et exécutés sur les données réelles~: ils chargent plus d'un million de consultations, les séjours, les enquêtes de satisfaction 2020 et 25 millions de décès, en écartant les lignes invalides et sans charger de données identifiantes sur les patients.
 
 \vspace{0.2cm}
 
@@ -824,7 +830,7 @@ MCO & Médecine, chirurgie, obstétrique~: séjours hospitaliers de courte duré
 \begin{itemize}
 	\item INSEE, data.gouv.fr~: \textit{Fichier des personnes décédées}.\\ \url{https://www.data.gouv.fr/fr/datasets/fichier-des-personnes-decedees/}
 	\item INSEE~: \textit{Code officiel géographique 2026}.\\ \url{https://www.insee.fr/fr/information/8740218}
-	\item Haute Autorité de santé, data.gouv.fr~: \textit{Indicateurs de qualité et de sécurité des soins, mesure de la satisfaction (dispositif e-Satis)}.\\ \url{https://www.data.gouv.fr/datasets/indicateurs-de-qualite-et-de-securite-des-soins-mesure-de-la-satisfaction-dispositif-e-satis-recueil-2017}
+	\item Haute Autorité de santé, data.gouv.fr~: \textit{Indicateurs de qualité et de sécurité des soins, recueil 2020 (dont les enquêtes de satisfaction e-Satis)}.\\ \url{https://www.data.gouv.fr/datasets/indicateurs-de-qualite-et-de-securite-des-soins-recueil-2020}
 	\item Agence du numérique en santé~: \textit{Répertoire FINESS des établissements}.\\ \url{https://finess.esante.gouv.fr/}
 	\item Agence du numérique en santé, data.gouv.fr~: \textit{Annuaire Santé, données en libre accès des professionnels (RPPS)}.\\ \url{https://www.data.gouv.fr/datasets/annuaire-sante-extractions-des-donnees-en-libre-acces-des-professionnels-intervenant-dans-le-systeme-de-sante-rpps}
 \end{itemize}
