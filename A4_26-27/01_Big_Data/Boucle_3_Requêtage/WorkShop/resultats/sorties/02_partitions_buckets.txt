@@ -1,0 +1,330 @@
+
+Logging initialized using configuration in jar:file:/usr/lib/hive/lib/hive-common-1.1.0-cdh5.12.0.jar!/hive-log4j.properties
+OK
+Time taken: 1.006 seconds
+OK
+Time taken: 0.059 seconds
+OK
+Time taken: 0.016 seconds
+OK
+Time taken: 0.017 seconds
+OK
+Time taken: 0.014 seconds
+OK
+col_name	data_type	comment
+sexe                	string              	                    
+age                 	double              	                    
+fonction            	string              	                    
+salaire             	string              	                    
+code_postal         	string              	                    
+id_empl             	int                 	                    
+Time taken: 0.325 seconds, Fetched: 6 row(s)
+Query ID = cloudera_20261028065353_66f9eb72-ca6d-4933-94b2-8c4da5fbaad9
+Total jobs = 1
+Launching Job 1 out of 1
+Number of reduce tasks not specified. Estimated from input data size: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1793191475690_0031, Tracking URL = http://quickstart.cloudera:8088/proxy/application_1793191475690_0031/
+Kill Command = /usr/lib/hadoop/bin/hadoop job  -kill job_1793191475690_0031
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 1
+2026-10-28 06:53:29,085 Stage-1 map = 0%,  reduce = 0%
+2026-10-28 06:53:35,404 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 0.98 sec
+2026-10-28 06:53:41,695 Stage-1 map = 100%,  reduce = 100%, Cumulative CPU 2.41 sec
+MapReduce Total cumulative CPU time: 2 seconds 410 msec
+Ended Job = job_1793191475690_0031
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1  Reduce: 1   Cumulative CPU: 2.41 sec   HDFS Read: 7382 HDFS Write: 4 SUCCESS
+Total MapReduce CPU Time Spent: 2 seconds 410 msec
+OK
+sexe
+F
+M
+Time taken: 22.294 seconds, Fetched: 2 row(s)
+OK
+Time taken: 0.117 seconds
+Query ID = cloudera_20261028065353_71ad295b-b537-4007-acff-beae64e0d3ac
+Total jobs = 3
+Launching Job 1 out of 3
+Number of reduce tasks is set to 0 since there's no reduce operator
+Starting Job = job_1793191475690_0032, Tracking URL = http://quickstart.cloudera:8088/proxy/application_1793191475690_0032/
+Kill Command = /usr/lib/hadoop/bin/hadoop job  -kill job_1793191475690_0032
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 0
+2026-10-28 06:53:51,029 Stage-1 map = 0%,  reduce = 0%
+2026-10-28 06:53:56,526 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 1.72 sec
+MapReduce Total cumulative CPU time: 1 seconds 720 msec
+Ended Job = job_1793191475690_0032
+Stage-4 is selected by condition resolver.
+Stage-3 is filtered out by condition resolver.
+Stage-5 is filtered out by condition resolver.
+Moving data to: hdfs://quickstart.cloudera:8020/user/hive/data/htables/population_genre/.hive-staging_hive_2026-10-28_06-53-42_988_5872142658022744648-1/-ext-10000
+Loading data to table htables.population_genre partition (sexe=null)
+	 Time taken for load dynamic partitions : 368
+	Loading partition {sexe=F}
+	Loading partition {sexe=M}
+	 Time taken for adding to write entity : 4
+Partition htables.population_genre{sexe=F} stats: [numFiles=1, numRows=6, totalSize=220, rawDataSize=214]
+Partition htables.population_genre{sexe=M} stats: [numFiles=1, numRows=6, totalSize=216, rawDataSize=210]
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1   Cumulative CPU: 1.72 sec   HDFS Read: 4961 HDFS Write: 575 SUCCESS
+Total MapReduce CPU Time Spent: 1 seconds 720 msec
+OK
+_col0	_col1	_col2	_col3	_col4	_col5
+Time taken: 15.455 seconds
+OK
+partition
+sexe=F
+sexe=M
+Time taken: 0.173 seconds, Fetched: 2 row(s)
+Query ID = cloudera_20261028065353_11190ee6-05ec-48ad-8662-87a98869b5b1
+Total jobs = 1
+Launching Job 1 out of 1
+Number of reduce tasks is set to 0 since there's no reduce operator
+Starting Job = job_1793191475690_0033, Tracking URL = http://quickstart.cloudera:8088/proxy/application_1793191475690_0033/
+Kill Command = /usr/lib/hadoop/bin/hadoop job  -kill job_1793191475690_0033
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 0
+2026-10-28 06:54:05,144 Stage-1 map = 0%,  reduce = 0%
+2026-10-28 06:54:10,361 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 1.49 sec
+MapReduce Total cumulative CPU time: 1 seconds 490 msec
+Ended Job = job_1793191475690_0033
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1   Cumulative CPU: 1.49 sec   HDFS Read: 4796 HDFS Write: 244 SUCCESS
+Total MapReduce CPU Time Spent: 1 seconds 490 msec
+OK
+emploi_population.sexe	emploi_population.age	emploi_population.fonction	emploi_population.salaire	emploi_population.code_postal	emploi_population.id_empl
+F	38.0	Aide-soignant	20000euro/an	59000	1
+F	59.0	Infermiere	22000euro/an	77000	3
+F	70.0	Professeur	30000euro/an	95000	4
+F	71.0	Pericultrice	38000euro/an	76000	8
+F	54.0	Informaticienne	45000euro/an	91000	9
+F	31.0	Musicienne	41000euro/an	6000	12
+Time taken: 13.949 seconds, Fetched: 6 row(s)
+OK
+population_genre.age	population_genre.fonction	population_genre.salaire	population_genre.code_postal	population_genre.id	population_genre.sexe
+38	Aide-soignant	20000euro/an	59000	1	F
+59	Infermiere	22000euro/an	77000	3	F
+70	Professeur	30000euro/an	95000	4	F
+71	Pericultrice	38000euro/an	76000	8	F
+54	Informaticienne	45000euro/an	91000	9	F
+31	Musicienne	41000euro/an	6000	12	F
+Time taken: 0.21 seconds, Fetched: 6 row(s)
+drwxrwxrwx   - cloudera supergroup          0 2026-10-28 06:53 /user/hive/data/htables/population_genre/sexe=F
+-rwxrwxrwx   1 cloudera supergroup        220 2026-10-28 06:53 /user/hive/data/htables/population_genre/sexe=F/000000_0
+drwxrwxrwx   - cloudera supergroup          0 2026-10-28 06:53 /user/hive/data/htables/population_genre/sexe=M
+-rwxrwxrwx   1 cloudera supergroup        216 2026-10-28 06:53 /user/hive/data/htables/population_genre/sexe=M/000000_0
+OK
+Time taken: 0.092 seconds
+OK
+log_internautes.id_internaute	log_internautes.prenom	log_internautes.site_consulte	log_internautes.date_consultation	log_internautes.pays
+1001	John	Google	27-04-2016	US
+1001	John	Facebook	27-04-2016	US
+1002	Eric	Instagram	28-04-2016	US
+1002	Eric	Google	28-04-2016	UK
+1003	Annie	Facebook	28-04-2016	UK
+1004	Sara	Instagram	28-04-2016	US
+1005	Wei	Google	29-04-2016	CHINA
+1007	Li	Instagram	29-04-2016	CHINA
+1008	Sota	Google	29-04-2016	JAPAN
+1009	Yuto	Facebook	27-04-2016	JAPAN
+1010	Ryota	Instagram	28-04-2016	JAPAN
+1011	Gauray	Google	29-04-2016	INDIA
+1012	Anu	Facebook	27-04-2016	INDIA
+1013	Maya	Instagram	27-04-2016	INDIA
+1014	Rohit	Google	28-04-2016	INDIA
+1015	Michel	Facebook	28-04-2016	AUSTRALIA
+1016	Ricky	Instagram	28-04-2016	AUSTRALIA
+Time taken: 0.218 seconds, Fetched: 17 row(s)
+OK
+Time taken: 0.137 seconds
+Query ID = cloudera_20261028065454_133ad86d-c27f-4d12-a1ee-464555b30144
+Total jobs = 1
+Launching Job 1 out of 1
+Number of reduce tasks determined at compile time: 4
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1793191475690_0034, Tracking URL = http://quickstart.cloudera:8088/proxy/application_1793191475690_0034/
+Kill Command = /usr/lib/hadoop/bin/hadoop job  -kill job_1793191475690_0034
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 4
+2026-10-28 06:54:22,007 Stage-1 map = 0%,  reduce = 0%
+2026-10-28 06:54:26,278 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 0.91 sec
+2026-10-28 06:54:33,644 Stage-1 map = 100%,  reduce = 50%, Cumulative CPU 4.25 sec
+2026-10-28 06:54:40,028 Stage-1 map = 100%,  reduce = 100%, Cumulative CPU 7.62 sec
+MapReduce Total cumulative CPU time: 7 seconds 620 msec
+Ended Job = job_1793191475690_0034
+Loading data to table htables.log_internautes_buckets partition (date_consultation=null)
+	 Time taken for load dynamic partitions : 1064121
+	Loading partition {date_consultation=27-04-2016}
+	Loading partition {date_consultation=28-04-2016}
+	Loading partition {date_consultation=29-04-2016}
+	 Time taken for adding to write entity : 1
+Partition htables.log_internautes_buckets{date_consultation=27-04-2016} stats: [numFiles=4, numRows=5, totalSize=117, rawDataSize=112]
+Partition htables.log_internautes_buckets{date_consultation=28-04-2016} stats: [numFiles=4, numRows=8, totalSize=202, rawDataSize=194]
+Partition htables.log_internautes_buckets{date_consultation=29-04-2016} stats: [numFiles=4, numRows=4, totalSize=94, rawDataSize=90]
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1  Reduce: 4   Cumulative CPU: 7.62 sec   HDFS Read: 19959 HDFS Write: 1193 SUCCESS
+Total MapReduce CPU Time Spent: 7 seconds 620 msec
+OK
+id_internaute	prenom	site_consulte	pays	date_consultation
+Time taken: 1092.457 seconds
+OK
+col_name	data_type	comment
+# col_name            	data_type           	comment             
+	 	 
+id_internaute       	int                 	                    
+prenom              	string              	                    
+site_consulte       	string              	                    
+pays                	string              	                    
+	 	 
+# Partition Information	 	 
+# col_name            	data_type           	comment             
+	 	 
+date_consultation   	string              	                    
+	 	 
+# Detailed Table Information	 	 
+Database:           	htables             	 
+Owner:              	cloudera            	 
+CreateTime:         	Wed Oct 28 06:54:13 PDT 2026	 
+LastAccessTime:     	UNKNOWN             	 
+Protect Mode:       	None                	 
+Retention:          	0                   	 
+Location:           	hdfs://quickstart.cloudera:8020/user/hive/data/htables/log_internautes_buckets	 
+Table Type:         	MANAGED_TABLE       	 
+Table Parameters:	 	 
+	numPartitions       	3                   
+	transient_lastDdlTime	1793195653          
+	 	 
+# Storage Information	 	 
+SerDe Library:      	org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe	 
+InputFormat:        	org.apache.hadoop.mapred.TextInputFormat	 
+OutputFormat:       	org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat	 
+Compressed:         	No                  	 
+Num Buckets:        	4                   	 
+Bucket Columns:     	[id_internaute]     	 
+Sort Columns:       	[]                  	 
+Storage Desc Params:	 	 
+	field.delim         	;                   
+	serialization.format	;                   
+Time taken: 0.237 seconds, Fetched: 36 row(s)
+OK
+partition
+date_consultation=27-04-2016
+date_consultation=28-04-2016
+date_consultation=29-04-2016
+Time taken: 0.104 seconds, Fetched: 3 row(s)
+drwxrwxrwx   - cloudera supergroup          0 2026-10-28 06:54 /user/hive/data/htables/log_internautes_buckets/date_consultation=27-04-2016
+-rwxrwxrwx   1 cloudera supergroup         24 2026-10-28 06:54 /user/hive/data/htables/log_internautes_buckets/date_consultation=27-04-2016/000000_0
+-rwxrwxrwx   1 cloudera supergroup         93 2026-10-28 06:54 /user/hive/data/htables/log_internautes_buckets/date_consultation=27-04-2016/000001_0
+-rwxrwxrwx   1 cloudera supergroup          0 2026-10-28 06:54 /user/hive/data/htables/log_internautes_buckets/date_consultation=27-04-2016/000002_0
+-rwxrwxrwx   1 cloudera supergroup          0 2026-10-28 06:54 /user/hive/data/htables/log_internautes_buckets/date_consultation=27-04-2016/000003_0
+drwxrwxrwx   - cloudera supergroup          0 2026-10-28 06:54 /user/hive/data/htables/log_internautes_buckets/date_consultation=28-04-2016
+-rwxrwxrwx   1 cloudera supergroup         54 2026-10-28 06:54 /user/hive/data/htables/log_internautes_buckets/date_consultation=28-04-2016/000000_0
+-rwxrwxrwx   1 cloudera supergroup          0 2026-10-28 06:54 /user/hive/data/htables/log_internautes_buckets/date_consultation=28-04-2016/000001_0
+-rwxrwxrwx   1 cloudera supergroup         94 2026-10-28 06:54 /user/hive/data/htables/log_internautes_buckets/date_consultation=28-04-2016/000002_0
+-rwxrwxrwx   1 cloudera supergroup         54 2026-10-28 06:54 /user/hive/data/htables/log_internautes_buckets/date_consultation=28-04-2016/000003_0
+drwxrwxrwx   - cloudera supergroup          0 2026-10-28 06:54 /user/hive/data/htables/log_internautes_buckets/date_consultation=29-04-2016
+-rwxrwxrwx   1 cloudera supergroup         23 2026-10-28 06:54 /user/hive/data/htables/log_internautes_buckets/date_consultation=29-04-2016/000000_0
+-rwxrwxrwx   1 cloudera supergroup         22 2026-10-28 06:54 /user/hive/data/htables/log_internautes_buckets/date_consultation=29-04-2016/000001_0
+-rwxrwxrwx   1 cloudera supergroup          0 2026-10-28 06:54 /user/hive/data/htables/log_internautes_buckets/date_consultation=29-04-2016/000002_0
+-rwxrwxrwx   1 cloudera supergroup         49 2026-10-28 06:54 /user/hive/data/htables/log_internautes_buckets/date_consultation=29-04-2016/000003_0
+OK
+Time taken: 0.101 seconds
+Query ID = cloudera_20261028071212_4bfb2ea8-709a-4269-958e-27483d675f15
+Total jobs = 1
+Launching Job 1 out of 1
+Number of reduce tasks determined at compile time: 4
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1793191475690_0035, Tracking URL = http://quickstart.cloudera:8088/proxy/application_1793191475690_0035/
+Kill Command = /usr/lib/hadoop/bin/hadoop job  -kill job_1793191475690_0035
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 4
+2026-10-28 07:12:36,531 Stage-1 map = 0%,  reduce = 0%
+2026-10-28 07:12:40,749 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 0.88 sec
+2026-10-28 07:12:49,139 Stage-1 map = 100%,  reduce = 25%, Cumulative CPU 2.58 sec
+2026-10-28 07:12:50,199 Stage-1 map = 100%,  reduce = 50%, Cumulative CPU 5.29 sec
+2026-10-28 07:18:17,688 Stage-1 map = 100%,  reduce = 100%, Cumulative CPU 8.87 sec
+MapReduce Total cumulative CPU time: 8 seconds 870 msec
+Ended Job = job_1793191475690_0035
+Loading data to table htables.log_internautes_buckets2
+Table htables.log_internautes_buckets2 stats: [numFiles=4, numRows=17, totalSize=600, rawDataSize=583]
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1  Reduce: 4   Cumulative CPU: 8.87 sec   HDFS Read: 19283 HDFS Write: 924 SUCCESS
+Total MapReduce CPU Time Spent: 8 seconds 870 msec
+OK
+id_internaute	prenom	site_consulte	date_consultation	pays
+Time taken: 353.179 seconds
+OK
+col_name	data_type	comment
+# col_name            	data_type           	comment             
+	 	 
+id_internaute       	int                 	                    
+prenom              	string              	                    
+site_consulte       	string              	                    
+date_consultation   	string              	                    
+pays                	string              	                    
+	 	 
+# Detailed Table Information	 	 
+Database:           	htables             	 
+Owner:              	cloudera            	 
+CreateTime:         	Wed Oct 28 07:12:26 PDT 2026	 
+LastAccessTime:     	UNKNOWN             	 
+Protect Mode:       	None                	 
+Retention:          	0                   	 
+Location:           	hdfs://quickstart.cloudera:8020/user/hive/data/htables/log_internautes_buckets2	 
+Table Type:         	MANAGED_TABLE       	 
+Table Parameters:	 	 
+	COLUMN_STATS_ACCURATE	true                
+	numFiles            	4                   
+	numRows             	17                  
+	rawDataSize         	583                 
+	totalSize           	600                 
+	transient_lastDdlTime	1793197099          
+	 	 
+# Storage Information	 	 
+SerDe Library:      	org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe	 
+InputFormat:        	org.apache.hadoop.mapred.TextInputFormat	 
+OutputFormat:       	org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat	 
+Compressed:         	No                  	 
+Num Buckets:        	4                   	 
+Bucket Columns:     	[pays]              	 
+Sort Columns:       	[]                  	 
+Storage Desc Params:	 	 
+	field.delim         	;                   
+	serialization.format	;                   
+Time taken: 0.183 seconds, Fetched: 36 row(s)
+-rwxrwxrwx   1 cloudera supergroup         84 2026-10-28 07:12 /user/hive/data/htables/log_internautes_buckets2/000000_0
+-rwxrwxrwx   1 cloudera supergroup          0 2026-10-28 07:12 /user/hive/data/htables/log_internautes_buckets2/000001_0
+-rwxrwxrwx   1 cloudera supergroup        305 2026-10-28 07:12 /user/hive/data/htables/log_internautes_buckets2/000002_0
+-rwxrwxrwx   1 cloudera supergroup        211 2026-10-28 07:12 /user/hive/data/htables/log_internautes_buckets2/000003_0
+Query ID = cloudera_20261028071818_e5f77c18-af9d-4a8b-a093-ec052ff35a50
+Total jobs = 1
+Launching Job 1 out of 1
+Number of reduce tasks is set to 0 since there's no reduce operator
+Starting Job = job_1793191475690_0036, Tracking URL = http://quickstart.cloudera:8088/proxy/application_1793191475690_0036/
+Kill Command = /usr/lib/hadoop/bin/hadoop job  -kill job_1793191475690_0036
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 0
+2026-10-28 07:18:27,527 Stage-1 map = 0%,  reduce = 0%
+2026-10-28 07:18:34,811 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 1.72 sec
+MapReduce Total cumulative CPU time: 1 seconds 720 msec
+Ended Job = job_1793191475690_0036
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1   Cumulative CPU: 1.72 sec   HDFS Read: 5134 HDFS Write: 84 SUCCESS
+Total MapReduce CPU Time Spent: 1 seconds 720 msec
+OK
+log_internautes_buckets2.id_internaute	log_internautes_buckets2.prenom	log_internautes_buckets2.site_consulte	log_internautes_buckets2.date_consultation	log_internautes_buckets2.pays
+1016	Ricky	Instagram	28-04-2016	AUSTRALIA
+1015	Michel	Facebook	28-04-2016	AUSTRALIA
+Time taken: 16.247 seconds, Fetched: 2 row(s)
+WARN: The method class org.apache.commons.logging.impl.SLF4JLogFactory#release() was invoked.
+WARN: Please see http://www.slf4j.org/codes.html#release for an explanation.
