@@ -1,0 +1,3 @@
+-- Design naif : reglages de la VM tels que livres (hive-site.xml QuickStart), aucun ajout.
+-- Pour info, le hive-site livre contient deja hive.auto.convert.join=true (seuil 20 Mo)
+-- et hive.cbo.enable=false.
