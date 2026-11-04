@@ -1,0 +1,61 @@
+\documentclass[a4paper,12pt]{article}
+
+% --- PACKAGES ---
+\input{../../../../_Template/preambule}
+
+% --- STYLES ---
+\input{../../../../_Template/styles}
+
+\usepackage{pdflscape}
+\usetikzlibrary{arrows.meta,positioning,calc,shapes.geometric}
+% Séparateur entre définitions : jamais en haut ni en bas de page
+% (filet en \cleaders, supprimé par TeX s'il tombe sur une coupure de page)
+\newcommand{\separateur}{\par\needspace{8\baselineskip}\vskip0.4cm%
+  \cleaders\hbox to\linewidth{\hss\rule{5cm}{0.4pt}\hss}\vskip0.5pt\nobreak}
+\newcommand{\source}[1]{\par\nobreak\vspace{-0.2cm}\nobreak{\centering\footnotesize\textit{Source~: #1}\par}}
+
+% --- RÈGLES DE MISE EN PAGE ---
+% Paragraphes, listes et cases de tableau jamais coupés entre deux pages,
+% pas de ligne seule en haut ou en bas de page
+\interlinepenalty=10000
+\clubpenalty=10000
+\widowpenalty=10000
+\displaywidowpenalty=10000
+\makeatletter
+\@itempenalty=10000
+% Une liste reste attachée à la phrase qui l'introduit
+\AtBeginEnvironment{itemize}{\@beginparpenalty=10000}
+\AtBeginEnvironment{enumerate}{\@beginparpenalty=10000}
+\makeatother
+% Un titre part à la page suivante s'il ne reste pas la place d'un vrai bloc.
+% \needspace redéfini sans son \penalty-100, qui faisait préférer une coupure
+% avant chaque titre et laissait de grands blancs en bas de page ;
+% pas de coupure forcée si la page est déjà pleine (elle se coupera d'elle-même)
+\makeatletter
+\renewcommand{\needspace}[1]{\par\begingroup\setlength{\dimen@}{#1}%
+  \dimen@ii\pagegoal\advance\dimen@ii-\pagetotal
+  \ifdim\dimen@>\dimen@ii\ifdim\dimen@ii>\z@\vfil\break\fi\fi\endgroup}
+\makeatother
+\usepackage{etoolbox}
+\pretocmd{\section}{\needspace{14\baselineskip}}{}{}
+\pretocmd{\subsection}{\needspace{10\baselineskip}}{}{}
+% Plus d'air autour des tableaux et des schémas centrés
+\AtBeginEnvironment{center}{\setlength{\topsep}{14pt plus 4pt minus 2pt}}
+
+\begin{document}
+\sloppy
+
+% --- PAGE DE GARDE ---
+\input{contents/title}
+
+% --- TABLE DES MATIÈRES ---
+\newpage
+\tableofcontents
+
+% --- FOOTER ---
+\input{../../../../_Template/footer}
+
+% --- CONTENT ---
+\input{contents/researches.tex}
+
+\end{document}

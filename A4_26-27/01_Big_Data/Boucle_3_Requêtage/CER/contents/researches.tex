@@ -1,0 +1,1092 @@
+% --- ETUDE DE CAS ---
+\newpage
+\section*{Étude de cas~: Bee patient}
+\phantomsection
+\addcontentsline{toc}{section}{Étude de cas~: Bee patient}
+
+\subsection*{AAV}
+\phantomsection
+\addcontentsline{toc}{subsection}{AAV}
+\begin{itemize}
+	\item [2] Distinguer les différents types de bases NoSQL (clé-valeur, orientée documents, orientée colonnes, orientée graphes) dans leur organisation et dans leurs cas d'usage
+	\item [2] Comparer les propriétés des SGBDR et des bases NoSQL (propriétés ACID vs BASE, théorème CAP)
+	\item [3] Utiliser un ETL pour intégrer des données dans une base NoSQL
+	\item [4] Sélectionner le type de stockage adapté à un besoin métier
+	\item [3] Utiliser MapReduce pour extraire des informations
+	\item [4] Optimiser le modèle physique (partitionnement, bucket)
+\end{itemize}
+
+\subsection*{Mots clés}
+\phantomsection
+\addcontentsline{toc}{subsection}{Mots clés}
+\begin{itemize}
+	\item NoSQL (clé-valeur, documents, colonnes, graphes)
+	\item ACID / BASE
+	\item Théorème CAP
+	\item Hive
+	\item MapReduce
+	\item Modèle physique
+	\item Partitionnement
+	\item Bucketing
+	\item Vue matérialisée
+\end{itemize}
+
+\subsection*{Contexte}
+\phantomsection
+\addcontentsline{toc}{subsection}{Contexte}
+\noindent Une réunion avec un panel d'utilisateurs (médecins, personnels infirmiers, chercheurs et administrateurs d'établissements) a revalidé toutes les demandes d'analyse. Le modèle conceptuel ne change pas et l'ETL n'évolue que pour les calculs d'agrégation. L'équipe lance donc l'implémentation du modèle physique de l'entrepôt dans Hive, le remplissage des tables et le requêtage des analyses. Les données sources seront mises à jour tous les trois mois, au même rythme que la définition de nouvelles analyses.
+
+\subsection*{Problématique}
+\phantomsection
+\addcontentsline{toc}{subsection}{Problématique}
+\noindent Comment implémenter et optimiser le modèle physique de l'entrepôt dans Hive pour que les analyses demandées, portant sur des millions de lignes, s'exécutent en moins de deux minutes~?
+
+\subsection*{Contraintes}
+\phantomsection
+\addcontentsline{toc}{subsection}{Contraintes}
+\begin{itemize}
+	\item Temps de réponse maximal de 2~minutes par analyse
+	\item Volumes importants~: plusieurs millions de lignes et requêtes à plus de 3 jointures
+	\item Délai de 3 jours pour produire les analyses
+	\item Mise à jour des sources et des analyses tous les 3 mois
+	\item Modèle conceptuel inchangé
+	\item Stockage sur Hive et l'écosystème Hadoop
+\end{itemize}
+
+\subsection*{Généralisation}
+\phantomsection
+\addcontentsline{toc}{subsection}{Généralisation}
+\begin{itemize}
+	\item Optimisation du modèle physique
+	\item Choix du type de stockage
+	\item Performance des requêtes
+\end{itemize}
+
+\subsection*{Livrables}
+\phantomsection
+\addcontentsline{toc}{subsection}{Livrables}
+\begin{itemize}
+	\item Modèle physique de l'entrepôt implémenté dans Hive (tables, partitions, buckets)
+	\item Requêtes des analyses demandées et mesure de leurs temps de réponse
+	\item Comparaison des types de stockage (SGBDR et familles NoSQL)
+\end{itemize}
+
+\subsection*{Pistes de solutions}
+\phantomsection
+\addcontentsline{toc}{subsection}{Pistes de solutions}
+\begin{itemize}
+	\item Partitionner les tables de faits sur une colonne souvent filtrée, comme l'année.
+	\item Répartir les tables en buckets sur les clés de jointure.
+	\item Précalculer les agrégations dans des vues matérialisées.
+	\item Utiliser un format de stockage en colonnes (ORC, Parquet).
+	\item Comparer SGBDR et bases NoSQL pour choisir le stockage adapté à chaque besoin.
+\end{itemize}
+
+\subsection*{Plan d'actions}
+\phantomsection
+\addcontentsline{toc}{subsection}{Plan d'actions}
+\begin{itemize}
+	\item Définir les mots clés, étudier les ressources et réaliser le workshop.
+	\item Présenter les familles de bases NoSQL et leurs cas d'usage.
+	\item Comparer SGBDR et NoSQL~: propriétés ACID et BASE, théorème CAP.
+	\item Étudier le fonctionnement de Hive et de MapReduce.
+	\item Étudier les leviers d'optimisation~: partitionnement, bucketing, vues matérialisées, formats de stockage.
+	\item Implémenter le modèle physique de l'entrepôt du CHU dans Hive et charger les tables.
+	\item Écrire les requêtes des analyses et mesurer leurs temps de réponse avant et après optimisation.
+\end{itemize}
+
+% =============================================================
+% --- RETOUR ---
+% =============================================================
+
+% --- DEFINITIONS ---
+\newpage
+\section{Définitions des mots clés}
+
+\needspace{8\baselineskip}
+\noindent \textbf{NoSQL}:
+\noindent \textit{Not only SQL}. Famille de bases de données qui n'utilisent pas le modèle relationnel en tables liées. Elles abandonnent souvent le schéma fixe et une partie des garanties transactionnelles pour passer à l'échelle sur plusieurs serveurs. On distingue quatre familles~:
+\begin{itemize}
+	\item \textbf{clé-valeur}~: une clé unique donne accès à une valeur opaque (Redis)~;
+	\item \textbf{documents}~: la valeur est un document structuré (JSON, BSON) dont on peut interroger les champs (MongoDB)~;
+	\item \textbf{colonnes}~: les données sont rangées par familles de colonnes, ligne par ligne, avec des colonnes variables d'une ligne à l'autre (HBase, Cassandra)~;
+	\item \textbf{graphes}~: les données sont des n\oe uds reliés par des relations, elles-mêmes porteuses de propriétés (Neo4j).
+\end{itemize}
+
+\separateur
+
+\needspace{8\baselineskip}
+\noindent \textbf{ACID / BASE}:
+\noindent Deux ensembles de propriétés qui décrivent le comportement d'une base face aux écritures.
+\begin{itemize}
+	\item \textbf{ACID} (SGBD relationnels)~: \textbf{A}tomicité (une transaction est faite entièrement ou pas du tout), \textbf{C}ohérence (les contraintes restent respectées), \textbf{I}solation (les transactions simultanées ne se gênent pas), \textbf{D}urabilité (une transaction validée n'est jamais perdue).
+	\item \textbf{BASE} (beaucoup de bases NoSQL)~: \textbf{B}asically \textbf{A}vailable (la base répond toujours), \textbf{S}oft state (l'état peut changer sans nouvelle écriture, le temps que les copies se synchronisent), \textbf{E}ventual consistency (toutes les copies finissent par être identiques).
+\end{itemize}
+
+\separateur
+
+\needspace{8\baselineskip}
+\noindent \textbf{Théorème CAP}:
+\noindent Énoncé par Eric Brewer en 2000. Un système distribué ne peut pas garantir en même temps les trois propriétés suivantes~:
+\begin{itemize}
+	\item \textbf{C}ohérence (\textit{Consistency})~: tous les n\oe uds voient la même donnée au même moment~;
+	\item \textbf{D}isponibilité (\textit{Availability})~: toute requête reçoit une réponse~;
+	\item \textbf{T}olérance au partitionnement (\textit{Partition tolerance})~: le système continue de fonctionner si le réseau coupe le cluster en morceaux.
+\end{itemize}
+Sur un cluster, une coupure réseau finit toujours par arriver~: le vrai choix se fait entre cohérence et disponibilité pendant la coupure (partie~\ref{sec:cap}).
+
+\separateur
+
+\needspace{8\baselineskip}
+\noindent \textbf{Hive}:
+\noindent Entrepôt de données de l'écosystème Hadoop, créé chez Facebook puis confié à la fondation Apache. Il permet d'interroger en \textbf{HiveQL}, un langage proche de SQL, des fichiers stockés dans HDFS. Le \textbf{metastore} garde la description des tables (colonnes, format, emplacement, partitions)~; chaque requête est traduite en tâches distribuées (MapReduce, Tez ou Spark). Hive est conçu pour l'analyse de gros volumes en lecture, pas pour des transactions rapides.
+
+\separateur
+
+\needspace{8\baselineskip}
+\noindent \textbf{MapReduce}:
+\noindent Modèle de programmation et moteur de calcul distribué de Hadoop, issu d'un article de Google (2004). Un traitement s'écrit en deux fonctions~:
+\begin{itemize}
+	\item \textbf{map}~: lit chaque enregistrement et produit des paires (clé, valeur)~;
+	\item \textbf{reduce}~: reçoit toutes les valeurs d'une même clé et les agrège.
+\end{itemize}
+Entre les deux, le framework trie et regroupe les paires par clé (\textit{shuffle and sort}). Les calculs sont lancés sur les n\oe uds qui portent déjà les données.
+
+\separateur
+
+\needspace{8\baselineskip}
+\noindent \textbf{Modèle physique}:
+\noindent Traduction du modèle dimensionnel dans un moteur précis. Il fixe, pour chaque fait et chaque dimension, les types des colonnes, le format de stockage (texte, ORC, Parquet), la compression, le découpage en partitions et en buckets, et les structures annexes (vues matérialisées, statistiques). Le modèle dimensionnel dit \textbf{quoi} stocker~; le modèle physique dit \textbf{comment} le stocker pour que les requêtes soient rapides.
+
+\separateur
+
+\needspace{8\baselineskip}
+\noindent \textbf{Partitionnement}:
+\noindent Découpage d'une table selon la valeur d'une ou plusieurs colonnes. Dans Hive, chaque valeur devient un \textbf{répertoire} HDFS (\texttt{annee=2019/}). Une requête qui filtre sur cette colonne ne lit que les répertoires utiles~: c'est l'élagage de partitions (\textit{partition pruning}).
+
+\separateur
+
+\needspace{8\baselineskip}
+\noindent \textbf{Bucketing}:
+\noindent Répartition des lignes d'une table (ou de chaque partition) dans un nombre fixe de \textbf{fichiers}, les buckets, selon un hachage d'une colonne~: \texttt{bucket = hash(colonne) mod n}. Deux tables découpées de la même façon sur leur clé de jointure peuvent être jointes bucket par bucket, sans redistribuer toutes les données.
+
+\separateur
+
+\needspace{8\baselineskip}
+\noindent \textbf{Vue matérialisée}:
+\noindent Vue dont le résultat est calculé et \textbf{stocké} sur disque, au lieu d'être recalculé à chaque appel. Elle sert à précalculer des agrégations coûteuses. Dans Hive (version~3 et plus), l'optimiseur peut réécrire automatiquement une requête pour lire la vue à la place des tables d'origine. La vue doit être reconstruite quand les données sources changent.
+
+% --- FAMILLES NOSQL ---
+\newpage
+\section{Les familles de bases NoSQL}\label{sec:familles}
+
+\noindent Les bases NoSQL sont nées des besoins du web (Google, Amazon, Facebook)~: stocker des volumes qu'un seul serveur ne tient plus, et répondre à des millions d'utilisateurs. Chaque famille organise les données autrement, et chacune est efficace pour un type d'accès précis. On modélise donc une base NoSQL \textbf{à partir des requêtes} à servir, et non à partir des données.
+
+\subsection{Clé-valeur}
+
+\noindent La base est un grand dictionnaire~: une clé unique donne une valeur que la base ne sait pas lire (texte, nombre, objet sérialisé). Les seules opérations sont lire, écrire et supprimer par clé.
+\begin{itemize}
+	\item \textbf{Produits}~: Redis (en mémoire), Amazon DynamoDB, Riak.
+	\item \textbf{Points forts}~: temps de réponse de l'ordre de la milliseconde, répartition simple sur plusieurs serveurs.
+	\item \textbf{Limites}~: aucune requête sur le contenu de la valeur, pas de jointure.
+	\item \textbf{Cas d'usage}~: cache, sessions d'utilisateurs, compteurs, files d'attente.
+\end{itemize}
+
+\subsection{Documents}
+
+\noindent La valeur est un document JSON ou BSON, avec des champs imbriqués et des tableaux. La base connaît la structure du document~: on peut filtrer, indexer et agréger sur ses champs. Deux documents d'une même collection peuvent avoir des champs différents.
+\begin{itemize}
+	\item \textbf{Produits}~: MongoDB, CouchDB, Elasticsearch (orienté recherche).
+	\item \textbf{Points forts}~: schéma souple, un objet métier complet lu en une seule fois.
+	\item \textbf{Limites}~: jointures limitées, données dupliquées entre documents.
+	\item \textbf{Cas d'usage}~: catalogues, contenus, dossiers échangés en JSON, réponses à des questionnaires.
+\end{itemize}
+
+\subsection{Colonnes}
+
+\noindent Les données sont rangées par \textbf{clé de ligne}, puis par \textbf{familles de colonnes}. Chaque ligne peut avoir ses propres colonnes, et seules les cellules renseignées sont stockées. Les lignes sont triées par clé~: lire une plage de clés voisines est très rapide. Chaque cellule peut garder plusieurs versions horodatées.
+\begin{itemize}
+	\item \textbf{Produits}~: Apache HBase (sur HDFS), Apache Cassandra, Google Bigtable.
+	\item \textbf{Points forts}~: écritures massives, milliards de lignes, lecture par clé ou par plage de clés.
+	\item \textbf{Limites}~: la clé de ligne doit être pensée pour la requête~; une recherche sur une autre colonne parcourt toute la table.
+	\item \textbf{Cas d'usage}~: historiques et séries temporelles, journaux d'événements, parcours d'un client ou d'un patient.
+\end{itemize}
+
+\noindent Il ne faut pas confondre cette famille avec les \textbf{formats colonnes} ORC et Parquet utilisés par Hive~: ces derniers rangent les valeurs d'une même colonne ensemble pour accélérer les agrégations, alors que HBase sert surtout des lectures par clé.
+
+\subsection{Graphes}
+
+\noindent Les données sont des n\oe uds (un patient, un médecin, un établissement) reliés par des relations orientées (\textit{consulte}, \textit{exerce dans}). N\oe uds et relations portent des propriétés. Parcourir une relation ne demande pas de jointure~: chaque n\oe ud pointe directement vers ses voisins.
+\begin{itemize}
+	\item \textbf{Produits}~: Neo4j (langage Cypher), JanusGraph, Amazon Neptune.
+	\item \textbf{Points forts}~: requêtes sur les chemins et les voisinages, même à plusieurs niveaux.
+	\item \textbf{Limites}~: mal adaptée aux agrégations sur tout le jeu de données, répartition sur plusieurs serveurs difficile.
+	\item \textbf{Cas d'usage}~: réseaux sociaux, recommandation, détection de fraude, réseau de soins (qui adresse ses patients à qui).
+\end{itemize}
+
+\subsection{Tableau comparatif}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\bfseries\raggedright\arraybackslash}p{2.3cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+\toprule
+ & Clé-valeur & Documents & Colonnes & Graphes \\
+\midrule
+Unité stockée & Paire clé, valeur & Document JSON / BSON & Ligne~: clé, familles de colonnes & N\oe uds et relations \\
+Schéma & Aucun & Souple, par document & Familles fixées, colonnes libres & Souple \\
+Accès type & Par clé & Par champs, index secondaires & Par clé ou plage de clés & Parcours de relations \\
+Passage à l'échelle & Très bon & Bon (sharding) & Très bon & Plus difficile \\
+Produits & Redis, DynamoDB & MongoDB, CouchDB & HBase, Cassandra & Neo4j, JanusGraph \\
+Exemple CHU & Cache des indicateurs du tableau de bord & Réponses brutes aux questionnaires e-Satis & Parcours de soins d'un patient & Réseau patients, professionnels, établissements \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+% --- SGBDR VS NOSQL ---
+\newpage
+\section{SGBDR et NoSQL}
+
+\subsection{ACID et BASE}
+
+\noindent Un SGBD relationnel garantit les propriétés ACID~: c'est indispensable quand une écriture ne doit jamais être perdue ni appliquée à moitié (un virement, une prescription). Ces garanties ont un coût~: verrous, journal de transactions, coordination entre serveurs. Elles rendent difficile la répartition sur un grand nombre de machines.
+
+\vspace{0.2cm}
+
+\noindent Beaucoup de bases NoSQL choisissent le modèle BASE~: elles acceptent qu'une lecture renvoie pendant un court instant une ancienne valeur, en échange d'une disponibilité et d'un débit plus élevés. Ce choix n'est pas absolu~: MongoDB et HBase offrent des écritures atomiques sur un document ou une ligne, et Cassandra laisse régler le niveau de cohérence requête par requête.
+
+\begin{center}
+\begin{tabularx}{\textwidth}{>{\bfseries}l >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+\toprule
+ & ACID & BASE \\
+\midrule
+Priorité & Exactitude de chaque transaction & Disponibilité et débit \\
+Cohérence & Immédiate, forte & À terme (\textit{eventual}) \\
+Transactions & Sur plusieurs lignes et tables & Souvent limitées à une ligne ou un document \\
+Répartition & Difficile au-delà de quelques serveurs & Conçue pour des dizaines ou centaines de n\oe uds \\
+Exemples & PostgreSQL, Oracle, SQL Server & Cassandra, DynamoDB, CouchDB \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Le théorème CAP}\label{sec:cap}
+
+\noindent Sur un système réparti, la tolérance au partitionnement n'est pas une option~: un câble ou un commutateur finira par tomber. Pendant la coupure, chaque partie du cluster doit choisir~:
+\begin{itemize}
+	\item \textbf{CP}~: refuser de répondre (ou d'écrire) tant que la cohérence n'est pas garantie~;
+	\item \textbf{AP}~: répondre quand même, quitte à renvoyer une valeur qui n'est plus à jour.
+\end{itemize}
+Le cas \textbf{CA} ne concerne en pratique qu'un système sur un seul serveur, où aucune coupure interne n'est possible.
+
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize]
+  \coordinate (C) at (0,3.3);
+  \coordinate (A) at (-3.2,0);
+  \coordinate (P) at (3.2,0);
+  \draw[thick,title1,fill=title2!8] (C) -- (A) -- (P) -- cycle;
+  \node[circle,fill=title1,text=white,minimum size=0.9cm] at (C) {\textbf{C}};
+  \node[circle,fill=title1,text=white,minimum size=0.9cm] at (A) {\textbf{A}};
+  \node[circle,fill=title1,text=white,minimum size=0.9cm] at (P) {\textbf{P}};
+  \node[above=0.5cm of C,align=center] {Cohérence};
+  \node[below=0.5cm of A,align=center] {Disponibilité};
+  \node[below=0.5cm of P,align=center] {Tolérance au partitionnement};
+  \node[align=center,text width=3cm,anchor=east] at ($(C)!0.5!(A)+(-0.35,0)$) {\textbf{CA}\\ PostgreSQL, MySQL sur un seul serveur};
+  \node[align=center,text width=3cm,anchor=west] at ($(C)!0.5!(P)+(0.35,0)$) {\textbf{CP}\\ HBase, MongoDB (réglage par défaut)};
+  \node[align=center,text width=4cm] at ($(A)!0.5!(P)+(0,-1.05)$) {\textbf{AP}\\ Cassandra, CouchDB, DynamoDB};
+\end{tikzpicture}
+\end{center}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\bfseries}l l c >{\raggedright\arraybackslash}X}
+\toprule
+Système & Famille & Choix & Comportement pendant une coupure \\
+\midrule
+PostgreSQL (un serveur) & Relationnel & CA & Pas de coupure interne possible~; si le serveur tombe, plus de service \\
+HBase & Colonnes & CP & Chaque plage de clés n'a qu'un serveur responsable~: elle est indisponible le temps de sa réaffectation \\
+MongoDB & Documents & CP & Seul le primaire accepte les écritures~; sans majorité, pas de nouvelle écriture \\
+Cassandra & Colonnes & AP & Tous les n\oe uds acceptent les écritures, réconciliées ensuite~; cohérence réglable \\
+CouchDB & Documents & AP & Réplication multi-maîtres, conflits résolus après coup \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\noindent Ce classement décrit le réglage par défaut. Plusieurs produits permettent de déplacer le curseur (niveau de cohérence de Cassandra, lectures sur les secondaires de MongoDB).
+
+\subsection{Comparaison}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\bfseries\raggedright\arraybackslash}p{2.6cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+\toprule
+Critère & SGBDR & NoSQL \\
+\midrule
+Modèle & Tables liées par des clés & Clé-valeur, documents, colonnes ou graphes \\
+Schéma & Fixe, défini avant l'écriture & Souple, souvent défini à la lecture \\
+Langage & SQL normalisé & API propre à chaque produit (CQL, Cypher, requêtes JSON) \\
+Propriétés & ACID & BASE le plus souvent \\
+Passage à l'échelle & Vertical (un serveur plus puissant) & Horizontal (plus de serveurs) \\
+Jointures & Natives et optimisées & Absentes ou limitées~: on duplique les données \\
+Conception & À partir des données (normalisation) & À partir des requêtes à servir \\
+Points forts & Intégrité, requêtes libres, maturité & Volume, débit, souplesse, disponibilité \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\noindent Hive n'entre dans aucune des deux colonnes~: il offre du SQL et un schéma fixe, comme un SGBDR, mais sur des fichiers répartis dans HDFS et pour des lectures en masse. Il ne remplace ni la base opérationnelle ni une base NoSQL d'accès rapide.
+
+\subsection{Choisir le stockage adapté à un besoin métier}
+
+\noindent Le choix part de la façon dont les données seront \textbf{lues}~:
+\begin{itemize}
+	\item des \textbf{agrégations} sur des millions de lignes, selon des axes variés~$\rightarrow$ entrepôt en colonnes (Hive avec ORC)~;
+	\item des \textbf{transactions} fréquentes et sûres sur des données liées~$\rightarrow$ SGBDR~;
+	\item la lecture de \textbf{tout ce qui concerne un élément} (un patient), très vite~$\rightarrow$ base colonnes ou documents, avec une clé bien choisie~;
+	\item des \textbf{relations} à parcourir sur plusieurs niveaux~$\rightarrow$ base graphe~;
+	\item une \textbf{valeur} à relire des milliers de fois~$\rightarrow$ cache clé-valeur.
+\end{itemize}
+
+\needspace{22\baselineskip}
+\noindent Appliqué au CHU~:
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}p{3cm} >{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Besoin} & \textbf{Stockage} & \textbf{Justification} \\
+\midrule
+Les 8 analyses demandées (taux de consultation, d'hospitalisation, décès, satisfaction) & Hive, tables ORC partitionnées & Agrégations sur des millions de lignes, par période et par axe~; SQL connu des analystes, branché à Power BI \\
+Dossier patient au quotidien (saisie des soins) & SGBDR (PostgreSQL, base de soins existante) & Écritures fréquentes, intégrité indispensable, transactions ACID \\
+Parcours de soins d'un patient & HBase (choix du CER~2) & Lecture par clé en quelques millisecondes, déjà présent dans Cloudera, données dans HDFS \\
+Réponses brutes aux questionnaires de satisfaction & Base documents (MongoDB) & Questionnaires qui changent d'une année à l'autre~: schéma souple \\
+Réseau d'adressage entre professionnels & Base graphe (Neo4j) & Chemins entre médecins, établissements et patients~; besoin exploratoire, non demandé à ce stade \\
+Indicateurs affichés en page d'accueil & Cache clé-valeur (Redis) & Valeur recalculée tous les trois mois et relue très souvent \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\noindent Pour le livrable, seul l'entrepôt Hive est nécessaire~: les 8 besoins sont tous des agrégations. Les lignes suivantes du tableau montrent que le CHU aura à terme plusieurs stockages, chacun pour un type d'accès (on parle de \textbf{persistance polyglotte}).
+
+% --- HIVE ET MAPREDUCE ---
+\newpage
+\section{Hive et MapReduce}
+
+\subsection{Architecture de Hive}
+
+\noindent Hive ne stocke pas les données lui-même~: il décrit des fichiers déjà présents dans HDFS et transforme les requêtes HiveQL en traitements distribués.
+
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize,node distance=0.45cm and 0.6cm,
+  b/.style={draw=title1,thick,rounded corners,fill=#1,align=center,text width=2.6cm,minimum height=1.1cm},
+  b/.default={title2!12},
+  arr/.style={-{Latex},thick,title1}]
+  \node[b=gray!12] (cli) {\textbf{Clients}\\ Beeline, Power BI (ODBC / JDBC)};
+  \node[b,right=of cli] (hs2) {\textbf{HiveServer2}\\ sessions, droits};
+  \node[b,right=of hs2] (drv) {\textbf{Driver}\\ analyse, plan, optimiseur};
+  \node[b=orange!18,above=of drv] (ms) {\textbf{Metastore}\\ tables, colonnes, partitions (base relationnelle)};
+  \node[b,right=of drv] (exe) {\textbf{Moteur}\\ MapReduce, Tez ou Spark};
+  \node[b,below=of exe] (yarn) {\textbf{YARN}\\ ressources du cluster};
+  \node[b=title1!20,below=of drv] (hdfs) {\textbf{HDFS}\\ fichiers ORC, Parquet, texte};
+  \draw[arr] (cli) -- (hs2);
+  \draw[arr] (hs2) -- (drv);
+  \draw[arr,<->] (drv) -- (ms);
+  \draw[arr] (drv) -- (exe);
+  \draw[arr] (exe) -- (yarn);
+  \draw[arr] (yarn) -- (hdfs);
+\end{tikzpicture}
+\end{center}
+
+\noindent Une requête suit le chemin suivant~:
+\begin{enumerate}
+	\item le client envoie la requête à \textbf{HiveServer2}~;
+	\item le \textbf{driver} l'analyse et consulte le \textbf{metastore} pour connaître les colonnes, l'emplacement des fichiers et la liste des partitions~;
+	\item l'\textbf{optimiseur} produit un plan~: partitions à lire, ordre et type des jointures, filtres poussés au plus près des fichiers~;
+	\item le plan devient un ensemble de tâches (MapReduce, ou un graphe de tâches Tez) lancées par \textbf{YARN} sur les n\oe uds qui portent les blocs HDFS~;
+	\item le résultat remonte au client.
+\end{enumerate}
+
+\noindent Le principe est le \textbf{schéma à la lecture}~: Hive ne vérifie pas les fichiers au chargement, il les interprète au moment de la requête. La commande \texttt{EXPLAIN} affiche le plan, ce qui permet de vérifier qu'une partition est bien élaguée ou qu'une jointure est faite en mémoire.
+
+\vspace{0.2cm}
+
+\noindent Le moteur d'exécution dépend de la distribution~: MapReduce était le moteur d'origine~; Tez, plus rapide car il enchaîne les étapes sans écrire de fichiers intermédiaires sur HDFS, est le moteur par défaut de Hive~3 (Cloudera CDP)~; les anciennes distributions Cloudera (CDH) proposent MapReduce ou Spark.
+
+\subsection{Fonctionnement de MapReduce}
+
+\noindent Un traitement MapReduce se déroule en quatre temps~:
+\begin{enumerate}
+	\item \textbf{découpage}~: le fichier d'entrée est découpé en blocs (\textit{splits}), en général un par bloc HDFS de 128~Mo~;
+	\item \textbf{map}~: une tâche par bloc lit les lignes et émet des paires (clé, valeur). Un \textbf{combiner} facultatif fait une première agrégation locale pour réduire le volume envoyé sur le réseau~;
+	\item \textbf{shuffle and sort}~: les paires sont envoyées vers les reducers selon un hachage de la clé, puis triées et regroupées par clé~;
+	\item \textbf{reduce}~: chaque reducer reçoit une clé et la liste de ses valeurs, les agrège et écrit le résultat dans HDFS.
+\end{enumerate}
+
+\subsection{Exemple~: nombre de décès par région en 2019}
+
+\noindent Le besoin~7 se prête bien à un exemple. On suppose que la région de décès est déjà jointe à chaque ligne (la petite dimension des régions est copiée sur chaque n\oe ud et la jointure se fait dans le map). Le schéma ci-dessous suit six lignes fictives, réparties en deux blocs.
+
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize,
+  d/.style={draw=gray,fill=gray!10,rounded corners,align=left,text width=2.3cm,minimum height=1.6cm},
+  m/.style={draw=title1,fill=title2!12,rounded corners,align=left,text width=2.3cm,minimum height=1.6cm},
+  s/.style={draw=orange!80!black,fill=orange!12,rounded corners,align=left,text width=2.6cm,minimum height=0.75cm},
+  r/.style={draw=title1,fill=title1!20,rounded corners,align=left,text width=2.1cm,minimum height=0.75cm},
+  arr/.style={-{Latex},thick,gray!70!black},
+  h/.style={font=\scriptsize\bfseries,text=title1}]
+  \node[d] (d1) at (0,1.1) {2019, Bretagne\\ 2019, Occitanie\\ 2019, Bretagne};
+  \node[d] (d2) at (0,-1.1) {2019, Occitanie\\ 2019, Bretagne\\ 2019, Normandie};
+  \node[m] (m1) at (3.3,1.1) {(Bretagne, 1)\\ (Occitanie, 1)\\ (Bretagne, 1)};
+  \node[m] (m2) at (3.3,-1.1) {(Occitanie, 1)\\ (Bretagne, 1)\\ (Normandie, 1)};
+  \node[s] (s1) at (6.9,1.1) {Bretagne~: [1, 1, 1]};
+  \node[s] (s2) at (6.9,0) {Normandie~: [1]};
+  \node[s] (s3) at (6.9,-1.1) {Occitanie~: [1, 1]};
+  \node[r] (r1) at (10.3,1.1) {Bretagne~: 3};
+  \node[r] (r2) at (10.3,0) {Normandie~: 1};
+  \node[r] (r3) at (10.3,-1.1) {Occitanie~: 2};
+  \node[h] at (0,2.4) {Blocs d'entrée};
+  \node[h] at (3.3,2.4) {Map};
+  \node[h] at (6.9,2.4) {Shuffle and sort};
+  \node[h] at (10.3,2.4) {Reduce};
+  \draw[arr] (d1) -- (m1);
+  \draw[arr] (d2) -- (m2);
+  \foreach \a in {m1,m2} \foreach \b in {s1,s2,s3} \draw[arr,gray!50] (\a.east) -- (\b.west);
+  \draw[arr] (s1) -- (r1);
+  \draw[arr] (s2) -- (r2);
+  \draw[arr] (s3) -- (r3);
+\end{tikzpicture}
+\end{center}
+\source{exemple fictif de six lignes, réalisé pour ce CER}
+
+\noindent En pseudo-code, le traitement tient en deux fonctions~:
+
+\begin{center}
+\begin{minipage}{0.92\textwidth}
+\begin{tcolorbox}[colback=title2!6,colframe=title1,boxsep=2pt]
+\begin{minted}[fontsize=\scriptsize]{text}
+map(cle, ligne_deces):
+    si annee(ligne_deces.id_temps) == 2019:
+        region = regions[ligne_deces.id_region_deces]   -- dimension en memoire
+        emettre(region, 1)
+
+reduce(region, valeurs):
+    emettre(region, somme(valeurs))
+\end{minted}
+\end{tcolorbox}
+\end{minipage}
+\end{center}
+
+\noindent La somme étant associative, la fonction reduce peut aussi servir de combiner~: chaque map n'envoie alors qu'une paire par région au lieu d'une paire par décès. Sur les 25~millions de lignes du fichier INSEE, c'est ce qui limite le trafic réseau.
+
+\vspace{0.2cm}
+
+\noindent Dans Hive, on n'écrit pas ce code~: la requête du besoin~7 (partie~\ref{sec:requetes}) est compilée en un plan équivalent. Le \texttt{WHERE} devient un filtre dans le map, le \texttt{JOIN} avec la petite dimension une jointure en mémoire (\textit{map join}), et le \texttt{GROUP BY} un shuffle suivi d'un reduce. Ce traitement n'a pas été exécuté sur le cluster~: l'exemple a été déroulé à la main.
+
+% --- OPTIMISATION ---
+\newpage
+\section{Optimiser le modèle physique dans Hive}
+
+\noindent Une requête Hive est lente surtout parce qu'elle \textbf{lit trop de données}, ou parce qu'elle les \textbf{déplace} sur le réseau pendant les jointures. Les leviers d'optimisation visent l'un ou l'autre.
+
+\subsection{Partitionnement}
+
+\noindent Une table partitionnée est rangée en un sous-répertoire par valeur de la colonne de partition. Cette colonne n'est pas stockée dans les fichiers~: elle est portée par le nom du répertoire.
+
+\begin{center}
+\begin{minipage}{0.92\textwidth}
+\begin{tcolorbox}[colback=title2!6,colframe=title1,boxsep=2pt]
+\begin{minted}[fontsize=\scriptsize]{text}
+/warehouse/entrepot.db/fait_deces/
+    annee=1970/000000_0
+    annee=1971/000000_0
+    ...
+    annee=2019/000000_0      <- seul répertoire lu si WHERE annee = 2019
+    annee=2020/000000_0
+\end{minted}
+\end{tcolorbox}
+\end{minipage}
+\end{center}
+
+\noindent Deux façons de remplir les partitions~:
+\begin{itemize}
+	\item \textbf{statique}~: la valeur est écrite dans la requête (\texttt{PARTITION (annee=2019)}). Adapté au chargement d'une seule période connue~;
+	\item \textbf{dynamique}~: Hive crée les partitions d'après la dernière colonne du \texttt{SELECT} (\texttt{PARTITION (annee)}). Adapté au chargement initial de tout l'historique. Il faut l'autoriser~: \texttt{hive.exec.dynamic.partition=true} et \texttt{hive.exec.dynamic.partition.mode=nonstrict}.
+\end{itemize}
+
+\noindent \textbf{Choisir la colonne de partition}~:
+\begin{itemize}
+	\item une colonne présente dans les filtres de la plupart des requêtes (la période, ici l'année)~;
+	\item une \textbf{cardinalité faible}~: quelques dizaines à quelques centaines de valeurs, pas l'identifiant patient ni la date au jour~;
+	\item des partitions assez grosses~: idéalement plusieurs centaines de mégaoctets chacune.
+\end{itemize}
+
+\noindent Le piège est le \textbf{sur-partitionnement}~: trop de petites partitions produisent des milliers de petits fichiers. Le NameNode garde chaque fichier en mémoire, le metastore doit lister toutes les partitions, et chaque fichier lance une tâche. Une requête peut alors devenir plus lente qu'avec une table non partitionnée. Hive limite d'ailleurs le nombre de partitions dynamiques créées par requête (\texttt{hive.exec.max.dynamic.partitions}, 1\,000 par défaut).
+
+\vspace{0.2cm}
+
+\noindent L'élagage ne fonctionne que si le filtre porte \textbf{directement} sur la colonne de partition. Un filtre sur \texttt{dim\_temps.annee} après jointure n'élague rien si la table de faits est partitionnée sur sa propre colonne \texttt{annee}~: il faut filtrer \texttt{f.annee}.
+
+\subsection{Bucketing}
+
+\noindent Le bucketing découpe une table, ou chaque partition, en un nombre fixe de fichiers, selon le hachage d'une colonne~:
+
+\begin{center}
+\begin{minipage}{0.92\textwidth}
+\begin{tcolorbox}[colback=title2!6,colframe=title1,boxsep=2pt]
+\begin{minted}[fontsize=\scriptsize]{sql}
+CREATE TABLE entrepot.dim_etablissement ( ... )
+CLUSTERED BY (id_etablissement) SORTED BY (id_etablissement) INTO 4 BUCKETS
+STORED AS ORC;
+\end{minted}
+\end{tcolorbox}
+\end{minipage}
+\end{center}
+
+\noindent Il sert à trois choses~:
+\begin{itemize}
+	\item \textbf{bucket map join}~: si deux tables sont découpées sur leur clé de jointure, avec des nombres de buckets multiples l'un de l'autre, chaque tâche ne charge en mémoire que le bucket correspondant de l'autre table (\texttt{hive.optimize.bucketmapjoin=true})~;
+	\item \textbf{sort-merge bucket join} (SMB)~: si les deux tables ont le \textbf{même} nombre de buckets et sont aussi triées sur la clé (\texttt{SORTED BY}), la jointure se fait par simple fusion de fichiers triés, sans shuffle ni table en mémoire (\texttt{hive.optimize.bucketmapjoin.sortedmerge=true}, \texttt{hive.auto.convert.sortmerge.join=true})~;
+	\item \textbf{échantillonnage}~: \texttt{TABLESAMPLE(BUCKET 1 OUT OF 4)} lit un quart de la table pour tester une requête.
+\end{itemize}
+
+\noindent Contrairement à la partition, le bucket convient aux colonnes de \textbf{forte cardinalité}, comme une clé de jointure. Le nombre de buckets se fixe à la création et ne change plus sans recharger la table~: on vise des fichiers proches d'un bloc HDFS, et une puissance de deux. Sur les versions de Hive antérieures à la~2.0, il faut activer \texttt{hive.enforce.bucketing=true} avant chaque chargement, sinon les lignes ne sont pas réparties.
+
+\subsection{Formats colonnes et compression}
+
+\noindent Le format texte (CSV) oblige à lire et découper chaque ligne entière. Les formats colonnes \textbf{ORC} et \textbf{Parquet} rangent ensemble les valeurs d'une même colonne~:
+\begin{itemize}
+	\item une requête ne lit que les colonnes dont elle a besoin~;
+	\item des valeurs semblables, côte à côte, se compressent bien (ZLIB, Snappy)~;
+	\item ORC stocke le minimum et le maximum de chaque colonne par bloc de lignes~: un filtre peut sauter les blocs inutiles (\textit{predicate pushdown}), et des filtres de Bloom peuvent être ajoutés sur une colonne.
+\end{itemize}
+
+\noindent ORC est le format natif de Hive et le seul qui supporte ses tables transactionnelles~; Parquet est préféré quand les fichiers sont aussi lus par Spark ou Impala.
+
+\subsection{Statistiques, vectorisation et optimiseur}
+
+\begin{itemize}
+	\item \textbf{Statistiques}~: \texttt{ANALYZE TABLE ... COMPUTE STATISTICS} enregistre dans le metastore le nombre de lignes, et \texttt{FOR COLUMNS} le nombre de valeurs distinctes, les nulls, le minimum et le maximum. Certaines requêtes (\texttt{COUNT(*)}) sont alors servies sans lire les fichiers (\texttt{hive.compute.query.using.stats}).
+	\item \textbf{Optimiseur fondé sur les coûts} (CBO, avec Apache Calcite)~: grâce aux statistiques, il choisit l'ordre des jointures et décide quelles tables sont assez petites pour une jointure en mémoire (\texttt{hive.cbo.enable}, \texttt{hive.auto.convert.join}).
+	\item \textbf{Vectorisation}~: les opérateurs traitent les lignes par lots de 1\,024 au lieu d'une à la fois, ce qui réduit le coût processeur des filtres et des agrégations. Elle fonctionne avec ORC (\texttt{hive.vectorized.execution.enabled}).
+	\item \textbf{Moteur Tez}~: il enchaîne les étapes d'une requête en un seul graphe, sans écrire les résultats intermédiaires sur HDFS comme le fait MapReduce entre deux jobs (\texttt{hive.execution.engine=tez}).
+\end{itemize}
+
+\subsection{Vues matérialisées}
+
+\noindent Une vue matérialisée stocke le résultat d'une agrégation. Depuis Hive~3, l'optimiseur peut \textbf{réécrire automatiquement} une requête pour lire la vue au lieu des tables de faits, sans que l'utilisateur change sa requête~:
+
+\begin{center}
+\begin{minipage}{0.92\textwidth}
+\begin{tcolorbox}[colback=title2!6,colframe=title1,boxsep=2pt]
+\begin{minted}[fontsize=\scriptsize]{sql}
+CREATE MATERIALIZED VIEW entrepot.mv_exemple
+STORED AS ORC
+AS SELECT ... GROUP BY ...;
+
+ALTER MATERIALIZED VIEW entrepot.mv_exemple REBUILD;  -- après chaque chargement
+\end{minted}
+\end{tcolorbox}
+\end{minipage}
+\end{center}
+
+\noindent Points d'attention~:
+\begin{itemize}
+	\item une vue périmée n'est pas utilisée pour la réécriture~; il faut la reconstruire (\texttt{REBUILD}) après chaque chargement trimestriel~;
+	\item Hive ne sait dire si la vue est à jour, et ne peut la reconstruire de façon incrémentale, que si les tables sources sont \textbf{transactionnelles}~;
+	\item la réécriture se contrôle par \texttt{hive.materializedview.rewriting}~; une vue peut aussi être créée avec \texttt{DISABLE REWRITE} et interrogée directement.
+\end{itemize}
+
+\noindent Sur une version de Hive antérieure à la~3, le même effet s'obtient avec une \textbf{table d'agrégats} ordinaire, rechargée par \texttt{INSERT OVERWRITE} à chaque mise à jour, et interrogée explicitement.
+
+\subsection{Synthèse des leviers}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\bfseries\raggedright\arraybackslash}p{3.1cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X l}
+\toprule
+Levier & Effet attendu & Condition & Hive \\
+\midrule
+Partitionnement & Ne lit que les périodes filtrées & Filtre direct sur la colonne, partitions pas trop petites & 0.x \\
+Bucketing & Jointures sans shuffle (bucket map join, SMB) & Même clé et nombre de buckets compatible des deux côtés & 0.x \\
+ORC + compression & Moins d'octets lus, colonnes utiles seulement & Recharger les tables au format ORC & 0.11 \\
+Statistiques + CBO & Meilleur plan, jointures en mémoire & \texttt{ANALYZE TABLE} après chaque chargement & 0.14 \\
+Vectorisation & Moins de temps processeur & Format ORC & 0.13 \\
+Tez & Moins d'écritures intermédiaires & Distribution qui fournit Tez & 0.13 \\
+Vue matérialisée & Agrégat précalculé, réécriture automatique & Hive~3, reconstruction après chargement & 3.0 \\
+\bottomrule
+\end{tabularx}
+\end{center}
+\source{Apache Hive Language Manual et pages de conception du wiki Apache Hive}
+
+\noindent La dernière colonne donne la version de Hive qui a introduit la fonctionnalité. La première étape sur le cluster sera donc de relever sa version (\texttt{hive --version}, ou \texttt{SELECT version();} dans Beeline à partir de Hive~2.1), pour savoir quels leviers sont disponibles.
+
+% --- APPLICATION CHU ---
+\newpage
+\section{Application au CHU~: modèle physique dans Hive}
+
+\noindent Le modèle dimensionnel est la constellation du projet~: quatre tables de faits (consultations, hospitalisations, satisfaction, décès) qui partagent des dimensions communes (temps, établissement, région, diagnostic, patient, professionnel). Il ne change pas. Seule sa traduction physique dans Hive est décidée ici. Les jobs Talend J00 à J10 alimentent l'entrepôt~: PostgreSQL sert de cible de développement, Hive sur HDFS (Cloudera) est la cible finale. Ce qui suit n'a pas été exécuté sur le cluster.
+
+\subsection{Volumes et choix par table}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\bfseries\raggedright\arraybackslash}p{3.6cm} >{\raggedright\arraybackslash}p{2.4cm} l >{\raggedright\arraybackslash}X}
+\toprule
+Table & Volume & Période & Choix physique \\
+\midrule
+fait\_deces & 25\,088\,208 lignes & 1970--2020 & ORC, partition par année de décès (51 partitions) \\
+fait\_consultation & 1\,027\,157 lignes & 2015--2023 & ORC, partition par année (9), 4 buckets sur \texttt{id\_etablissement} \\
+fait\_hospitalisation & 2\,479 lignes & 2015--2021 & ORC, ni partition ni bucket \\
+fait\_satisfaction & environ 2\,000 lignes & 2020 & ORC, partition par année \\
+dim\_etablissement & environ 416\,000 lignes & -- & ORC, 4 buckets triés sur \texttt{id\_etablissement} \\
+dim\_professionnel & 1\,048\,575 lignes & -- & ORC \\
+dim\_temps, dim\_patient, dim\_diagnostic, dim\_region\_\allowbreak insee & de 15\,490 à 100\,000 lignes & -- & ORC, jointures en mémoire \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\noindent Les choix se justifient ainsi~:
+\begin{itemize}
+	\item \textbf{fait\_deces} porte l'essentiel du volume. Le besoin~7 filtre une seule année~: avec une partition par année, la requête lit 1 partition sur 51, soit environ 490\,000 lignes en moyenne au lieu de 25~millions. Une partition par mois donnerait plus de 600 partitions bien plus petites, sans gain pour les besoins actuels.
+	\item \textbf{fait\_consultation} est filtré par période (besoins 1, 2 et 6)~: la partition par année découpe environ 114\,000 lignes par année. Le bucket sur \texttt{id\_etablissement}, avec le même découpage sur la dimension établissement, permet une jointure par buckets pour le besoin~1. L'établissement est choisi parce que c'est la dimension partagée par trois faits.
+	\item \textbf{fait\_hospitalisation} est trop petite pour être découpée~: 7 partitions d'environ 350 lignes ne produiraient que de petits fichiers. Un seul fichier ORC est lu en entier en une fraction de seconde~; le choix sera revu si le volume grandit.
+	\item \textbf{fait\_satisfaction} n'a qu'une année aujourd'hui. La partition par année sert surtout le chargement~: chaque nouvelle campagne e-Satis s'ajoute dans sa partition sans réécrire les autres.
+	\item Les \textbf{petites dimensions} tiennent en mémoire~: Hive les diffuse à chaque tâche (\textit{map join}). Les découper n'apporterait rien.
+\end{itemize}
+
+\noindent Le bucket a peu d'effet sur un fait d'un million de lignes~: il est surtout prévu pour la suite, quand les consultations s'ajouteront tous les trois mois. Il ne sera conservé que si la mesure montre un gain.
+
+\subsection{Création des tables}
+
+\begin{center}
+\begin{minipage}{0.92\textwidth}
+\begin{tcolorbox}[colback=title2!6,colframe=title1,title=\textbf{Faits Décès et Consultation},fonttitle=\small,boxsep=2pt]
+\begin{minted}[fontsize=\scriptsize]{sql}
+CREATE DATABASE IF NOT EXISTS entrepot;
+
+CREATE TABLE entrepot.fait_deces (
+    id_deces             BIGINT,
+    id_temps             INT,          -- date de décès AAAAMMJJ
+    id_region_deces      INT,
+    id_region_naissance  INT,
+    age_deces            INT,
+    annee_naissance      INT,
+    numero_acte_deces    STRING,
+    flag_date_partielle  BOOLEAN,
+    date_chargement      TIMESTAMP
+)
+PARTITIONED BY (annee INT)               -- année de décès
+STORED AS ORC
+TBLPROPERTIES ('orc.compress' = 'SNAPPY');
+
+CREATE TABLE entrepot.fait_consultation (
+    num_consultation        INT,
+    id_patient              INT,
+    id_temps                INT,
+    id_professionnel        INT,
+    id_diagnostic           INT,
+    id_etablissement        INT,
+    nombre_de_consultation  INT
+)
+PARTITIONED BY (annee INT)
+CLUSTERED BY (id_etablissement) SORTED BY (id_etablissement) INTO 4 BUCKETS
+STORED AS ORC
+TBLPROPERTIES ('orc.compress' = 'SNAPPY');
+\end{minted}
+\end{tcolorbox}
+\end{minipage}
+\end{center}
+
+\begin{center}
+\begin{minipage}{0.92\textwidth}
+\begin{tcolorbox}[colback=title2!6,colframe=title1,title=\textbf{Faits Hospitalisation et Satisfaction},fonttitle=\small,boxsep=2pt]
+\begin{minted}[fontsize=\scriptsize]{sql}
+CREATE TABLE entrepot.fait_hospitalisation (
+    id_hospitalisation    INT,
+    id_patient            INT,
+    id_etablissement      INT,
+    id_diagnostic         INT,
+    id_date_entree        INT,             -- AAAAMMJJ
+    num_hospitalisation   STRING,
+    jour_hospitalisation  INT
+)
+STORED AS ORC;                           -- 2 479 lignes : pas de découpage
+
+CREATE TABLE entrepot.fait_satisfaction (
+    id_satisfaction            INT,
+    id_etablissement           INT,
+    id_region                  INT,
+    participation_obligatoire  BOOLEAN,
+    depot_valide               BOOLEAN,
+    nb_reponses                INT,
+    score                      DECIMAL(5,2)
+)
+PARTITIONED BY (annee INT)               -- une campagne e-Satis par année
+STORED AS ORC;
+\end{minted}
+\end{tcolorbox}
+\end{minipage}
+\end{center}
+
+\noindent Dans Hive, la colonne de partition ne figure pas dans la liste des colonnes~: \texttt{annee} de la satisfaction passe donc dans la clause \texttt{PARTITIONED BY}. Hive ne vérifie ni clé primaire ni clé étrangère~: l'intégrité est contrôlée par les jobs Talend avant le chargement. La dimension établissement est créée comme dans la partie précédente, avec \texttt{CLUSTERED BY (id\_etablissement) SORTED BY (id\_etablissement) INTO 4 BUCKETS}.
+
+\subsection{Chargement depuis les tables de transit}
+
+\noindent Les jobs Talend déposent les données préparées dans des tables de transit (base \texttt{transit}). Le passage vers l'entrepôt se fait en HiveQL, avec un partitionnement dynamique~:
+
+\begin{center}
+\begin{minipage}{0.92\textwidth}
+\begin{tcolorbox}[colback=title2!6,colframe=title1,boxsep=2pt]
+\begin{minted}[fontsize=\scriptsize]{sql}
+SET hive.exec.dynamic.partition = true;
+SET hive.exec.dynamic.partition.mode = nonstrict;
+
+INSERT OVERWRITE TABLE entrepot.fait_deces PARTITION (annee)
+SELECT id_deces, id_temps, id_region_deces, id_region_naissance,
+       age_deces, annee_naissance, numero_acte_deces,
+       flag_date_partielle, date_chargement,
+       id_temps DIV 10000 AS annee        -- dernière colonne = partition
+FROM transit.fait_deces;
+
+INSERT OVERWRITE TABLE entrepot.fait_consultation PARTITION (annee)
+SELECT num_consultation, id_patient, id_temps, id_professionnel,
+       id_diagnostic, id_etablissement, nombre_de_consultation,
+       id_temps DIV 10000 AS annee
+FROM transit.fait_consultation;
+
+ANALYZE TABLE entrepot.fait_deces PARTITION (annee) COMPUTE STATISTICS;
+ANALYZE TABLE entrepot.fait_deces PARTITION (annee) COMPUTE STATISTICS FOR COLUMNS;
+\end{minted}
+\end{tcolorbox}
+\end{minipage}
+\end{center}
+
+\noindent Trois remarques~:
+\begin{itemize}
+	\item l'année est déduite de \texttt{id\_temps} (\texttt{AAAAMMJJ}) par division entière~; les dates partielles du fichier INSEE gardent leur année, signalée par \texttt{flag\_date\_partielle}~;
+	\item avec des partitions dynamiques, \texttt{INSERT OVERWRITE} ne remplace \textbf{que} les partitions présentes dans le résultat. À chaque mise à jour trimestrielle, il suffit donc de charger les lignes des années concernées pour réécrire ces seules années~;
+	\item les statistiques sont recalculées après chaque chargement, sinon l'optimiseur travaille sur des chiffres faux.
+\end{itemize}
+
+\subsection{Requêtes des besoins}\label{sec:requetes}
+
+\needspace{14\baselineskip}
+\noindent Les réglages suivants sont fixés au début de chaque session (ou dans la configuration du cluster)~:
+
+\begin{center}
+\begin{minipage}{0.92\textwidth}
+\begin{tcolorbox}[colback=title2!6,colframe=title1,boxsep=2pt]
+\begin{minted}[fontsize=\scriptsize]{sql}
+SET hive.execution.engine = tez;                -- si la distribution le fournit
+SET hive.vectorized.execution.enabled = true;
+SET hive.cbo.enable = true;
+SET hive.compute.query.using.stats = true;
+SET hive.stats.fetch.column.stats = true;
+SET hive.auto.convert.join = true;              -- petites dimensions en mémoire
+SET hive.optimize.bucketmapjoin = true;
+SET hive.optimize.bucketmapjoin.sortedmerge = true;
+SET hive.auto.convert.sortmerge.join = true;
+\end{minted}
+\end{tcolorbox}
+\end{minipage}
+\end{center}
+
+\needspace{20\baselineskip}
+\noindent \textbf{Besoin 1}~: taux de consultation par établissement et par période. On retient ici comme taux la part des consultations d'une période réalisées dans chaque établissement.
+
+\begin{center}
+\begin{minipage}{0.92\textwidth}
+\begin{tcolorbox}[colback=title2!6,colframe=title1,boxsep=2pt]
+\begin{minted}[fontsize=\scriptsize]{sql}
+WITH c AS (
+    SELECT f.annee, t.trimestre, e.id_etablissement, e.raison_sociale_site,
+           SUM(f.nombre_de_consultation) AS nb_consultations
+    FROM entrepot.fait_consultation f
+    JOIN entrepot.dim_temps t         ON t.id_temps = f.id_temps
+    JOIN entrepot.dim_etablissement e ON e.id_etablissement = f.id_etablissement
+    WHERE f.annee BETWEEN 2019 AND 2023          -- élagage des partitions
+    GROUP BY f.annee, t.trimestre, e.id_etablissement, e.raison_sociale_site
+)
+SELECT annee, trimestre, raison_sociale_site, nb_consultations,
+       ROUND(100 * nb_consultations
+             / SUM(nb_consultations) OVER (PARTITION BY annee, trimestre), 2)
+           AS taux_pct
+FROM c
+ORDER BY annee, trimestre, taux_pct DESC;
+\end{minted}
+\end{tcolorbox}
+\end{minipage}
+\end{center}
+
+\needspace{20\baselineskip}
+\noindent \textbf{Besoin 4}~: taux d'hospitalisation par diagnostic et par période, c'est-à-dire la part des séjours de l'année dus à chaque diagnostic.
+
+\begin{center}
+\begin{minipage}{0.92\textwidth}
+\begin{tcolorbox}[colback=title2!6,colframe=title1,boxsep=2pt]
+\begin{minted}[fontsize=\scriptsize]{sql}
+WITH h AS (
+    SELECT t.annee, d.code_diagnostic, d.diagnostic, COUNT(*) AS nb_sejours
+    FROM entrepot.fait_hospitalisation f
+    JOIN entrepot.dim_temps t      ON t.id_temps = f.id_date_entree
+    JOIN entrepot.dim_diagnostic d ON d.id_diagnostic = f.id_diagnostic
+    GROUP BY t.annee, d.code_diagnostic, d.diagnostic
+)
+SELECT annee, code_diagnostic, diagnostic, nb_sejours,
+       ROUND(100 * nb_sejours / SUM(nb_sejours) OVER (PARTITION BY annee), 2)
+           AS taux_pct
+FROM h
+ORDER BY annee, taux_pct DESC;
+\end{minted}
+\end{tcolorbox}
+\end{minipage}
+\end{center}
+
+\needspace{16\baselineskip}
+\noindent \textbf{Besoin 7}~: nombre de décès par région en 2019.
+
+\begin{center}
+\begin{minipage}{0.92\textwidth}
+\begin{tcolorbox}[colback=title2!6,colframe=title1,boxsep=2pt]
+\begin{minted}[fontsize=\scriptsize]{sql}
+SELECT r.code_region, r.nom_region, COUNT(*) AS nb_deces
+FROM entrepot.fait_deces f
+JOIN entrepot.dim_region_insee r ON r.id_region = f.id_region_deces
+WHERE f.annee = 2019                  -- 1 partition lue sur 51
+GROUP BY r.code_region, r.nom_region
+ORDER BY nb_deces DESC;
+\end{minted}
+\end{tcolorbox}
+\end{minipage}
+\end{center}
+
+\needspace{18\baselineskip}
+\noindent \textbf{Besoin 8}~: satisfaction globale par région en 2020. Le score moyen est pondéré par le nombre de réponses, pour qu'un établissement avec peu de répondants ne pèse pas autant qu'un grand~; seuls les dépôts valides sont retenus.
+
+\begin{center}
+\begin{minipage}{0.92\textwidth}
+\begin{tcolorbox}[colback=title2!6,colframe=title1,boxsep=2pt]
+\begin{minted}[fontsize=\scriptsize]{sql}
+SELECT r.code_region, r.nom_region,
+       ROUND(SUM(s.score * s.nb_reponses) / SUM(s.nb_reponses), 2)
+           AS score_moyen_pondere,
+       SUM(s.nb_reponses) AS nb_reponses,
+       COUNT(*)           AS nb_evaluations
+FROM entrepot.fait_satisfaction s
+JOIN entrepot.dim_region_insee r ON r.id_region = s.id_region
+WHERE s.annee = 2020 AND s.depot_valide = true
+GROUP BY r.code_region, r.nom_region
+ORDER BY score_moyen_pondere DESC;
+\end{minted}
+\end{tcolorbox}
+\end{minipage}
+\end{center}
+
+\noindent Dans les quatre requêtes, le filtre de période porte directement sur la colonne de partition du fait (\texttt{f.annee}, \texttt{s.annee}) quand elle existe, pour que Hive élague les partitions. Pour le besoin~4, la table est assez petite pour être lue en entier.
+
+\subsection{Vue matérialisée}
+
+\noindent Les décès par région et par année sont une agrégation stable~: le fichier INSEE n'est mis à jour que tous les trois mois. Une vue matérialisée la précalcule une fois~:
+
+\begin{center}
+\begin{minipage}{0.92\textwidth}
+\begin{tcolorbox}[colback=title2!6,colframe=title1,boxsep=2pt]
+\begin{minted}[fontsize=\scriptsize]{sql}
+CREATE MATERIALIZED VIEW entrepot.mv_deces_region_annee
+STORED AS ORC
+AS
+SELECT f.annee, r.code_region, r.nom_region, COUNT(*) AS nb_deces
+FROM entrepot.fait_deces f
+JOIN entrepot.dim_region_insee r ON r.id_region = f.id_region_deces
+GROUP BY f.annee, r.code_region, r.nom_region;
+
+-- après chaque chargement trimestriel
+ALTER MATERIALIZED VIEW entrepot.mv_deces_region_annee REBUILD;
+\end{minted}
+\end{tcolorbox}
+\end{minipage}
+\end{center}
+
+\noindent La vue contient une ligne par année et par région, de l'ordre du millier de lignes au lieu de 25~millions. La requête du besoin~7 reste inchangée~: si la vue est à jour, l'optimiseur la réécrit pour lire la vue (\texttt{EXPLAIN} doit alors citer \texttt{mv\_deces\_region\_annee}). Sur Hive~3 (Cloudera CDP), une table gérée au format ORC est transactionnelle par défaut, ce qui permet à Hive de savoir si la vue est à jour. Sur une version plus ancienne, la vue est remplacée par une table d'agrégats rechargée par \texttt{INSERT OVERWRITE}.
+
+\subsection{Protocole de mesure}
+
+\noindent La contrainte est un temps de réponse inférieur à 2~minutes par analyse. Aucune mesure n'a pu être faite~: le cluster n'était pas disponible pour ce travail. Le protocole prévu est le suivant~:
+\begin{enumerate}
+	\item \textbf{relever l'environnement}~: version de Hive, moteur (MapReduce ou Tez), nombre de n\oe uds et mémoire allouée~;
+	\item \textbf{situation de départ}~: requêtes sur les tables de transit (texte, sans partition, sans bucket, sans statistiques)~;
+	\item \textbf{situation optimisée}~: tables ORC partitionnées et découpées, statistiques calculées, réglages ci-dessus, vue matérialisée~;
+	\item \textbf{vérifier le plan} avec \texttt{EXPLAIN} avant de mesurer~: partitions lues, type de jointure (map join, SMB), réécriture par la vue~;
+	\item \textbf{exécuter} chaque requête une fois à froid (temps noté à part), puis trois fois~; on retient la médiane des trois. Le temps est celui affiché par Beeline, complété par les compteurs du job (octets lus sur HDFS)~;
+	\item \textbf{changer un seul levier à la fois} (format, puis partition, puis bucket, puis vue) pour savoir d'où vient le gain~;
+	\item \textbf{conclure}~: chaque besoin dont la médiane dépasse 120~secondes reçoit une optimisation supplémentaire (table d'agrégats, autre colonne de partition).
+\end{enumerate}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\bfseries}l >{\raggedright\arraybackslash}X c c c c}
+\toprule
+Besoin & Effet attendu de l'optimisation & Avant (s) & Après (s) & Partitions lues & < 2 min \\
+\midrule
+1 & 5 partitions sur 9, jointure par buckets & à mesurer & à mesurer & à relever & -- \\
+4 & Petite table, dimensions en mémoire & à mesurer & à mesurer & -- & -- \\
+7 & 1 partition sur 51, ou lecture de la vue & à mesurer & à mesurer & à relever & -- \\
+8 & 1 partition, dimension en mémoire & à mesurer & à mesurer & à relever & -- \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\noindent Les effets de la deuxième colonne sont \textbf{attendus}, déduits du fonctionnement de Hive~; seule l'exécution sur le cluster dira si le seuil de 2~minutes est tenu.
+
+% --- ETL VERS NOSQL ---
+\newpage
+\section{Intégrer des données dans une base NoSQL avec un ETL}
+
+\noindent Le CER~2 a retenu \textbf{HBase} pour le parcours de soins d'un patient~: il est fourni par Cloudera et stocke ses données dans HDFS. Le job Talend qui l'alimente reprend les mêmes sources que l'entrepôt. Les composants NoSQL (\texttt{tHBaseConnection}, \texttt{tHBaseOutput}, \texttt{tMongoDBConnection}, \texttt{tMongoDBOutput}) sont fournis par l'édition Big Data de Talend Open Studio.
+
+\subsection{Concevoir la clé de ligne}
+
+\noindent Dans HBase, tout repose sur la clé de ligne~: c'est le seul accès rapide, et les lignes sont triées par clé. Pour lire le parcours d'un patient, du plus récent au plus ancien~:
+
+\begin{center}
+\begin{minipage}{0.92\textwidth}
+\begin{tcolorbox}[colback=title2!6,colframe=title1,boxsep=2pt]
+\begin{minted}[fontsize=\scriptsize]{text}
+<id_patient_hash>#<99999999 - AAAAMMJJ>#<type><numero>
+exemple : 3f9a...e1#79849698#C1027157
+\end{minted}
+\end{tcolorbox}
+\end{minipage}
+\end{center}
+
+\begin{itemize}
+	\item le \textbf{préfixe patient} regroupe tous les événements d'un patient~; comme c'est un hachage, les patients se répartissent uniformément entre les serveurs, sans point chaud~;
+	\item la \textbf{date inversée} range les événements du plus récent au plus ancien~;
+	\item le \textbf{type et le numéro} (C pour consultation, H pour hospitalisation) rendent la clé unique quand deux événements tombent le même jour.
+\end{itemize}
+
+\noindent La table est créée à l'avance, découpée en régions sur les premiers caractères du hachage pour que le chargement initial soit réparti dès le départ~:
+
+\begin{center}
+\begin{minipage}{0.92\textwidth}
+\begin{tcolorbox}[colback=title2!6,colframe=title1,boxsep=2pt]
+\begin{minted}[fontsize=\scriptsize]{text}
+create 'parcours_patient', 'evt', 'lieu', {SPLITS => ['4', '8', 'c']}
+\end{minted}
+\end{tcolorbox}
+\end{minipage}
+\end{center}
+
+\subsection{Le job Talend}
+
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize,node distance=0.45cm,
+  c/.style={draw=orange!80!black,thick,rounded corners,fill=orange!12,align=center,text width=2.2cm,minimum height=1.3cm},
+  arr/.style={-{Latex},thick,gray!70!black}]
+  \node[c,fill=gray!10,draw=gray] (s) {\texttt{tDBInput} / \texttt{tHiveInput}\\ consultations, hospitalisations};
+  \node[c,right=of s] (u) {\texttt{tUnite}\\ un seul flux d'événements};
+  \node[c,right=of u] (m) {\texttt{tMap}\\ clé de ligne, colonnes};
+  \node[c,right=of m] (f) {\texttt{tFilterRow}\\ clé vide~$\rightarrow$ rejets};
+  \node[c,right=of f,fill=title2!12,draw=title1] (h) {\texttt{tHBaseOutput}\\ \texttt{parcours\_\allowbreak patient}};
+  \foreach \a/\b in {s/u,u/m,m/f,f/h} \draw[arr] (\a) -- (\b);
+\end{tikzpicture}
+\end{center}
+
+\begin{itemize}
+	\item \texttt{tHBaseConnection} indique le quorum ZooKeeper du cluster et son port~;
+	\item dans \texttt{tHBaseOutput}, chaque colonne du schéma est rattachée à une famille~: date, type et diagnostic dans \texttt{evt}, établissement et professionnel dans \texttt{lieu}~;
+	\item une écriture HBase avec une clé existante remplace la cellule (une nouvelle version)~: relancer le job ne crée pas de doublon, ce qui convient au rechargement trimestriel~;
+	\item le contrôle compare le nombre d'événements lus au nombre de lignes écrites (\texttt{count 'parcours\_patient'} dans le shell HBase), et la lecture d'un parcours se teste avec un \texttt{scan} sur le préfixe d'un patient.
+\end{itemize}
+
+\noindent \textbf{Variante MongoDB}~: avec \texttt{tMongoDBOutput}, on écrirait un document par événement, avec un index sur \texttt{id\_patient\_hash}. Un document unique par patient, avec la liste de ses événements, grossirait sans limite à chaque chargement, alors qu'un document MongoDB est plafonné à 16~Mo.
+
+\vspace{0.2cm}
+
+\noindent Ce job est conçu mais n'a pas été exécuté sur le cluster~: il reste à le tester sur la machine Cloudera.
+
+% --- CONCLUSION ---
+\newpage
+\section*{Conclusion}
+\phantomsection
+\addcontentsline{toc}{section}{Conclusion}
+
+\noindent \textbf{En réponse à la problématique}, implémenter l'entrepôt du CHU dans Hive revient à traduire la constellation en un modèle physique pensé pour les requêtes. Chaque table de faits est stockée en \textbf{ORC} compressé, pour ne lire que les colonnes utiles. Les faits volumineux et filtrés par période sont \textbf{partitionnés par année}~: la requête des décès de 2019 ne lit plus qu'une partition sur 51. La clé de jointure la plus partagée, l'établissement, sert au \textbf{bucketing} du fait des consultations et de sa dimension. Les petites tables ne sont pas découpées, pour éviter les petits fichiers.
+
+\vspace{0.2cm}
+
+\noindent Les agrégations stables, comme les décès par région et par année, sont précalculées dans une \textbf{vue matérialisée} que Hive~3 utilise de lui-même, à reconstruire après chaque chargement trimestriel. Les statistiques, l'optimiseur fondé sur les coûts, la vectorisation et le moteur Tez complètent ces choix. Le seuil de 2~minutes ne peut pas être affirmé sans mesure~: un protocole avant / après, un levier à la fois, est prêt à être exécuté sur le cluster.
+
+\vspace{0.2cm}
+
+\noindent Le choix du stockage part de la façon dont les données sont lues. Les huit analyses sont des agrégations~: elles relèvent de l'entrepôt Hive. Les bases NoSQL répondent à d'autres accès, chacune selon sa famille~: clé-valeur pour un cache, documents pour des données au schéma changeant, colonnes pour lire tout un parcours par clé, graphes pour des relations. Elles échangent souvent une partie des garanties ACID contre la disponibilité, comme l'explique le théorème CAP. Pour le CHU, HBase garde le rôle défini au CER~2~: servir le parcours d'un patient, alimenté par un job Talend.
+
+\vspace{0.2cm}
+
+\noindent Enfin, MapReduce éclaire ce que fait Hive~: un filtre et une jointure en mémoire dans le map, un regroupement dans le shuffle, une agrégation dans le reduce. Comprendre ce découpage permet de lire un plan d'exécution et de savoir où une requête perd du temps.
+
+% --- CAPITALISATION ---
+\newpage
+\section*{Capitalisation}
+\phantomsection
+\addcontentsline{toc}{section}{Capitalisation}
+
+\begin{center}
+\small
+\setlength{\tabcolsep}{8pt}
+\renewcommand{\arraystretch}{1.15}
+
+\begin{tabular}{|>{\raggedright\arraybackslash}p{0.30\textwidth}|>{\raggedright\arraybackslash}p{0.47\textwidth}|m{0.08\textwidth}|}
+\hline
+\textbf{AAV} & \textbf{Commentaire} & \textbf{Statut} \\ \hline
+
+Distinguer les types de bases NoSQL (organisation, cas d'usage) &
+Organisation, produits, forces et limites des quatre familles, tableau comparatif et un cas d'usage CHU par famille. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Comparer SGBDR et NoSQL (ACID vs BASE, théorème CAP) &
+ACID et BASE comparés, théorème CAP expliqué avec le classement CP / AP / CA de systèmes courants et ses limites. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Utiliser un ETL pour intégrer des données dans une base NoSQL &
+Clé de ligne HBase conçue (préfixe haché, date inversée), table prédécoupée, job Talend décrit avec ses contrôles. Non exécuté sur le cluster. &
+{\color{orange}Partiel} \\ \hline
+
+Sélectionner le type de stockage adapté à un besoin métier &
+Méthode fondée sur le mode de lecture, appliquée aux besoins du CHU~: entrepôt Hive pour les 8 analyses, SGBDR, HBase, documents, graphe et cache pour les autres usages. &
+{\color{green!60!black}Acquis} \\ \hline
+
+Utiliser MapReduce pour extraire des informations &
+Fonctionnement (map, combiner, shuffle and sort, reduce) et exemple du besoin~7 déroulé à la main, lien avec le plan d'une requête Hive. Aucun job exécuté. &
+{\color{orange}Partiel} \\ \hline
+
+Optimiser le modèle physique (partitionnement, bucket) &
+Choix justifiés table par table (partitions, buckets, ORC, vue matérialisée), scripts de création, de chargement et de requêtes, protocole de mesure. Non exécuté sur le cluster~: gains non mesurés. &
+{\color{orange}Partiel} \\ \hline
+
+\end{tabular}
+\end{center}
+
+% --- RESSOURCES ---
+\newpage
+\section*{Ressources}
+\phantomsection
+\addcontentsline{toc}{section}{Ressources}
+
+\begin{itemize}
+	\item \textbf{Apache Hive, site officiel} : \url{https://hive.apache.org/}
+	\item \textbf{Apache Hive, Language Manual} : \url{https://cwiki.apache.org/confluence/display/Hive/LanguageManual}
+	\item \textbf{Apache Hive, jointures} : \url{https://cwiki.apache.org/confluence/display/Hive/LanguageManual+Joins}
+	\item \textbf{Apache Hive, vues matérialisées} : \url{https://cwiki.apache.org/confluence/display/Hive/Materialized+views}
+	\item \textbf{Apache Hive, DDL (partitions)} : \url{https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL}
+	\item \textbf{Apache Hive, tables en buckets} : \url{https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL+BucketedTables}
+	\item \textbf{Apache Hive, format ORC} : \url{https://cwiki.apache.org/confluence/display/Hive/LanguageManual+ORC}
+	\item \textbf{Apache Hive, statistiques} : \url{https://cwiki.apache.org/confluence/display/Hive/StatsDev}
+	\item \textbf{Apache Hive, exécution vectorisée} : \url{https://cwiki.apache.org/confluence/display/Hive/Vectorized+Query+Execution}
+	\item \textbf{H. Bansal, S. Chauhan, S. Mehrotra, \textit{Apache Hive Cookbook}, Packt Publishing, 2016}, référencé par le site Apache Hive : \url{https://hive.apache.org/community/resources/books-blogs-talks/}
+	\item \textbf{Apache Hadoop, tutoriel MapReduce} : \url{https://hadoop.apache.org/docs/stable/hadoop-mapreduce-client/hadoop-mapreduce-client-core/MapReduceTutorial.html}
+	\item \textbf{E. Brewer, \og CAP Twelve Years Later: How the Rules Have Changed\fg{}, InfoQ} : \url{https://www.infoq.com/articles/cap-twelve-years-later-how-the-rules-have-changed/}
+	\item \textbf{AWS, différences entre ACID et BASE} : \url{https://aws.amazon.com/compare/the-difference-between-acid-and-base-database/}
+	\item \textbf{Helpshift Engineering, \og Building a Data warehouse with Hive at Helpshift\fg{}} : \url{https://medium.com/helpshift-engineering/building-a-data-warehouse-with-hive-at-helpshift-part-1-443046df6484}
+	\item \textbf{Cloudera, Apache Hive Performance Tuning} : \url{https://docs.cloudera.com/cdp-private-cloud-base/7.1.9/hive-performance-tuning/index.html}
+	\item \textbf{Apache HBase, guide de référence} : \url{https://hbase.apache.org/book.html}
+	\item \textbf{Documentation Talend} : \url{https://help.talend.com/}
+\end{itemize}
