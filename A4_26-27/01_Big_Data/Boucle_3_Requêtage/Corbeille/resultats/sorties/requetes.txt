@@ -1,0 +1,238 @@
+
+=== Q1 : collections de la base ===
+[
+  'restaurants',
+  'netflix',
+  'height'
+]
+
+=== Q2 : nombre de documents ===
+netflix     : 8807
+restaurants : 25357
+
+=== Q3 : un document par collection + champs ===
+{
+  _id: ObjectId('6ae2195352ce5b48dcb32a3d'),
+  show_id: 's2',
+  type: 'TV Show',
+  title: 'Blood & Water',
+  director: '',
+  cast: 'Ama Qamata, Khosi Ngema, Gail Mabalane, Thabang Molaba, Dillon Windvogel, Natasha Thahane, Arno Greeff, Xolile Tshabalala, Getmore Sithole, Cindy Mahlangu, Ryle De Morny, Greteli Fincham, Sello Maake Ka-Ncube, Odwa Gwanya, Mekaila Mathys, Sandi Schultz, Duane Williams, Shamilla Miller, Patrick Mofokeng',
+  country: 'South Africa',
+  date_added: 'September 24, 2021',
+  release_year: 2021,
+  rating: 'TV-MA',
+  duration: '2 Seasons',
+  listed_in: 'International TV Shows, TV Dramas, TV Mysteries',
+  description: 'After crossing paths at a party, a Cape Town teen sets out to prove whether a private-school swimming star is her sister who was abducted at birth.'
+}
+Champs netflix : _id, show_id, type, title, director, cast, country, date_added, release_year, rating, duration, listed_in, description
+{
+  _id: ObjectId('6ae2195444cbc4b785fd8514'),
+  address: {
+    building: '2780',
+    coord: {
+      type: 'Point',
+      coordinates: [
+        -73.98241999999999,
+        40.579505
+      ]
+    },
+    street: 'Stillwell Avenue',
+    zipcode: '11224'
+  },
+  borough: 'Brooklyn',
+  cuisine: 'American ',
+  grades: [
+    {
+      date: ISODate('2014-06-10T00:00:00.000Z'),
+      grade: 'A',
+      score: 5
+    },
+    {
+      date: ISODate('2013-06-05T00:00:00.000Z'),
+      grade: 'A',
+      score: 7
+    },
+    {
+      date: ISODate('2012-04-13T00:00:00.000Z'),
+      grade: 'A',
+      score: 12
+    },
+    {
+      date: ISODate('2011-10-12T00:00:00.000Z'),
+      grade: 'A',
+      score: 12
+    }
+  ],
+  name: 'Riviera Caterer',
+  restaurant_id: '40356018'
+}
+Champs restaurants : _id, address, borough, cuisine, grades, name, restaurant_id
+
+[info] type de release_year : int=8807
+
+=== Q4 : films sortis en 2016 ===
+Movie, release_year 2016        : 658
+[info] tous types, release_year 2016 : 902
+
+=== Q5 : nombre de films (type Movie) ===
+6131
+
+=== Q6 : nombre de series TV (type TV Show) ===
+2676
+
+=== Q7 : films francais de 90 min ===
+Movie, country contient France, duration '90 min' : 6
+[variante] country exactement 'France'            : 0
+
+=== Q8 : films americains sortis depuis 2020 ===
+Movie, country contient United States, release_year >= 2020 : 265
+
+=== Q9 : liste des cuisines ===
+[
+  'Afghan',
+  'African',
+  'American ',
+  'Armenian',
+  'Asian',
+  'Australian',
+  'Bagels/Pretzels',
+  'Bakery',
+  'Bangladeshi',
+  'Barbecue',
+  'Bottled beverages, including water, sodas, juices, etc.',
+  'Brazilian',
+  'CafÃ©/Coffee/Tea',
+  'Café/Coffee/Tea',
+  'Cajun',
+  'Californian',
+  'Caribbean',
+  'Chicken',
+  'Chilean',
+  'Chinese',
+  'Chinese/Cuban',
+  'Chinese/Japanese',
+  'Continental',
+  'Creole',
+  'Creole/Cajun',
+  'Czech',
+  'Delicatessen',
+  'Donuts',
+  'Eastern European',
+  'Egyptian',
+  'English',
+  'Ethiopian',
+  'Filipino',
+  'French',
+  'Fruits/Vegetables',
+  'German',
+  'Greek',
+  'Hamburgers',
+  'Hawaiian',
+  'Hotdogs',
+  'Hotdogs/Pretzels',
+  'Ice Cream, Gelato, Yogurt, Ices',
+  'Indian',
+  'Indonesian',
+  'Iranian',
+  'Irish',
+  'Italian',
+  'Japanese',
+  'Jewish/Kosher',
+  'Juice, Smoothies, Fruit Salads',
+  'Korean',
+  'Latin (Cuban, Dominican, Puerto Rican, South & Central American)',
+  'Mediterranean',
+  'Mexican',
+  'Middle Eastern',
+  'Moroccan',
+  'Not Listed/Not Applicable',
+  'Nuts/Confectionary',
+  'Other',
+  'Pakistani',
+  'Pancakes/Waffles',
+  'Peruvian',
+  'Pizza',
+  'Pizza/Italian',
+  'Polish',
+  'Polynesian',
+  'Portuguese',
+  'Russian',
+  'Salads',
+  'Sandwiches',
+  'Sandwiches/Salads/Mixed Buffet',
+  'Scandinavian',
+  'Seafood',
+  'Soul Food',
+  'Soups',
+  'Soups & Sandwiches',
+  'Southwestern',
+  'Spanish',
+  'Steak',
+  'Tapas',
+  'Tex-Mex',
+  'Thai',
+  'Turkish',
+  'Vegetarian',
+  'Vietnamese/Cambodian/Malaysia'
+]
+Nombre de cuisines distinctes : 85
+
+=== Q10 : restaurants dans le Queens ===
+5656
+
+=== Q11 : liste des quartiers ===
+[
+  'Bronx',
+  'Brooklyn',
+  'Manhattan',
+  'Missing',
+  'Queens',
+  'Staten Island'
+]
+Nombre de quartiers distincts : 6
+
+=== Q12 : nombre de pays avec au moins un film ===
+Movie (reponse)             : 117
+[variante] tous types       : 122
+
+=== Q13 : taille moyenne des hommes (cm) ===
+173.09 cm (brut : 173.08904522613065)
+
+=== Q14 : taille moyenne des femmes (cm) ===
+160.94 cm (brut : 160.9429145728643)
+
+=== Q15 : pays aux hommes les plus petits ===
+[
+  {
+    'Country Name': 'Timor-Leste',
+    'Male Height in Cm': 160.13
+  },
+  {
+    'Country Name': 'Laos',
+    'Male Height in Cm': 162.78
+  },
+  {
+    'Country Name': 'Solomon Islands',
+    'Male Height in Cm': 163.07
+  }
+]
+(le premier element est la reponse ; les suivants sont donnes pour verifier l'absence d'ex aequo)
+
+=== Q16 : pays aux femmes les plus grandes ===
+[
+  {
+    'Country Name': 'Netherlands',
+    'Female Height in Cm': 170.36
+  },
+  {
+    'Country Name': 'Montenegro',
+    'Female Height in Cm': 169.96
+  },
+  {
+    'Country Name': 'Denmark',
+    'Female Height in Cm': 169.47
+  }
+]
+(le premier element est la reponse ; les suivants sont donnes pour verifier l'absence d'ex aequo)
