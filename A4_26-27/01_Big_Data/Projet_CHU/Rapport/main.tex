@@ -60,6 +60,8 @@
 % Une liste reste attachée à la phrase qui l'introduit
 \AtBeginEnvironment{itemize}{\@beginparpenalty=10000}
 \AtBeginEnvironment{enumerate}{\@beginparpenalty=10000}
+% Liste locale dont les \item peuvent être séparés par un saut de page (jamais dans un item)
+\newenvironment{listecoupable}{\begingroup\@itempenalty=0 }{\endgroup}
 \makeatother
 % Un titre part à la page suivante s'il ne reste pas la place d'un vrai bloc.
 % \needspace redéfini sans son \penalty-100, qui faisait préférer une coupure

@@ -1,0 +1,1690 @@
+\newpage
+\section{Objectif du contrôle}
+
+\noindent L'objectif de ce rapport est d'évaluer la qualité des données intégrées dans l'entrepôt de données Hive, à la suite de leur extraction depuis PostgreSQL et de leur transformation via Talend.
+
+\noindent Trois axes de contrôle sont étudiés~:
+\begin{itemize}
+	\item \textbf{Complétude des données}~: mesure des valeurs renseignées et des valeurs manquantes pour chaque attribut.
+	\item \textbf{Cohérence référentielle}~: vérification de la correspondance entre les clés étrangères des tables de faits et les identifiants des dimensions, notamment les codes FINESS.
+	\item \textbf{Détection et traitement des doublons}~: identification des enregistrements dupliqués et définition des méthodes de correction.
+\end{itemize}
+
+\noindent Les contrôles sont effectués sur les tables internes de l'entrepôt, stockées au format Parquet.
+
+% ---------- 2. Complétude ----------
+\section{Contrôle de complétude des données}
+
+\subsection{Méthodologie}
+
+\noindent Le contrôle de complétude consiste à identifier les attributs dont les valeurs sont manquantes (NULL).
+
+\noindent Pour chaque attribut, trois indicateurs sont calculés~:
+\begin{itemize}
+	\item Le nombre total d'enregistrements.
+	\item Le nombre de valeurs renseignées et le nombre de valeurs manquantes.
+	\item Le taux de complétude exprimé en pourcentage.
+\end{itemize}
+
+\noindent Formule de calcul~:
+
+\begin{center}
+Taux de complétude = (Nombre de valeurs renseignées / Nombre total d'enregistrements) $\times$ 100
+\end{center}
+
+\noindent Un taux de 100~\% indique que toutes les lignes possèdent une valeur pour l'attribut étudié.
+
+\subsection{Requêtes de contrôle}
+
+\noindent Les contrôles sont réalisés sur les principales dimensions et tables de faits.
+
+\noindent Exemple~: DIM\_Patient
+
+\begin{minted}{sql}
+SET mapreduce.map.memory.mb=1024;
+SET mapreduce.reduce.memory.mb=1024;
+
+SET mapreduce.map.java.opts=-Xmx768m;
+SET mapreduce.reduce.java.opts=-Xmx768m;
+
+SELECT
+    'Id_Patient' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(Id_Patient) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(Id_Patient) AS Valeurs_Null,
+    ROUND(COUNT(Id_Patient) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM DIM_Patient
+
+UNION ALL
+
+SELECT
+    'Sexe' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(Sexe) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(Sexe) AS Valeurs_Null,
+    ROUND(COUNT(Sexe) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM DIM_Patient
+
+UNION ALL
+
+SELECT
+    'Age' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(Age) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(Age) AS Valeurs_Null,
+    ROUND(COUNT(Age) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM DIM_Patient
+\end{minted}
+
+\noindent Cette requête permet de mesurer la complétude des attributs de DIM\_Patient. On peut donc vérifier s'il y a des valeurs NULL et leur taux de complétude
+
+\noindent Le même contrôle doit être reproduit pour les attributs suivants~:
+
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.2350\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.4342\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.3308\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Table} & \textbf{Attributs à contrôler} & \textbf{Pourquoi ?} \\ \hline
+DIM\_\hspace{0pt}Etablissement & Id\_\hspace{0pt}Etablissement, finess\_\hspace{0pt}site, raison\_\hspace{0pt}sociale\_\hspace{0pt}site, code\_\hspace{0pt}postal, commune & Identification et localisation \\ \hline
+DIM\_\hspace{0pt}Professionnel & Id\_\hspace{0pt}Professionnel, identifiant, nom, prenom, profession & Identification du professionnel \\ \hline
+DIM\_\hspace{0pt}Temps & Id\_\hspace{0pt}Temps, Date, Annee & Cohérence temporelle \\ \hline
+DIM\_\hspace{0pt}Patient & Id\_\hspace{0pt}Patient, Sexe, Age & Informations démographiques \\ \hline
+DIM\_\hspace{0pt}Diagnostic & Id\_\hspace{0pt}Diagnostic, Code\_\hspace{0pt}Diagnostic, Diagnostic & Identification du diagnostic \\ \hline
+DIM\_\hspace{0pt}Region\_\hspace{0pt}INSEE & Id\_\hspace{0pt}Region, Code\_\hspace{0pt}Commune\_\hspace{0pt}INSEE, Code\_\hspace{0pt}Region, Nom\_\hspace{0pt}Region & Identification géographique \\ \hline
+FAIT\_\hspace{0pt}SATISFACTION & Id\_\hspace{0pt}Satisfaction, Id\_\hspace{0pt}Etablissement, Id\_\hspace{0pt}Region, Score & Identification et indicateurs \\ \hline
+FAIT\_\hspace{0pt}DECES & Id\_\hspace{0pt}Deces, Id\_\hspace{0pt}Temps, Id\_\hspace{0pt}Region\_\hspace{0pt}Deces, Age\_\hspace{0pt}Deces & Identification et données de décès \\ \hline
+FAIT\_\hspace{0pt}CONSULTATION & num\_\hspace{0pt}consultation, Id\_\hspace{0pt}Patient, Id\_\hspace{0pt}Temps, Id\_\hspace{0pt}Professionnel, Id\_\hspace{0pt}Etablissement & Identification et relations \\ \hline
+FAIT\_\hspace{0pt}HOSPITALISATION & Id\_\hspace{0pt}Hospitalisation, Id\_\hspace{0pt}Patient, Id\_\hspace{0pt}Etablissement, Id\_\hspace{0pt}Date\_\hspace{0pt}Entree & Identification et relations \\ \hline
+\end{tableau}
+
+\noindent \textbf{Remarque~:} les attributs qui doivent obligatoirement être renseignés doivent être distingués de ceux qui peuvent légitimement être NULL selon les règles métier.
+
+\noindent Les requêtes ci-dessous ont été exécutées avec beeline sur la base \texttt{htables} de la VM Cloudera (Hive 1.1), le 6 novembre 2026.
+
+\noindent Les scripts complets sont dans le dépôt~: \texttt{qualite/01\_completude.hql}, \texttt{qualite/02\_coherence\_referentielle.hql} et \texttt{qualite/03\_doublons.hql}.
+
+\noindent Chaque script commence par \texttt{USE htables;} et par les quatre paramètres mémoire de l'exemple ci-dessus.
+
+\noindent Les nombres sont écrits avec une espace pour les milliers (33~911). Les taux sont arrondis à deux décimales par la requête.
+
+\noindent Le contrôle de DIM\_Patient est reproduit pour toutes les tables du tableau, avec exactement les attributs listés.
+
+\noindent Remarque~: \texttt{COUNT(colonne)} ne compte pas les valeurs NULL, mais il compte les chaînes vides \texttt{\textquotesingle{}\textquotesingle{}}. Pour les colonnes texte, une seconde requête compte donc les valeurs vides. Elle n'est commentée que lorsque le nombre n'est pas nul.
+
+\subsubsection{DIM\_Etablissement}
+
+\begin{minted}{sql}
+SELECT
+    'Id_Etablissement' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(Id_Etablissement) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(Id_Etablissement) AS Valeurs_Null,
+    ROUND(COUNT(Id_Etablissement) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM DIM_Etablissement
+
+UNION ALL
+
+SELECT
+    'finess_site' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(finess_site) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(finess_site) AS Valeurs_Null,
+    ROUND(COUNT(finess_site) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM DIM_Etablissement
+
+UNION ALL
+
+SELECT
+    'raison_sociale_site' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(raison_sociale_site) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(raison_sociale_site) AS Valeurs_Null,
+    ROUND(COUNT(raison_sociale_site) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM DIM_Etablissement
+
+UNION ALL
+
+SELECT
+    'code_postal' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(code_postal) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(code_postal) AS Valeurs_Null,
+    ROUND(COUNT(code_postal) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM DIM_Etablissement
+
+UNION ALL
+
+SELECT
+    'commune' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(commune) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(commune) AS Valeurs_Null,
+    ROUND(COUNT(commune) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM DIM_Etablissement;
+
+SELECT
+    'Id_Etablissement' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM DIM_Etablissement
+WHERE TRIM(CAST(Id_Etablissement AS STRING)) = ''
+
+UNION ALL
+
+SELECT
+    'finess_site' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM DIM_Etablissement
+WHERE TRIM(finess_site) = ''
+
+UNION ALL
+
+SELECT
+    'raison_sociale_site' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM DIM_Etablissement
+WHERE TRIM(raison_sociale_site) = ''
+
+UNION ALL
+
+SELECT
+    'code_postal' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM DIM_Etablissement
+WHERE TRIM(code_postal) = ''
+
+UNION ALL
+
+SELECT
+    'commune' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM DIM_Etablissement
+WHERE TRIM(commune) = '';
+\end{minted}
+{\centering
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.2546\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.0949\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1687\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1318\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1318\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1564\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Colonne} & \textbf{Total} & \textbf{Valeurs\_\hspace{0pt}Renseignees} & \textbf{Valeurs\_\hspace{0pt}Null} & \textbf{Valeurs\_\hspace{0pt}Vides} & \textbf{Taux\_\hspace{0pt}Completude} \\ \hline
+Id\_\hspace{0pt}Etablissement & 33911 & 33911 & 0 & 0 & 100.0 \\ \hline
+finess\_\hspace{0pt}site & 33911 & 33911 & 0 & 33711 & 0.59 \\ \hline
+raison\_\hspace{0pt}sociale\_\hspace{0pt}site & 33911 & 33911 & 0 & 0 & 100.0 \\ \hline
+code\_\hspace{0pt}postal & 33911 & 33911 & 0 & 2 & 99.99 \\ \hline
+commune & 33911 & 33911 & 0 & 140 & 99.59 \\ \hline
+\end{tableau}
+}
+\noindent Aucune valeur NULL. Mais finess\_site est vide (\texttt{\textquotesingle{}\textquotesingle{}}) sur 33~711 lignes sur 33~911~: seuls 200 établissements ont un FINESS géographique, soit un taux réel de 0,59 \%. Le fichier chargé sur HDFS (\texttt{/user/cloudera/etablissement/}) a déjà ce champ vide~: le défaut est en amont de Hive (source PostgreSQL ou export Talend), pas dans le chargement HiveQL. Il y a aussi 2 code\_postal vides et 140 communes vides.
+
+\subsubsection{DIM\_Professionnel}
+
+\begin{minted}{sql}
+SELECT
+    'Id_Professionnel' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(Id_Professionnel) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(Id_Professionnel) AS Valeurs_Null,
+    ROUND(COUNT(Id_Professionnel) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM DIM_Professionnel
+
+UNION ALL
+
+SELECT
+    'identifiant' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(identifiant) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(identifiant) AS Valeurs_Null,
+    ROUND(COUNT(identifiant) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM DIM_Professionnel
+
+UNION ALL
+
+SELECT
+    'nom' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(nom) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(nom) AS Valeurs_Null,
+    ROUND(COUNT(nom) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM DIM_Professionnel
+
+UNION ALL
+
+SELECT
+    'prenom' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(prenom) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(prenom) AS Valeurs_Null,
+    ROUND(COUNT(prenom) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM DIM_Professionnel
+
+UNION ALL
+
+SELECT
+    'profession' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(profession) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(profession) AS Valeurs_Null,
+    ROUND(COUNT(profession) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM DIM_Professionnel;
+
+SELECT
+    'Id_Professionnel' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM DIM_Professionnel
+WHERE TRIM(CAST(Id_Professionnel AS STRING)) = ''
+
+UNION ALL
+
+SELECT
+    'identifiant' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM DIM_Professionnel
+WHERE TRIM(identifiant) = ''
+
+UNION ALL
+
+SELECT
+    'nom' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM DIM_Professionnel
+WHERE TRIM(nom) = ''
+
+UNION ALL
+
+SELECT
+    'prenom' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM DIM_Professionnel
+WHERE TRIM(prenom) = ''
+
+UNION ALL
+
+SELECT
+    'profession' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM DIM_Professionnel
+WHERE TRIM(profession) = '';
+\end{minted}
+{\centering
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.2197\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1103\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1687\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1318\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1318\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1564\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Colonne} & \textbf{Total} & \textbf{Valeurs\_\hspace{0pt}Renseignees} & \textbf{Valeurs\_\hspace{0pt}Null} & \textbf{Valeurs\_\hspace{0pt}Vides} & \textbf{Taux\_\hspace{0pt}Completude} \\ \hline
+Id\_\hspace{0pt}Professionnel & 1048572 & 1048572 & 0 & 0 & 100.0 \\ \hline
+identifiant & 1048572 & 1048572 & 0 & 0 & 100.0 \\ \hline
+nom & 1048572 & 1048572 & 0 & 0 & 100.0 \\ \hline
+prenom & 1048572 & 1048572 & 0 & 17 & 100.0 (99,998 avant arrondi) \\ \hline
+profession & 1048572 & 1048572 & 0 & 0 & 100.0 \\ \hline
+\end{tableau}
+}
+\noindent Aucune valeur NULL. On compte 17 prénoms vides sur 1~048~572 professionnels, ce qui est négligeable.
+
+\subsubsection{DIM\_Temps}
+
+\begin{minted}{sql}
+SELECT
+    'Id_Temps' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(Id_Temps) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(Id_Temps) AS Valeurs_Null,
+    ROUND(COUNT(Id_Temps) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM DIM_Temps
+
+UNION ALL
+
+SELECT
+    'Date' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(`Date`) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(`Date`) AS Valeurs_Null,
+    ROUND(COUNT(`Date`) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM DIM_Temps
+
+UNION ALL
+
+SELECT
+    'Annee' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(Annee) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(Annee) AS Valeurs_Null,
+    ROUND(COUNT(Annee) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM DIM_Temps;
+
+SELECT
+    'Id_Temps' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM DIM_Temps
+WHERE TRIM(CAST(Id_Temps AS STRING)) = ''
+
+UNION ALL
+
+SELECT
+    'Date' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM DIM_Temps
+WHERE TRIM(`Date`) = ''
+
+UNION ALL
+
+SELECT
+    'Annee' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM DIM_Temps
+WHERE TRIM(CAST(Annee AS STRING)) = '';
+\end{minted}
+{\centering
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.1265\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.0949\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1687\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1318\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1318\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1564\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Colonne} & \textbf{Total} & \textbf{Valeurs\_\hspace{0pt}Renseignees} & \textbf{Valeurs\_\hspace{0pt}Null} & \textbf{Valeurs\_\hspace{0pt}Vides} & \textbf{Taux\_\hspace{0pt}Completude} \\ \hline
+Id\_\hspace{0pt}Temps & 55151 & 55151 & 0 & 0 & 100.0 \\ \hline
+Date & 55151 & 55151 & 0 & 0 & 100.0 \\ \hline
+Annee & 55151 & 55151 & 0 & 0 & 100.0 \\ \hline
+\end{tableau}
+}
+\noindent Aucune valeur NULL ni vide~: la dimension temps est complète.
+
+\subsubsection{DIM\_Patient}
+
+\begin{minted}{sql}
+SELECT
+    'Id_Patient' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(Id_Patient) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(Id_Patient) AS Valeurs_Null,
+    ROUND(COUNT(Id_Patient) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM DIM_Patient
+
+UNION ALL
+
+SELECT
+    'Sexe' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(Sexe) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(Sexe) AS Valeurs_Null,
+    ROUND(COUNT(Sexe) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM DIM_Patient
+
+UNION ALL
+
+SELECT
+    'Age' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(Age) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(Age) AS Valeurs_Null,
+    ROUND(COUNT(Age) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM DIM_Patient;
+
+SELECT
+    'Id_Patient' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM DIM_Patient
+WHERE TRIM(CAST(Id_Patient AS STRING)) = ''
+
+UNION ALL
+
+SELECT
+    'Sexe' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM DIM_Patient
+WHERE TRIM(Sexe) = ''
+
+UNION ALL
+
+SELECT
+    'Age' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM DIM_Patient
+WHERE TRIM(CAST(Age AS STRING)) = '';
+\end{minted}
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.1400\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1000\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.2200\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1500\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1500\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.2400\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Colonne} & \textbf{Total} & \textbf{Valeurs\_\hspace{0pt}Renseignees} & \textbf{Valeurs\_\hspace{0pt}Null} & \textbf{Valeurs\_\hspace{0pt}Vides} & \textbf{Taux\_\hspace{0pt}Completude} \\ \hline
+Id\_\hspace{0pt}Patient & 99999 & 99999 & 0 & 0 & 100.0 \\ \hline
+Sexe & 99999 & 99999 & 0 & 0 & 100.0 \\ \hline
+Age & 99999 & 99999 & 0 & 0 & 100.0 \\ \hline
+\end{tableau}
+\noindent Aucune valeur NULL ni vide~: le taux de complétude, valeurs vides comprises, est de 100~\% et les informations démographiques sont complètes.
+
+\subsubsection{DIM\_Diagnostic}
+
+\begin{minted}{sql}
+SELECT
+    'Id_Diagnostic' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(Id_Diagnostic) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(Id_Diagnostic) AS Valeurs_Null,
+    ROUND(COUNT(Id_Diagnostic) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM DIM_Diagnostic
+
+UNION ALL
+
+SELECT
+    'Code_Diagnostic' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(Code_Diagnostic) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(Code_Diagnostic) AS Valeurs_Null,
+    ROUND(COUNT(Code_Diagnostic) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM DIM_Diagnostic
+
+UNION ALL
+
+SELECT
+    'Diagnostic' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(Diagnostic) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(Diagnostic) AS Valeurs_Null,
+    ROUND(COUNT(Diagnostic) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM DIM_Diagnostic;
+
+SELECT
+    'Id_Diagnostic' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM DIM_Diagnostic
+WHERE TRIM(CAST(Id_Diagnostic AS STRING)) = ''
+
+UNION ALL
+
+SELECT
+    'Code_Diagnostic' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM DIM_Diagnostic
+WHERE TRIM(Code_Diagnostic) = ''
+
+UNION ALL
+
+SELECT
+    'Diagnostic' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM DIM_Diagnostic
+WHERE TRIM(Diagnostic) = '';
+\end{minted}
+{\centering
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.2080\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.0949\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1687\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1318\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1318\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1564\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Colonne} & \textbf{Total} & \textbf{Valeurs\_\hspace{0pt}Renseignees} & \textbf{Valeurs\_\hspace{0pt}Null} & \textbf{Valeurs\_\hspace{0pt}Vides} & \textbf{Taux\_\hspace{0pt}Completude} \\ \hline
+Id\_\hspace{0pt}Diagnostic & 15489 & 15489 & 0 & 0 & 100.0 \\ \hline
+Code\_\hspace{0pt}Diagnostic & 15489 & 15489 & 0 & 0 & 100.0 \\ \hline
+Diagnostic & 15489 & 15489 & 0 & 0 & 100.0 \\ \hline
+\end{tableau}
+}
+\noindent Aucune valeur NULL ni vide~: chaque diagnostic a un code et un libellé.
+
+\subsubsection{DIM\_Region\_INSEE}
+
+\begin{minted}{sql}
+SELECT
+    'Id_Region' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(Id_Region) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(Id_Region) AS Valeurs_Null,
+    ROUND(COUNT(Id_Region) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM DIM_Region_INSEE
+
+UNION ALL
+
+SELECT
+    'Code_Commune_INSEE' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(Code_Commune_INSEE) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(Code_Commune_INSEE) AS Valeurs_Null,
+    ROUND(COUNT(Code_Commune_INSEE) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM DIM_Region_INSEE
+
+UNION ALL
+
+SELECT
+    'Code_Region' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(Code_Region) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(Code_Region) AS Valeurs_Null,
+    ROUND(COUNT(Code_Region) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM DIM_Region_INSEE
+
+UNION ALL
+
+SELECT
+    'Nom_Region' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(Nom_Region) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(Nom_Region) AS Valeurs_Null,
+    ROUND(COUNT(Nom_Region) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM DIM_Region_INSEE;
+
+SELECT
+    'Id_Region' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM DIM_Region_INSEE
+WHERE TRIM(CAST(Id_Region AS STRING)) = ''
+
+UNION ALL
+
+SELECT
+    'Code_Commune_INSEE' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM DIM_Region_INSEE
+WHERE TRIM(Code_Commune_INSEE) = ''
+
+UNION ALL
+
+SELECT
+    'Code_Region' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM DIM_Region_INSEE
+WHERE TRIM(Code_Region) = ''
+
+UNION ALL
+
+SELECT
+    'Nom_Region' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM DIM_Region_INSEE
+WHERE TRIM(Nom_Region) = '';
+\end{minted}
+{\centering
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.2430\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.0949\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1687\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1318\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1318\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1564\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Colonne} & \textbf{Total} & \textbf{Valeurs\_\hspace{0pt}Renseignees} & \textbf{Valeurs\_\hspace{0pt}Null} & \textbf{Valeurs\_\hspace{0pt}Vides} & \textbf{Taux\_\hspace{0pt}Completude} \\ \hline
+Id\_\hspace{0pt}Region & 39520 & 39520 & 0 & 0 & 100.0 \\ \hline
+Code\_\hspace{0pt}Commune\_\hspace{0pt}INSEE & 39520 & 39520 & 0 & 0 & 100.0 \\ \hline
+Code\_\hspace{0pt}Region & 39520 & 39520 & 0 & 358 & 99.09 \\ \hline
+Nom\_\hspace{0pt}Region & 39520 & 39520 & 0 & 358 & 99.09 \\ \hline
+\end{tableau}
+}
+\noindent Aucune valeur NULL. Code\_Region et Nom\_Region sont vides sur 358 lignes (0,91 \%). Ces 358 lignes sont exactement les 254 lignes de type Etranger et les 104 lignes de type COM (collectivités d'outre-mer)~: elles n'ont pas de région française, le vide est donc normal.
+
+\subsubsection{FAIT\_SATISFACTION}
+
+\begin{minted}{sql}
+SELECT
+    'Id_Satisfaction' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(Id_Satisfaction) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(Id_Satisfaction) AS Valeurs_Null,
+    ROUND(COUNT(Id_Satisfaction) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM FAIT_SATISFACTION
+
+UNION ALL
+
+SELECT
+    'Id_Etablissement' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(Id_Etablissement) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(Id_Etablissement) AS Valeurs_Null,
+    ROUND(COUNT(Id_Etablissement) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM FAIT_SATISFACTION
+
+UNION ALL
+
+SELECT
+    'Id_Region' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(Id_Region) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(Id_Region) AS Valeurs_Null,
+    ROUND(COUNT(Id_Region) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM FAIT_SATISFACTION
+
+UNION ALL
+
+SELECT
+    'Score' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(Score) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(Score) AS Valeurs_Null,
+    ROUND(COUNT(Score) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM FAIT_SATISFACTION;
+
+SELECT
+    'Id_Satisfaction' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM FAIT_SATISFACTION
+WHERE TRIM(CAST(Id_Satisfaction AS STRING)) = ''
+
+UNION ALL
+
+SELECT
+    'Id_Etablissement' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM FAIT_SATISFACTION
+WHERE TRIM(CAST(Id_Etablissement AS STRING)) = ''
+
+UNION ALL
+
+SELECT
+    'Id_Region' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM FAIT_SATISFACTION
+WHERE TRIM(CAST(Id_Region AS STRING)) = ''
+
+UNION ALL
+
+SELECT
+    'Score' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM FAIT_SATISFACTION
+WHERE TRIM(CAST(Score AS STRING)) = '';
+\end{minted}
+{\centering
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.2197\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.0949\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1687\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1318\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1318\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1564\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Colonne} & \textbf{Total} & \textbf{Valeurs\_\hspace{0pt}Renseignees} & \textbf{Valeurs\_\hspace{0pt}Null} & \textbf{Valeurs\_\hspace{0pt}Vides} & \textbf{Taux\_\hspace{0pt}Completude} \\ \hline
+Id\_\hspace{0pt}Satisfaction & 2080 & 2080 & 0 & 0 & 100.0 \\ \hline
+Id\_\hspace{0pt}Etablissement & 2080 & 2080 & 0 & 0 & 100.0 \\ \hline
+Id\_\hspace{0pt}Region & 2080 & 2080 & 0 & 0 & 100.0 \\ \hline
+Score & 2080 & 1624 & 456 & 0 & 78.08 \\ \hline
+\end{tableau}
+}
+\noindent Score n'est renseigné que sur 1~624 lignes~: 456 lignes sont NULL (taux de 78,08 \%). C'est l'attribut le moins complet de l'entrepôt. Un score NULL correspond à un établissement sans résultat publié~: c'est une valeur qui peut légitimement être NULL, il ne faut pas la remplacer par 0.
+
+\subsubsection{FAIT\_DECES}
+
+\begin{minted}{sql}
+SELECT
+    'Id_Deces' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(Id_Deces) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(Id_Deces) AS Valeurs_Null,
+    ROUND(COUNT(Id_Deces) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM FAIT_DECES
+
+UNION ALL
+
+SELECT
+    'Id_Temps' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(Id_Temps) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(Id_Temps) AS Valeurs_Null,
+    ROUND(COUNT(Id_Temps) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM FAIT_DECES
+
+UNION ALL
+
+SELECT
+    'Id_Region_Deces' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(Id_Region_Deces) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(Id_Region_Deces) AS Valeurs_Null,
+    ROUND(COUNT(Id_Region_Deces) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM FAIT_DECES
+
+UNION ALL
+
+SELECT
+    'Age_Deces' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(Age_Deces) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(Age_Deces) AS Valeurs_Null,
+    ROUND(COUNT(Age_Deces) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM FAIT_DECES;
+
+SELECT
+    'Id_Deces' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM FAIT_DECES
+WHERE TRIM(CAST(Id_Deces AS STRING)) = ''
+
+UNION ALL
+
+SELECT
+    'Id_Temps' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM FAIT_DECES
+WHERE TRIM(CAST(Id_Temps AS STRING)) = ''
+
+UNION ALL
+
+SELECT
+    'Id_Region_Deces' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM FAIT_DECES
+WHERE TRIM(CAST(Id_Region_Deces AS STRING)) = ''
+
+UNION ALL
+
+SELECT
+    'Age_Deces' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM FAIT_DECES
+WHERE TRIM(CAST(Age_Deces AS STRING)) = '';
+\end{minted}
+{\centering
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.2080\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1213\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1687\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1318\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1318\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1564\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Colonne} & \textbf{Total} & \textbf{Valeurs\_\hspace{0pt}Renseignees} & \textbf{Valeurs\_\hspace{0pt}Null} & \textbf{Valeurs\_\hspace{0pt}Vides} & \textbf{Taux\_\hspace{0pt}Completude} \\ \hline
+Id\_\hspace{0pt}Deces & 24875113 & 24875113 & 0 & 0 & 100.0 \\ \hline
+Id\_\hspace{0pt}Temps & 24875113 & 24875113 & 0 & 0 & 100.0 \\ \hline
+Id\_\hspace{0pt}Region\_\hspace{0pt}Deces & 24875113 & 24875113 & 0 & 0 & 100.0 \\ \hline
+Age\_\hspace{0pt}Deces & 24875113 & 24874527 & 586 & 0 & 100.0 (99,998 avant arrondi) \\ \hline
+\end{tableau}
+}
+\noindent Les clés sont toutes renseignées. Age\_Deces est NULL sur 586 lignes sur 24~875~113 (99,998 \%, affiché 100.0 après arrondi).
+
+\subsubsection{FAIT\_CONSULTATION}
+
+\begin{minted}{sql}
+SELECT
+    'num_consultation' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(num_consultation) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(num_consultation) AS Valeurs_Null,
+    ROUND(COUNT(num_consultation) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM FAIT_CONSULTATION
+
+UNION ALL
+
+SELECT
+    'Id_Patient' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(Id_Patient) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(Id_Patient) AS Valeurs_Null,
+    ROUND(COUNT(Id_Patient) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM FAIT_CONSULTATION
+
+UNION ALL
+
+SELECT
+    'Id_Temps' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(Id_Temps) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(Id_Temps) AS Valeurs_Null,
+    ROUND(COUNT(Id_Temps) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM FAIT_CONSULTATION
+
+UNION ALL
+
+SELECT
+    'Id_Professionnel' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(Id_Professionnel) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(Id_Professionnel) AS Valeurs_Null,
+    ROUND(COUNT(Id_Professionnel) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM FAIT_CONSULTATION
+
+UNION ALL
+
+SELECT
+    'Id_Etablissement' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(Id_Etablissement) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(Id_Etablissement) AS Valeurs_Null,
+    ROUND(COUNT(Id_Etablissement) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM FAIT_CONSULTATION;
+
+SELECT
+    'num_consultation' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM FAIT_CONSULTATION
+WHERE TRIM(CAST(num_consultation AS STRING)) = ''
+
+UNION ALL
+
+SELECT
+    'Id_Patient' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM FAIT_CONSULTATION
+WHERE TRIM(CAST(Id_Patient AS STRING)) = ''
+
+UNION ALL
+
+SELECT
+    'Id_Temps' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM FAIT_CONSULTATION
+WHERE TRIM(CAST(Id_Temps AS STRING)) = ''
+
+UNION ALL
+
+SELECT
+    'Id_Professionnel' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM FAIT_CONSULTATION
+WHERE TRIM(CAST(Id_Professionnel AS STRING)) = ''
+
+UNION ALL
+
+SELECT
+    'Id_Etablissement' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM FAIT_CONSULTATION
+WHERE TRIM(CAST(Id_Etablissement AS STRING)) = '';
+\end{minted}
+{\centering
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.2197\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1103\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1687\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1318\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1318\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1564\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Colonne} & \textbf{Total} & \textbf{Valeurs\_\hspace{0pt}Renseignees} & \textbf{Valeurs\_\hspace{0pt}Null} & \textbf{Valeurs\_\hspace{0pt}Vides} & \textbf{Taux\_\hspace{0pt}Completude} \\ \hline
+num\_\hspace{0pt}consultation & 1027136 & 1027136 & 0 & 0 & 100.0 \\ \hline
+Id\_\hspace{0pt}Patient & 1027136 & 1027136 & 0 & 0 & 100.0 \\ \hline
+Id\_\hspace{0pt}Temps & 1027136 & 1027136 & 0 & 0 & 100.0 \\ \hline
+Id\_\hspace{0pt}Professionnel & 1027136 & 1027136 & 0 & 0 & 100.0 \\ \hline
+Id\_\hspace{0pt}Etablissement & 1027136 & 1027136 & 0 & 0 & 100.0 \\ \hline
+\end{tableau}
+}
+\noindent Toutes les clés sont renseignées. Attention~: renseigné ne veut pas dire valide. Id\_Etablissement vaut -1 sur une grande partie des lignes (voir 3.3).
+
+\subsubsection{FAIT\_HOSPITALISATION}
+
+\begin{minted}{sql}
+SELECT
+    'Id_Hospitalisation' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(Id_Hospitalisation) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(Id_Hospitalisation) AS Valeurs_Null,
+    ROUND(COUNT(Id_Hospitalisation) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM FAIT_HOSPITALISATION
+
+UNION ALL
+
+SELECT
+    'Id_Patient' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(Id_Patient) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(Id_Patient) AS Valeurs_Null,
+    ROUND(COUNT(Id_Patient) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM FAIT_HOSPITALISATION
+
+UNION ALL
+
+SELECT
+    'Id_Etablissement' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(Id_Etablissement) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(Id_Etablissement) AS Valeurs_Null,
+    ROUND(COUNT(Id_Etablissement) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM FAIT_HOSPITALISATION
+
+UNION ALL
+
+SELECT
+    'Id_Date_Entree' AS Colonne,
+    COUNT(*) AS Total,
+    COUNT(Id_Date_Entree) AS Valeurs_Renseignees,
+    COUNT(*) - COUNT(Id_Date_Entree) AS Valeurs_Null,
+    ROUND(COUNT(Id_Date_Entree) * 100.0 / COUNT(*), 2) AS Taux_Completude
+FROM FAIT_HOSPITALISATION;
+
+SELECT
+    'Id_Hospitalisation' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM FAIT_HOSPITALISATION
+WHERE TRIM(CAST(Id_Hospitalisation AS STRING)) = ''
+
+UNION ALL
+
+SELECT
+    'Id_Patient' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM FAIT_HOSPITALISATION
+WHERE TRIM(CAST(Id_Patient AS STRING)) = ''
+
+UNION ALL
+
+SELECT
+    'Id_Etablissement' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM FAIT_HOSPITALISATION
+WHERE TRIM(CAST(Id_Etablissement AS STRING)) = ''
+
+UNION ALL
+
+SELECT
+    'Id_Date_Entree' AS Colonne,
+    COUNT(*) AS Valeurs_Vides
+FROM FAIT_HOSPITALISATION
+WHERE TRIM(CAST(Id_Date_Entree AS STRING)) = '';
+\end{minted}
+{\centering
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.2430\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.0949\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1687\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1318\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1318\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1564\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Colonne} & \textbf{Total} & \textbf{Valeurs\_\hspace{0pt}Renseignees} & \textbf{Valeurs\_\hspace{0pt}Null} & \textbf{Valeurs\_\hspace{0pt}Vides} & \textbf{Taux\_\hspace{0pt}Completude} \\ \hline
+Id\_\hspace{0pt}Hospitalisation & 2478 & 2478 & 0 & 0 & 100.0 \\ \hline
+Id\_\hspace{0pt}Patient & 2478 & 2478 & 0 & 0 & 100.0 \\ \hline
+Id\_\hspace{0pt}Etablissement & 2478 & 2478 & 0 & 0 & 100.0 \\ \hline
+Id\_\hspace{0pt}Date\_\hspace{0pt}Entree & 2478 & 2478 & 0 & 0 & 100.0 \\ \hline
+\end{tableau}
+}
+\noindent Toutes les clés sont renseignées. Comme pour les consultations, la validité des clés est vérifiée en 3.3.
+
+\subsection{Résultats attendus}
+
+\noindent Les résultats seront regroupés dans un tableau de synthèse~:
+
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.2090\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1937\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.5973\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Table} & \textbf{Attribut} & \textbf{Taux de complétude} \\ \hline
+DIM\_\hspace{0pt}Etablissement & finess\_\hspace{0pt}site & 100 \% de valeurs non NULL, mais 33~711 valeurs vides~: taux réel 0,59 \% (200 / 33~911) \\ \hline
+DIM\_\hspace{0pt}Etablissement & raison\_\hspace{0pt}sociale\_\hspace{0pt}site & 100 \% \\ \hline
+DIM\_\hspace{0pt}Professionnel & identifiant & 100 \% \\ \hline
+DIM\_\hspace{0pt}Patient & Sexe & 100 \% \\ \hline
+DIM\_\hspace{0pt}Diagnostic & Code\_\hspace{0pt}Diagnostic & 100 \% \\ \hline
+DIM\_\hspace{0pt}Temps & Date & 100 \% \\ \hline
+\end{tableau}
+
+\noindent Les résultats permettront d'identifier les attributs les moins renseignés et de déterminer si les données manquantes nécessitent un traitement.
+
+\noindent Les attributs les moins renseignés sont finess\_site (0,59 \% réellement renseigné), Score de FAIT\_SATISFACTION (78,08 \%) et Code\_Region / Nom\_Region de DIM\_Region\_INSEE (99,09 \% une fois les vides retirés, vides normaux pour l'étranger et les COM). Seul finess\_site demande un traitement~: il ne peut pas servir de clé d'identification, il faut utiliser finess\_etablissement\_juridique ou Id\_Etablissement.
+
+
+\section{Contrôle de cohérence référentielle}
+
+\subsection{Méthodologie}
+
+\noindent La cohérence référentielle consiste à vérifier que les identifiants utilisés dans les tables de faits correspondent bien à des enregistrements existants dans les dimensions.
+
+\noindent Une référence est considérée comme invalide lorsqu'une clé étrangère présente dans une table de faits ne possède aucune correspondance dans sa dimension associée.
+
+\noindent Une attention particulière est portée aux identifiants FINESS des établissements de santé.
+
+\subsection{Vérification des établissements FINESS}
+
+\noindent Les établissements sont identifiés dans DIM\_Etablissement grâce aux attributs finess\_site et finess\_etablissement\_juridique.
+
+\noindent Le contrôle permet de détecter les identifiants FINESS manquants ou invalides.
+
+\noindent Exemple de vérification du format FINESS~:
+
+\begin{minted}{sql}
+SELECT
+    COUNT(*) AS Total_Invalide
+FROM DIM_Etablissement
+WHERE finess_site IS NOT NULL
+AND NOT (finess_site RLIKE '^[0-9]{9}$');
+\end{minted}
+
+\noindent Cette requête vérifie que les identifiants FINESS géographiques renseignés comportent neuf chiffres.
+
+\noindent Format~: un FINESS valide comporte neuf chiffres. La requête du rapport est appliquée aux deux colonnes FINESS.
+
+\begin{minted}{sql}
+SELECT
+COUNT(*) AS Total_Invalide
+FROM DIM_Etablissement
+WHERE finess_site IS NOT NULL
+AND NOT (finess_site RLIKE '^[0-9]{9}$');
+
+SELECT
+COUNT(*) AS Total_Invalide
+FROM DIM_Etablissement
+WHERE finess_etablissement_juridique IS NOT NULL
+AND NOT (finess_etablissement_juridique RLIKE '^[0-9]{9}$');
+\end{minted}
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.8560\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1440\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Colonne} & \textbf{Total\_\hspace{0pt}Invalide} \\ \hline
+finess\_\hspace{0pt}site & 33711 \\ \hline
+finess\_\hspace{0pt}etablissement\_\hspace{0pt}juridique & 209 \\ \hline
+\end{tableau}
+\noindent Détail des valeurs invalides, valeurs manquantes et unicité de finess\_site~:
+
+\begin{minted}{sql}
+SELECT
+'finess_site' AS Colonne,
+COUNT(*) AS Total_Invalide,
+SUM(CASE WHEN finess_site RLIKE '^2[AB][0-9]{7}$' THEN 1 ELSE 0 END) AS Dont_Corse,
+SUM(CASE WHEN TRIM(finess_site) = '' THEN 1 ELSE 0 END) AS Dont_Vide
+FROM DIM_Etablissement
+WHERE finess_site IS NOT NULL
+AND NOT (finess_site RLIKE '^[0-9]{9}$')
+
+UNION ALL
+
+SELECT
+'finess_etablissement_juridique' AS Colonne,
+COUNT(*) AS Total_Invalide,
+SUM(CASE WHEN finess_etablissement_juridique RLIKE '^2[AB][0-9]{7}$' THEN 1 ELSE 0 END) AS Dont_Corse,
+SUM(CASE WHEN TRIM(finess_etablissement_juridique) = '' THEN 1 ELSE 0 END) AS Dont_Vide
+FROM DIM_Etablissement
+WHERE finess_etablissement_juridique IS NOT NULL
+AND NOT (finess_etablissement_juridique RLIKE '^[0-9]{9}$');
+
+SELECT
+'finess_site' AS Colonne,
+COUNT(*) AS Total,
+SUM(CASE WHEN finess_site IS NULL THEN 1 ELSE 0 END) AS Valeurs_Null,
+SUM(CASE WHEN TRIM(finess_site) = '' THEN 1 ELSE 0 END) AS Valeurs_Vides
+FROM DIM_Etablissement
+
+UNION ALL
+
+SELECT
+'finess_etablissement_juridique' AS Colonne,
+COUNT(*) AS Total,
+SUM(CASE WHEN finess_etablissement_juridique IS NULL THEN 1 ELSE 0 END) AS Valeurs_Null,
+SUM(CASE WHEN TRIM(finess_etablissement_juridique) = '' THEN 1 ELSE 0 END) AS Valeurs_Vides
+FROM DIM_Etablissement;
+
+SELECT
+COUNT(*) AS Finess_Dupliques,
+COALESCE(SUM(t.Nombre), 0) AS Lignes_Concernees
+FROM (
+    SELECT finess_site, COUNT(*) AS Nombre
+    FROM DIM_Etablissement
+    WHERE finess_site IS NOT NULL
+    GROUP BY finess_site
+    HAVING COUNT(*) > 1
+) t;
+\end{minted}
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.6460\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1440\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1050\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1050\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Colonne} & \textbf{Total\_\hspace{0pt}Invalide} & \textbf{Dont\_\hspace{0pt}Corse} & \textbf{Dont\_\hspace{0pt}Vide} \\ \hline
+finess\_\hspace{0pt}site & 33711 & 0 & 33711 \\ \hline
+finess\_\hspace{0pt}etablissement\_\hspace{0pt}juridique & 209 & 209 & 0 \\ \hline
+\end{tableau}
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.6070\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1050\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1440\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1440\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Colonne} & \textbf{Total} & \textbf{Valeurs\_\hspace{0pt}Null} & \textbf{Valeurs\_\hspace{0pt}Vides} \\ \hline
+finess\_\hspace{0pt}site & 33911 & 0 & 33711 \\ \hline
+finess\_\hspace{0pt}etablissement\_\hspace{0pt}juridique & 33911 & 0 & 0 \\ \hline
+\end{tableau}
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.8300\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1700\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Finess\_\hspace{0pt}Dupliques} & \textbf{Lignes\_\hspace{0pt}Concernees} \\ \hline
+1 & 33711 \\ \hline
+\end{tableau}
+\noindent Les 33~711 finess\_site \og invalides\fg{} sont tous des valeurs vides~: aucun FINESS géographique renseigné n'a un mauvais format.
+
+\noindent Les 209 finess\_etablissement\_juridique invalides sont tous des codes de Corse (2A ou 2B suivis de sept chiffres). Ce sont de vrais FINESS~: la règle \texttt{\textasciicircum{}[0-9]\{9\}\$} est trop stricte, la bonne règle est \texttt{\textasciicircum{}(2[AB]|[0-9]\{2\})[0-9]\{7\}\$}. Il n'y a donc aucun FINESS juridique réellement faux.
+
+\noindent Aucun FINESS n'est NULL. Pour l'unicité, la seule valeur répétée est la valeur vide (33~711 lignes)~: les 200 finess\_site renseignés sont tous uniques.
+
+
+\subsection{Vérification des clés étrangères}
+
+\noindent Exemple~: contrôle de la référence établissement dans FAIT\_CONSULTATION
+
+\begin{minted}{sql}
+SELECT
+    COUNT(*) AS References_Invalides
+FROM FAIT_CONSULTATION f
+LEFT JOIN DIM_Etablissement e
+ON f.Id_Etablissement = e.Id_Etablissement
+WHERE e.Id_Etablissement IS NULL;
+\end{minted}
+
+\noindent Si le résultat est égal à zéro, toutes les références contrôlées correspondent à un établissement existant.
+
+\noindent Les mêmes contrôles seront réalisés pour les autres relations~:
+
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.2350\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.2090\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.5560\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Table de faits} & \textbf{Clé étrangère} & \textbf{Dimension de référence} \\ \hline
+FAIT\_\hspace{0pt}SATISFACTION & Id\_\hspace{0pt}Etablissement & DIM\_\hspace{0pt}Etablissement \\ \hline
+FAIT\_\hspace{0pt}SATISFACTION & Id\_\hspace{0pt}Region & DIM\_\hspace{0pt}Region\_\hspace{0pt}INSEE \\ \hline
+FAIT\_\hspace{0pt}CONSULTATION & Id\_\hspace{0pt}Patient & DIM\_\hspace{0pt}Patient \\ \hline
+FAIT\_\hspace{0pt}CONSULTATION & Id\_\hspace{0pt}Temps & DIM\_\hspace{0pt}Temps \\ \hline
+FAIT\_\hspace{0pt}CONSULTATION & Id\_\hspace{0pt}Professionnel & DIM\_\hspace{0pt}Professionnel \\ \hline
+FAIT\_\hspace{0pt}CONSULTATION & Id\_\hspace{0pt}Diagnostic & DIM\_\hspace{0pt}Diagnostic \\ \hline
+FAIT\_\hspace{0pt}CONSULTATION & Id\_\hspace{0pt}Etablissement & DIM\_\hspace{0pt}Etablissement \\ \hline
+FAIT\_\hspace{0pt}HOSPITALISATION & Id\_\hspace{0pt}Patient & DIM\_\hspace{0pt}Patient \\ \hline
+FAIT\_\hspace{0pt}HOSPITALISATION & Id\_\hspace{0pt}Etablissement & DIM\_\hspace{0pt}Etablissement \\ \hline
+FAIT\_\hspace{0pt}HOSPITALISATION & Id\_\hspace{0pt}Diagnostic & DIM\_\hspace{0pt}Diagnostic \\ \hline
+FAIT\_\hspace{0pt}HOSPITALISATION & Id\_\hspace{0pt}Date\_\hspace{0pt}Entree & DIM\_\hspace{0pt}Temps \\ \hline
+FAIT\_\hspace{0pt}DECES & Id\_\hspace{0pt}Temps & DIM\_\hspace{0pt}Temps \\ \hline
+\end{tableau}
+
+\noindent \textbf{Attention~:} les références régionales de FAIT\_DECES doivent être contrôlées après vérification de leur correspondance avec la structure de DIM\_Region\_INSEE. Il faut notamment confirmer que Id\_Region\_Deces et Id\_Region\_Naissance utilisent le même référentiel que Id\_Region.
+
+\noindent Une requête par ligne du tableau, dans le style de l'exemple du rapport. Deux colonnes ont été ajoutées pour expliquer les références invalides~: \texttt{Dont\_Null} (clé NULL) et \texttt{Dont\_Moins\_Un} (clé égale à -1, valeur \og inconnu\fg{} mise par l'ETL). Quand il n'y a aucune référence invalide, ces deux sommes valent NULL dans beeline (somme sur zéro ligne), ce qui est noté 0 ici.
+
+\begin{minted}{sql}
+SELECT
+'FAIT_SATISFACTION' AS Table_De_Faits,
+'Id_Etablissement' AS Cle_Etrangere,
+COUNT(*) AS References_Invalides,
+SUM(CASE WHEN f.Id_Etablissement IS NULL THEN 1 ELSE 0 END) AS Dont_Null,
+SUM(CASE WHEN f.Id_Etablissement = -1 THEN 1 ELSE 0 END) AS Dont_Moins_Un
+FROM FAIT_SATISFACTION f
+LEFT JOIN DIM_Etablissement e
+ON f.Id_Etablissement = e.Id_Etablissement
+WHERE e.Id_Etablissement IS NULL;
+
+SELECT
+'FAIT_SATISFACTION' AS Table_De_Faits,
+'Id_Region' AS Cle_Etrangere,
+COUNT(*) AS References_Invalides,
+SUM(CASE WHEN f.Id_Region IS NULL THEN 1 ELSE 0 END) AS Dont_Null,
+SUM(CASE WHEN f.Id_Region = -1 THEN 1 ELSE 0 END) AS Dont_Moins_Un
+FROM FAIT_SATISFACTION f
+LEFT JOIN DIM_Region_INSEE r
+ON f.Id_Region = r.Id_Region
+WHERE r.Id_Region IS NULL;
+
+SELECT
+'FAIT_CONSULTATION' AS Table_De_Faits,
+'Id_Patient' AS Cle_Etrangere,
+COUNT(*) AS References_Invalides,
+SUM(CASE WHEN f.Id_Patient IS NULL THEN 1 ELSE 0 END) AS Dont_Null,
+SUM(CASE WHEN f.Id_Patient = -1 THEN 1 ELSE 0 END) AS Dont_Moins_Un
+FROM FAIT_CONSULTATION f
+LEFT JOIN DIM_Patient p
+ON f.Id_Patient = p.Id_Patient
+WHERE p.Id_Patient IS NULL;
+
+SELECT
+'FAIT_CONSULTATION' AS Table_De_Faits,
+'Id_Temps' AS Cle_Etrangere,
+COUNT(*) AS References_Invalides,
+SUM(CASE WHEN f.Id_Temps IS NULL THEN 1 ELSE 0 END) AS Dont_Null,
+SUM(CASE WHEN f.Id_Temps = -1 THEN 1 ELSE 0 END) AS Dont_Moins_Un
+FROM FAIT_CONSULTATION f
+LEFT JOIN DIM_Temps d
+ON f.Id_Temps = d.Id_Temps
+WHERE d.Id_Temps IS NULL;
+
+SELECT
+'FAIT_CONSULTATION' AS Table_De_Faits,
+'Id_Professionnel' AS Cle_Etrangere,
+COUNT(*) AS References_Invalides,
+SUM(CASE WHEN f.Id_Professionnel IS NULL THEN 1 ELSE 0 END) AS Dont_Null,
+SUM(CASE WHEN f.Id_Professionnel = -1 THEN 1 ELSE 0 END) AS Dont_Moins_Un
+FROM FAIT_CONSULTATION f
+LEFT JOIN DIM_Professionnel pr
+ON f.Id_Professionnel = pr.Id_Professionnel
+WHERE pr.Id_Professionnel IS NULL;
+
+SELECT
+'FAIT_CONSULTATION' AS Table_De_Faits,
+'Id_Diagnostic' AS Cle_Etrangere,
+COUNT(*) AS References_Invalides,
+SUM(CASE WHEN f.Id_Diagnostic IS NULL THEN 1 ELSE 0 END) AS Dont_Null,
+SUM(CASE WHEN f.Id_Diagnostic = -1 THEN 1 ELSE 0 END) AS Dont_Moins_Un
+FROM FAIT_CONSULTATION f
+LEFT JOIN DIM_Diagnostic dg
+ON f.Id_Diagnostic = dg.Id_Diagnostic
+WHERE dg.Id_Diagnostic IS NULL;
+
+SELECT
+'FAIT_CONSULTATION' AS Table_De_Faits,
+'Id_Etablissement' AS Cle_Etrangere,
+COUNT(*) AS References_Invalides,
+SUM(CASE WHEN f.Id_Etablissement IS NULL THEN 1 ELSE 0 END) AS Dont_Null,
+SUM(CASE WHEN f.Id_Etablissement = -1 THEN 1 ELSE 0 END) AS Dont_Moins_Un
+FROM FAIT_CONSULTATION f
+LEFT JOIN DIM_Etablissement e
+ON f.Id_Etablissement = e.Id_Etablissement
+WHERE e.Id_Etablissement IS NULL;
+
+SELECT
+'FAIT_HOSPITALISATION' AS Table_De_Faits,
+'Id_Patient' AS Cle_Etrangere,
+COUNT(*) AS References_Invalides,
+SUM(CASE WHEN f.Id_Patient IS NULL THEN 1 ELSE 0 END) AS Dont_Null,
+SUM(CASE WHEN f.Id_Patient = -1 THEN 1 ELSE 0 END) AS Dont_Moins_Un
+FROM FAIT_HOSPITALISATION f
+LEFT JOIN DIM_Patient p
+ON f.Id_Patient = p.Id_Patient
+WHERE p.Id_Patient IS NULL;
+
+SELECT
+'FAIT_HOSPITALISATION' AS Table_De_Faits,
+'Id_Etablissement' AS Cle_Etrangere,
+COUNT(*) AS References_Invalides,
+SUM(CASE WHEN f.Id_Etablissement IS NULL THEN 1 ELSE 0 END) AS Dont_Null,
+SUM(CASE WHEN f.Id_Etablissement = -1 THEN 1 ELSE 0 END) AS Dont_Moins_Un
+FROM FAIT_HOSPITALISATION f
+LEFT JOIN DIM_Etablissement e
+ON f.Id_Etablissement = e.Id_Etablissement
+WHERE e.Id_Etablissement IS NULL;
+
+SELECT
+'FAIT_HOSPITALISATION' AS Table_De_Faits,
+'Id_Diagnostic' AS Cle_Etrangere,
+COUNT(*) AS References_Invalides,
+SUM(CASE WHEN f.Id_Diagnostic IS NULL THEN 1 ELSE 0 END) AS Dont_Null,
+SUM(CASE WHEN f.Id_Diagnostic = -1 THEN 1 ELSE 0 END) AS Dont_Moins_Un
+FROM FAIT_HOSPITALISATION f
+LEFT JOIN DIM_Diagnostic dg
+ON f.Id_Diagnostic = dg.Id_Diagnostic
+WHERE dg.Id_Diagnostic IS NULL;
+
+SELECT
+'FAIT_HOSPITALISATION' AS Table_De_Faits,
+'Id_Date_Entree' AS Cle_Etrangere,
+COUNT(*) AS References_Invalides,
+SUM(CASE WHEN f.Id_Date_Entree IS NULL THEN 1 ELSE 0 END) AS Dont_Null,
+SUM(CASE WHEN f.Id_Date_Entree = -1 THEN 1 ELSE 0 END) AS Dont_Moins_Un
+FROM FAIT_HOSPITALISATION f
+LEFT JOIN DIM_Temps d
+ON f.Id_Date_Entree = d.Id_Temps
+WHERE d.Id_Temps IS NULL;
+
+SELECT
+'FAIT_DECES' AS Table_De_Faits,
+'Id_Temps' AS Cle_Etrangere,
+COUNT(*) AS References_Invalides,
+SUM(CASE WHEN f.Id_Temps IS NULL THEN 1 ELSE 0 END) AS Dont_Null,
+SUM(CASE WHEN f.Id_Temps = -1 THEN 1 ELSE 0 END) AS Dont_Moins_Un
+FROM FAIT_DECES f
+LEFT JOIN DIM_Temps d
+ON f.Id_Temps = d.Id_Temps
+WHERE d.Id_Temps IS NULL;
+\end{minted}
+\noindent Résultats~:
+
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.1762\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1567\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1567\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1079\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1274\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.0690\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.0885\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1177\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Table de faits} & \textbf{Clé} & \textbf{Dimension} & \textbf{Total lignes} & \textbf{Références invalides} & \textbf{Dont NULL} & \textbf{Dont -1} & \textbf{\% invalides} \\ \hline
+FAIT\_\hspace{0pt}SATISFACTION & Id\_\hspace{0pt}Etablissement & DIM\_\hspace{0pt}Etablissement & 2~080 & 474 & 0 & 474 & 22,79 \% \\ \hline
+FAIT\_\hspace{0pt}SATISFACTION & Id\_\hspace{0pt}Region & DIM\_\hspace{0pt}Region\_\hspace{0pt}INSEE & 2~080 & 474 & 0 & 474 & 22,79 \% \\ \hline
+FAIT\_\hspace{0pt}CONSULTATION & Id\_\hspace{0pt}Patient & DIM\_\hspace{0pt}Patient & 1~027~136 & 1 & 0 & 0 & 0,0001 \% \\ \hline
+FAIT\_\hspace{0pt}CONSULTATION & Id\_\hspace{0pt}Temps & DIM\_\hspace{0pt}Temps & 1~027~136 & 0 & 0 & 0 & 0 \% \\ \hline
+FAIT\_\hspace{0pt}CONSULTATION & Id\_\hspace{0pt}Professionnel & DIM\_\hspace{0pt}Professionnel & 1~027~136 & 0 & 0 & 0 & 0 \% \\ \hline
+FAIT\_\hspace{0pt}CONSULTATION & Id\_\hspace{0pt}Diagnostic & DIM\_\hspace{0pt}Diagnostic & 1~027~136 & 57 & 0 & 0 & 0,0055 \% \\ \hline
+FAIT\_\hspace{0pt}CONSULTATION & Id\_\hspace{0pt}Etablissement & DIM\_\hspace{0pt}Etablissement & 1~027~136 & 836~481 & 0 & 836~481 & 81,44 \% \\ \hline
+FAIT\_\hspace{0pt}HOSPITALISATION & Id\_\hspace{0pt}Patient & DIM\_\hspace{0pt}Patient & 2~478 & 1 & 0 & 0 & 0,04 \% \\ \hline
+FAIT\_\hspace{0pt}HOSPITALISATION & Id\_\hspace{0pt}Etablissement & DIM\_\hspace{0pt}Etablissement & 2~478 & 1~589 & 0 & 1~589 & 64,12 \% \\ \hline
+FAIT\_\hspace{0pt}HOSPITALISATION & Id\_\hspace{0pt}Diagnostic & DIM\_\hspace{0pt}Diagnostic & 2~478 & 0 & 0 & 0 & 0 \% \\ \hline
+FAIT\_\hspace{0pt}HOSPITALISATION & Id\_\hspace{0pt}Date\_\hspace{0pt}Entree & DIM\_\hspace{0pt}Temps & 2~478 & 0 & 0 & 0 & 0 \% \\ \hline
+FAIT\_\hspace{0pt}DECES & Id\_\hspace{0pt}Temps & DIM\_\hspace{0pt}Temps & 24~875~113 & 0 & 0 & 0 & 0 \% \\ \hline
+\end{tableau}
+\noindent Les clés vers DIM\_Temps, DIM\_Professionnel et (presque) DIM\_Patient et DIM\_Diagnostic sont cohérentes.
+
+\noindent Le problème principal est la clé établissement~: 81,44 \% des consultations, 64,12 \% des hospitalisations et 22,79 \% des réponses de satisfaction ont Id\_Etablissement = -1. Ce n'est pas une clé NULL~: c'est le membre \og inconnu\fg{} mis par l'ETL quand l'établissement source n'a pas été retrouvé dans DIM\_Etablissement. Les 474 lignes de satisfaction ont aussi Id\_Region = -1.
+
+\noindent Les autres anomalies sont isolées~: 1 Id\_Patient inconnu dans FAIT\_CONSULTATION, 1 dans FAIT\_HOSPITALISATION et 57 Id\_Diagnostic inconnus dans FAIT\_CONSULTATION (valeurs renseignées mais absentes de la dimension).
+
+\noindent Répartition par année des consultations sans établissement valide (année lue dans DIM\_Temps)~:
+
+\begin{minted}{sql}
+SELECT
+t.Annee,
+COUNT(*) AS Total,
+SUM(CASE WHEN e.Id_Etablissement IS NULL THEN 1 ELSE 0 END) AS References_Invalides,
+ROUND(SUM(CASE WHEN e.Id_Etablissement IS NULL THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) AS Pct_Invalides
+FROM FAIT_CONSULTATION f
+LEFT JOIN DIM_Etablissement e
+ON f.Id_Etablissement = e.Id_Etablissement
+LEFT JOIN DIM_Temps t
+ON f.Id_Temps = t.Id_Temps
+GROUP BY t.Annee
+ORDER BY t.Annee;
+\end{minted}
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.1050\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1180\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.6200\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1570\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Annee} & \textbf{Total} & \textbf{References\_\hspace{0pt}Invalides} & \textbf{Pct\_\hspace{0pt}Invalides} \\ \hline
+2015 & 33~895 & 27~640 & 81.55 \\ \hline
+2016 & 184~305 & 150~066 & 81.42 \\ \hline
+2017 & 133~401 & 108~940 & 81.66 \\ \hline
+2018 & 160~369 & 130~443 & 81.34 \\ \hline
+2019 & 87~495 & 71~345 & 81.54 \\ \hline
+2020 & 162~776 & 132~545 & 81.43 \\ \hline
+2021 & 145~881 & 118~780 & 81.42 \\ \hline
+2022 & 101~986 & 82~869 & 81.26 \\ \hline
+2023 & 17~028 & 13~853 & 81.35 \\ \hline
+\end{tableau}
+\noindent Le taux est stable autour de 81 \% pour toutes les années, 2019 et 2020 comprises (81,54 \% et 81,43 \%). Le défaut ne vient donc pas d'un chargement particulier~: il vient de la correspondance entre les établissements de la source des consultations et DIM\_Etablissement.
+
+\noindent Contrôle de la clé temps de FAIT\_DECES (nature des références invalides, puis vérification par une autre méthode)~:
+
+\begin{minted}{sql}
+SELECT
+COUNT(*) AS References_Invalides,
+SUM(CASE WHEN f.Id_Temps IS NULL OR f.Id_Temps = -1 THEN 1 ELSE 0 END) AS Dont_Null_Ou_Moins_Un,
+SUM(CASE WHEN f.Id_Temps > 0 AND (f.Id_Temps % 100 = 0 OR FLOOR(f.Id_Temps / 100) % 100 = 0) THEN 1 ELSE 0 END) AS Dont_Jour_Ou_Mois_00,
+SUM(CASE WHEN f.Flag_Date_Partielle = true THEN 1 ELSE 0 END) AS Dont_Flag_Date_Partielle,
+MIN(f.Id_Temps) AS Id_Temps_Min,
+MAX(f.Id_Temps) AS Id_Temps_Max
+FROM FAIT_DECES f
+LEFT JOIN DIM_Temps d
+ON f.Id_Temps = d.Id_Temps
+WHERE d.Id_Temps IS NULL;
+
+SELECT COUNT(*) AS Deces_Avec_Date_Connue FROM FAIT_DECES f LEFT SEMI JOIN DIM_Temps d ON (f.Id_Temps = d.Id_Temps);
+
+SELECT
+COUNT(*) AS Total,
+SUM(CASE WHEN Id_Temps % 100 = 0 OR FLOOR(Id_Temps / 100) % 100 = 0 THEN 1 ELSE 0 END) AS Jour_Ou_Mois_00,
+SUM(CASE WHEN Flag_Date_Partielle = true THEN 1 ELSE 0 END) AS Flag_Date_Partielle_Vrai,
+SUM(CASE WHEN Id_Temps < 18800102 OR Id_Temps > 20301231 THEN 1 ELSE 0 END) AS Hors_Plage_DIM_Temps
+FROM FAIT_DECES;
+\end{minted}
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.1910\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1796\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1440\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1261\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.2028\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1565\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{References\_\hspace{0pt}Invalides} & \textbf{Deces\_\hspace{0pt}Avec\_\hspace{0pt}Date\_\hspace{0pt}Connue} & \textbf{Total} & \textbf{Jour\_\hspace{0pt}Ou\_\hspace{0pt}Mois\_\hspace{0pt}00} & \textbf{Flag\_\hspace{0pt}Date\_\hspace{0pt}Partielle\_\hspace{0pt}Vrai} & \textbf{Hors\_\hspace{0pt}Plage\_\hspace{0pt}DIM\_\hspace{0pt}Temps} \\ \hline
+0 & 24~875~113 & 24~875~113 & 0 & 89~563 & 0 \\ \hline
+\end{tableau}
+\noindent Dans l'entrepôt actuel, les 24~875~113 décès ont un Id\_Temps présent dans DIM\_Temps (1880-01-02 à 2030-12-31). Les 89~563 décès à date partielle ont tous reçu une date valide. Il n'y a donc pas de décès hors de la dimension temps dans les données chargées aujourd'hui.
+
+\subsubsection{Attention~: référentiel des régions de FAIT\_DECES}
+
+\noindent DIM\_Region\_INSEE a une ligne par commune (39~520 lignes). Id\_Region est une clé de substitution de 1 à 39~520, Code\_Commune\_INSEE est le code INSEE (39~520 valeurs distinctes) et Code\_Region le code de région (19 valeurs). Dans FAIT\_DECES, Id\_Region\_Deces va de -1 à 39~514 et Id\_Region\_Naissance de -1 à 39~512. Pour savoir quel référentiel est utilisé, on compte les correspondances avec chacune des trois colonnes~:
+
+\begin{minted}{sql}
+SELECT
+'Id_Region_Deces' AS Colonne,
+COUNT(*) AS Total,
+SUM(CASE WHEN f.Id_Region_Deces IS NULL OR f.Id_Region_Deces = -1 THEN 1 ELSE 0 END) AS Null_Ou_Moins_Un,
+SUM(CASE WHEN r1.Id_Region IS NOT NULL THEN 1 ELSE 0 END) AS Correspond_Id_Region,
+SUM(CASE WHEN r2.Code_Commune IS NOT NULL THEN 1 ELSE 0 END) AS Correspond_Code_Commune_INSEE,
+SUM(CASE WHEN r3.Code_Reg IS NOT NULL THEN 1 ELSE 0 END) AS Correspond_Code_Region
+FROM FAIT_DECES f
+LEFT JOIN DIM_Region_INSEE r1
+ON f.Id_Region_Deces = r1.Id_Region
+LEFT JOIN (SELECT DISTINCT CAST(Code_Commune_INSEE AS INT) AS Code_Commune FROM DIM_Region_INSEE) r2
+ON f.Id_Region_Deces = r2.Code_Commune
+LEFT JOIN (SELECT DISTINCT CAST(Code_Region AS INT) AS Code_Reg FROM DIM_Region_INSEE) r3
+ON f.Id_Region_Deces = r3.Code_Reg;
+
+SELECT
+'Id_Region_Naissance' AS Colonne,
+COUNT(*) AS Total,
+SUM(CASE WHEN f.Id_Region_Naissance IS NULL OR f.Id_Region_Naissance = -1 THEN 1 ELSE 0 END) AS Null_Ou_Moins_Un,
+SUM(CASE WHEN r1.Id_Region IS NOT NULL THEN 1 ELSE 0 END) AS Correspond_Id_Region,
+SUM(CASE WHEN r2.Code_Commune IS NOT NULL THEN 1 ELSE 0 END) AS Correspond_Code_Commune_INSEE,
+SUM(CASE WHEN r3.Code_Reg IS NOT NULL THEN 1 ELSE 0 END) AS Correspond_Code_Region
+FROM FAIT_DECES f
+LEFT JOIN DIM_Region_INSEE r1
+ON f.Id_Region_Naissance = r1.Id_Region
+LEFT JOIN (SELECT DISTINCT CAST(Code_Commune_INSEE AS INT) AS Code_Commune FROM DIM_Region_INSEE) r2
+ON f.Id_Region_Naissance = r2.Code_Commune
+LEFT JOIN (SELECT DISTINCT CAST(Code_Region AS INT) AS Code_Reg FROM DIM_Region_INSEE) r3
+ON f.Id_Region_Naissance = r3.Code_Reg;
+\end{minted}
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.1615\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1440\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1237\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1853\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1975\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1880\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Colonne} & \textbf{Total} & \textbf{Null\_\hspace{0pt}Ou\_\hspace{0pt}Moins\_\hspace{0pt}Un} & \textbf{Correspond\_\hspace{0pt}Id\_\hspace{0pt}Region} & \textbf{Correspond\_\hspace{0pt}Code\_\hspace{0pt}Commune\_\hspace{0pt}INSEE} & \textbf{Correspond\_\hspace{0pt}Code\_\hspace{0pt}Region} \\ \hline
+Id\_\hspace{0pt}Region\_\hspace{0pt}Deces & 24~875~113 & 12~810 & 24~862~303 & 8~880~782 & 29~290 \\ \hline
+Id\_\hspace{0pt}Region\_\hspace{0pt}Naissance & 24~875~113 & 115~752 & 24~759~361 & 10~054~428 & 30~246 \\ \hline
+\end{tableau}
+\noindent Toutes les valeurs différentes de -1 correspondent à un Id\_Region (12~810 + 24~862~303 = 24~875~113 et 115~752 + 24~759~361 = 24~875~113). Les correspondances avec Code\_Commune\_INSEE et Code\_Region ne sont que des coïncidences de nombres. Id\_Region\_Deces et Id\_Region\_Naissance utilisent donc bien le même référentiel que Id\_Region~: la clé de substitution de DIM\_Region\_INSEE, au niveau commune.
+
+\noindent Le contrôle de clé étrangère est donc fait contre Id\_Region~:
+
+\begin{minted}{sql}
+SELECT
+'FAIT_DECES' AS Table_De_Faits,
+'Id_Region_Deces' AS Cle_Etrangere,
+COUNT(*) AS References_Invalides,
+SUM(CASE WHEN f.Id_Region_Deces IS NULL THEN 1 ELSE 0 END) AS Dont_Null,
+SUM(CASE WHEN f.Id_Region_Deces = -1 THEN 1 ELSE 0 END) AS Dont_Moins_Un
+FROM FAIT_DECES f
+LEFT JOIN DIM_Region_INSEE r
+ON f.Id_Region_Deces = r.Id_Region
+WHERE r.Id_Region IS NULL;
+
+SELECT
+'FAIT_DECES' AS Table_De_Faits,
+'Id_Region_Naissance' AS Cle_Etrangere,
+COUNT(*) AS References_Invalides,
+SUM(CASE WHEN f.Id_Region_Naissance IS NULL THEN 1 ELSE 0 END) AS Dont_Null,
+SUM(CASE WHEN f.Id_Region_Naissance = -1 THEN 1 ELSE 0 END) AS Dont_Moins_Un
+FROM FAIT_DECES f
+LEFT JOIN DIM_Region_INSEE r
+ON f.Id_Region_Naissance = r.Id_Region
+WHERE r.Id_Region IS NULL;
+\end{minted}
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.0955\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1427\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1427\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1309\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1545\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.0836\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1073\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1427\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Table de faits} & \textbf{Clé} & \textbf{Dimension} & \textbf{Total lignes} & \textbf{Références invalides} & \textbf{Dont NULL} & \textbf{Dont -1} & \textbf{\% invalides} \\ \hline
+FAIT\_\hspace{0pt}DECES & Id\_\hspace{0pt}Region\_\hspace{0pt}Deces & DIM\_\hspace{0pt}Region\_\hspace{0pt}INSEE & 24~875~113 & 12~810 & 0 & 12~810 & 0,05 \% \\ \hline
+FAIT\_\hspace{0pt}DECES & Id\_\hspace{0pt}Region\_\hspace{0pt}Naissance & DIM\_\hspace{0pt}Region\_\hspace{0pt}INSEE & 24~875~113 & 115~752 & 0 & 115~752 & 0,47 \% \\ \hline
+\end{tableau}
+\noindent Les références invalides sont uniquement des -1~: commune de décès ou de naissance inconnue. Le taux de naissance inconnue est plus élevé, ce qui peut s'expliquer par des naissances à l'étranger ou dans des communes qui n'existent plus (hypothèse non vérifiée).
+
+
+\subsection{Résultats attendus}
+
+\noindent Les contrôles permettront de déterminer~:
+\begin{itemize}
+	\item Le nombre de références valides.
+	\item Le nombre de références invalides.
+	\item Les tables concernées par les éventuelles incohérences.
+\end{itemize}
+
+\noindent Les références invalides devront être analysées afin de déterminer si elles résultent d'une donnée source manquante, d'une erreur d'intégration ou d'une correspondance absente dans une dimension.
+
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.5121\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.4879\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Indicateur} & \textbf{Résultat} \\ \hline
+Relations contrôlées & 14 (les 12 du tableau + les 2 clés régionales de FAIT\_\hspace{0pt}DECES) \\ \hline
+Relations sans aucune référence invalide & 5~: FAIT\_\hspace{0pt}CONSULTATION.Id\_\hspace{0pt}Temps, FAIT\_\hspace{0pt}CONSULTATION.Id\_\hspace{0pt}Professionnel, FAIT\_\hspace{0pt}HOSPITALISATION.Id\_\hspace{0pt}Diagnostic, FAIT\_\hspace{0pt}HOSPITALISATION.Id\_\hspace{0pt}Date\_\hspace{0pt}Entree, FAIT\_\hspace{0pt}DECES.Id\_\hspace{0pt}Temps \\ \hline
+Références invalides (12 relations du tableau) & 839~077 \\ \hline
+Références invalides (avec les 2 clés régionales de FAIT\_\hspace{0pt}DECES) & 967~639 \\ \hline
+Dont clés égales à -1 (membre \og inconnu\fg{}) & 967~580 \\ \hline
+Dont valeurs renseignées absentes de la dimension & 59 (1 + 1 Id\_\hspace{0pt}Patient, 57 Id\_\hspace{0pt}Diagnostic) \\ \hline
+Dont clés NULL & 0 \\ \hline
+Tables concernées & FAIT\_\hspace{0pt}CONSULTATION (Id\_\hspace{0pt}Etablissement surtout), FAIT\_\hspace{0pt}HOSPITALISATION (Id\_\hspace{0pt}Etablissement), FAIT\_\hspace{0pt}SATISFACTION (Id\_\hspace{0pt}Etablissement, Id\_\hspace{0pt}Region), FAIT\_\hspace{0pt}DECES (régions) \\ \hline
+\end{tableau}
+\noindent Origine des références invalides~:
+
+\begin{itemize}
+	\item Clés à -1~: correspondance absente dans une dimension. L'ETL n'a pas trouvé l'établissement (ou la commune) de la source dans la dimension et a mis la valeur \og inconnu\fg{}. Pour les établissements, la cause probable est la clé de rapprochement~: le FINESS géographique est vide dans 99,4 \% de DIM\_Etablissement (voir 3.2).
+	\item 59 clés renseignées mais absentes~: donnée source sans équivalent dans la dimension (erreur ponctuelle de la source).
+	\item Aucune clé NULL~: il n'y a pas d'erreur d'intégration qui perd des clés.
+\end{itemize}
+
+\noindent Pour garder un schéma en étoile propre (Kimball), il est conseillé d'ajouter dans chaque dimension une ligne \og Inconnu\fg{} d'identifiant -1. Les faits resteraient alors tous reliés à une ligne de dimension.
+
+
+\section{Détection et traitement des doublons}
+
+\subsection{Méthodologie}
+
+\noindent La détection des doublons consiste à identifier les enregistrements possédant un même identifiant alors que celui-ci est censé être unique.
+
+\noindent Les contrôles sont principalement réalisés sur les identifiants des dimensions et des tables de faits.
+
+\subsection{Requêtes de détection}
+
+\noindent Exemple~: DIM\_Etablissement
+
+\begin{minted}{sql}
+SELECT
+    Id_Etablissement,
+    COUNT(*) AS Nombre
+FROM DIM_Etablissement
+GROUP BY Id_Etablissement
+HAVING COUNT(*) > 1;
+\end{minted}
+
+\noindent Cette requête identifie les établissements possédant plusieurs enregistrements avec le même identifiant.
+
+\noindent Autres contrôles à effectuer~:
+\begin{itemize}
+	\item DIM\_Professionnel
+\begin{minted}{sql}
+SELECT Id_Professionnel, COUNT(*) AS Nombre
+FROM DIM_Professionnel
+GROUP BY Id_Professionnel
+HAVING COUNT(*) > 1;
+\end{minted}
+	\item DIM\_Patient
+\begin{minted}{sql}
+SELECT Id_Patient, COUNT(*) AS Nombre
+FROM DIM_Patient
+GROUP BY Id_Patient
+HAVING COUNT(*) > 1;
+\end{minted}
+	\item DIM\_Diagnostic
+\begin{minted}{sql}
+SELECT Id_Diagnostic, COUNT(*) AS Nombre
+FROM DIM_Diagnostic
+GROUP BY Id_Diagnostic
+HAVING COUNT(*) > 1;
+\end{minted}
+	\item FAIT\_SATISFACTION
+\begin{minted}{sql}
+SELECT Id_Satisfaction, COUNT(*) AS Nombre
+FROM FAIT_SATISFACTION
+GROUP BY Id_Satisfaction
+HAVING COUNT(*) > 1;
+\end{minted}
+	\item FAIT\_DECES
+\begin{minted}{sql}
+SELECT Id_Deces, COUNT(*) AS Nombre
+FROM FAIT_DECES
+GROUP BY Id_Deces
+HAVING COUNT(*) > 1;
+\end{minted}
+	\item FAIT\_CONSULTATION
+\begin{minted}{sql}
+SELECT num_consultation, COUNT(*) AS Nombre
+FROM FAIT_CONSULTATION
+GROUP BY num_consultation
+HAVING COUNT(*) > 1;
+\end{minted}
+	\item FAIT\_HOSPITALISATION
+\begin{minted}{sql}
+SELECT Id_Hospitalisation, COUNT(*) AS Nombre
+FROM FAIT_HOSPITALISATION
+GROUP BY Id_Hospitalisation
+HAVING COUNT(*) > 1;
+\end{minted}
+\end{itemize}
+
+\noindent Pour DIM\_Region\_INSEE, le contrôle doit être adapté à la granularité de la dimension~: Id\_Region peut être répété si plusieurs communes appartiennent à une même région. Il est donc préférable de contrôler également Code\_Commune\_INSEE.
+
+\noindent Les requêtes du rapport sont reprises et englobées dans un \texttt{SELECT COUNT(*)} pour obtenir un nombre. \texttt{Identifiants\_Dupliques} est le nombre d'identifiants présents plusieurs fois, \texttt{Lignes\_Concernees} le nombre de lignes qui portent ces identifiants. DIM\_Temps est ajoutée en complément. Pour DIM\_Region\_INSEE, le contrôle est fait sur Id\_Region et sur Code\_Commune\_INSEE, comme demandé.
+
+\begin{minted}{sql}
+SELECT 'DIM_Etablissement' AS Table_Controlee, 'Id_Etablissement' AS Identifiant,
+COUNT(*) AS Identifiants_Dupliques,
+COALESCE(SUM(t.Nombre), 0) AS Lignes_Concernees
+FROM (
+    SELECT Id_Etablissement, COUNT(*) AS Nombre
+    FROM DIM_Etablissement
+    GROUP BY Id_Etablissement
+    HAVING COUNT(*) > 1
+) t;
+
+SELECT 'DIM_Professionnel' AS Table_Controlee, 'Id_Professionnel' AS Identifiant,
+COUNT(*) AS Identifiants_Dupliques,
+COALESCE(SUM(t.Nombre), 0) AS Lignes_Concernees
+FROM (
+    SELECT Id_Professionnel, COUNT(*) AS Nombre
+    FROM DIM_Professionnel
+    GROUP BY Id_Professionnel
+    HAVING COUNT(*) > 1
+) t;
+
+SELECT 'DIM_Patient' AS Table_Controlee, 'Id_Patient' AS Identifiant,
+COUNT(*) AS Identifiants_Dupliques,
+COALESCE(SUM(t.Nombre), 0) AS Lignes_Concernees
+FROM (
+    SELECT Id_Patient, COUNT(*) AS Nombre
+    FROM DIM_Patient
+    GROUP BY Id_Patient
+    HAVING COUNT(*) > 1
+) t;
+
+SELECT 'DIM_Diagnostic' AS Table_Controlee, 'Id_Diagnostic' AS Identifiant,
+COUNT(*) AS Identifiants_Dupliques,
+COALESCE(SUM(t.Nombre), 0) AS Lignes_Concernees
+FROM (
+    SELECT Id_Diagnostic, COUNT(*) AS Nombre
+    FROM DIM_Diagnostic
+    GROUP BY Id_Diagnostic
+    HAVING COUNT(*) > 1
+) t;
+
+SELECT 'DIM_Temps' AS Table_Controlee, 'Id_Temps' AS Identifiant,
+COUNT(*) AS Identifiants_Dupliques,
+COALESCE(SUM(t.Nombre), 0) AS Lignes_Concernees
+FROM (
+    SELECT Id_Temps, COUNT(*) AS Nombre
+    FROM DIM_Temps
+    GROUP BY Id_Temps
+    HAVING COUNT(*) > 1
+) t;
+
+SELECT 'DIM_Region_INSEE' AS Table_Controlee, 'Id_Region' AS Identifiant,
+COUNT(*) AS Identifiants_Dupliques,
+COALESCE(SUM(t.Nombre), 0) AS Lignes_Concernees
+FROM (
+    SELECT Id_Region, COUNT(*) AS Nombre
+    FROM DIM_Region_INSEE
+    GROUP BY Id_Region
+    HAVING COUNT(*) > 1
+) t;
+
+SELECT 'DIM_Region_INSEE' AS Table_Controlee, 'Code_Commune_INSEE' AS Identifiant,
+COUNT(*) AS Identifiants_Dupliques,
+COALESCE(SUM(t.Nombre), 0) AS Lignes_Concernees
+FROM (
+    SELECT Code_Commune_INSEE, COUNT(*) AS Nombre
+    FROM DIM_Region_INSEE
+    GROUP BY Code_Commune_INSEE
+    HAVING COUNT(*) > 1
+) t;
+
+SELECT 'FAIT_SATISFACTION' AS Table_Controlee, 'Id_Satisfaction' AS Identifiant,
+COUNT(*) AS Identifiants_Dupliques,
+COALESCE(SUM(t.Nombre), 0) AS Lignes_Concernees
+FROM (
+    SELECT Id_Satisfaction, COUNT(*) AS Nombre
+    FROM FAIT_SATISFACTION
+    GROUP BY Id_Satisfaction
+    HAVING COUNT(*) > 1
+) t;
+
+SELECT 'FAIT_DECES' AS Table_Controlee, 'Id_Deces' AS Identifiant,
+COUNT(*) AS Identifiants_Dupliques,
+COALESCE(SUM(t.Nombre), 0) AS Lignes_Concernees
+FROM (
+    SELECT Id_Deces, COUNT(*) AS Nombre
+    FROM FAIT_DECES
+    GROUP BY Id_Deces
+    HAVING COUNT(*) > 1
+) t;
+
+SELECT 'FAIT_CONSULTATION' AS Table_Controlee, 'num_consultation' AS Identifiant,
+COUNT(*) AS Identifiants_Dupliques,
+COALESCE(SUM(t.Nombre), 0) AS Lignes_Concernees
+FROM (
+    SELECT num_consultation, COUNT(*) AS Nombre
+    FROM FAIT_CONSULTATION
+    GROUP BY num_consultation
+    HAVING COUNT(*) > 1
+) t;
+
+SELECT 'FAIT_HOSPITALISATION' AS Table_Controlee, 'Id_Hospitalisation' AS Identifiant,
+COUNT(*) AS Identifiants_Dupliques,
+COALESCE(SUM(t.Nombre), 0) AS Lignes_Concernees
+FROM (
+    SELECT Id_Hospitalisation, COUNT(*) AS Nombre
+    FROM FAIT_HOSPITALISATION
+    GROUP BY Id_Hospitalisation
+    HAVING COUNT(*) > 1
+) t;
+\end{minted}
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.2350\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.2350\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.3600\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.1700\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Table} & \textbf{Identifiant} & \textbf{Identifiants\_\hspace{0pt}Dupliques} & \textbf{Lignes\_\hspace{0pt}Concernees} \\ \hline
+DIM\_\hspace{0pt}Etablissement & Id\_\hspace{0pt}Etablissement & 0 & 0 \\ \hline
+DIM\_\hspace{0pt}Professionnel & Id\_\hspace{0pt}Professionnel & 0 & 0 \\ \hline
+DIM\_\hspace{0pt}Patient & Id\_\hspace{0pt}Patient & 0 & 0 \\ \hline
+DIM\_\hspace{0pt}Diagnostic & Id\_\hspace{0pt}Diagnostic & 0 & 0 \\ \hline
+DIM\_\hspace{0pt}Temps & Id\_\hspace{0pt}Temps & 0 & 0 \\ \hline
+DIM\_\hspace{0pt}Region\_\hspace{0pt}INSEE & Id\_\hspace{0pt}Region & 0 & 0 \\ \hline
+DIM\_\hspace{0pt}Region\_\hspace{0pt}INSEE & Code\_\hspace{0pt}Commune\_\hspace{0pt}INSEE & 0 & 0 \\ \hline
+FAIT\_\hspace{0pt}SATISFACTION & Id\_\hspace{0pt}Satisfaction & 0 & 0 \\ \hline
+FAIT\_\hspace{0pt}DECES & Id\_\hspace{0pt}Deces & 0 & 0 \\ \hline
+FAIT\_\hspace{0pt}CONSULTATION & num\_\hspace{0pt}consultation & 0 & 0 \\ \hline
+FAIT\_\hspace{0pt}HOSPITALISATION & Id\_\hspace{0pt}Hospitalisation & 0 & 0 \\ \hline
+\end{tableau}
+\noindent Aucun identifiant n'est dupliqué, ni dans les dimensions ni dans les tables de faits. Dans DIM\_Region\_INSEE, Id\_Region et Code\_Commune\_INSEE sont tous les deux uniques~: la dimension a bien une ligne par commune.
+
+
+\subsection{Traitement des doublons}
+
+\noindent Plusieurs méthodes peuvent être utilisées~:
+\begin{itemize}
+	\item \textbf{DISTINCT}~: suppression des doublons strictement identiques.
+	\item \textbf{ROW\_NUMBER()}~: conservation d'un seul enregistrement selon une règle de priorité.
+	\item \textbf{tUniqRow dans Talend}~: détection et filtrage des doublons pendant le processus ETL.
+\end{itemize}
+
+\noindent La suppression doit être réalisée uniquement après identification de la nature du doublon et vérification des règles métier.
+
+\noindent Comme aucun doublon n'a été trouvé, aucun traitement n'est nécessaire. La méthode ROW\_NUMBER() est quand même écrite et testée sur FAIT\_CONSULTATION, pour pouvoir la reprendre après un futur chargement. On numérote les lignes de chaque identifiant et on garde \texttt{rn = 1}. Le résultat est seulement lu par un SELECT~: aucune table n'est écrasée.
+
+\begin{minted}{sql}
+SELECT
+COUNT(*) AS Lignes_Avant,
+SUM(CASE WHEN t.rn = 1 THEN 1 ELSE 0 END) AS Lignes_Apres
+FROM (
+    SELECT
+    f.*,
+    ROW_NUMBER() OVER (PARTITION BY f.num_consultation ORDER BY f.Id_Temps) AS rn
+    FROM FAIT_CONSULTATION f
+) t;
+\end{minted}
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.5000\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.5000\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Lignes\_\hspace{0pt}Avant} & \textbf{Lignes\_\hspace{0pt}Apres} \\ \hline
+1~027~136 & 1~027~136 \\ \hline
+\end{tableau}
+\noindent Le nombre de lignes est le même avant et après~: la requête ne retire rien, ce qui confirme l'absence de doublons. Pour appliquer réellement le traitement, il faudrait écrire ce résultat (\texttt{WHERE rn = 1}) dans une nouvelle table, puis la contrôler avant de remplacer l'ancienne.
+
+
+\section{Synthèse de la qualité des données}
+
+\noindent Les résultats des trois catégories de contrôles permettront de constituer un bilan global de la qualité des données intégrées.
+
+\begin{tableau}{|>{\raggedright\arraybackslash}p{\dimexpr0.2261\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.3667\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|>{\raggedright\arraybackslash}p{\dimexpr0.4073\linewidth-2\tabcolsep-1.2\arrayrulewidth\relax}|}
+\rowcolor{tabentete}\textbf{Contrôle} & \textbf{Indicateur} & \textbf{Résultat} \\ \hline
+Complétude & Taux de valeurs renseignées par attribut & 100 \% pour 38 des 40 attributs contrôlés. Score (FAIT\_\hspace{0pt}SATISFACTION)~: 78,08 \% (456 NULL). Age\_\hspace{0pt}Deces~: 99,998 \% (586 NULL). En comptant aussi les chaînes vides~: finess\_\hspace{0pt}site 0,59 \% (33~711 vides), Code\_\hspace{0pt}Region et Nom\_\hspace{0pt}Region 99,09 \% (358 vides), commune 99,59 \% (140 vides) \\ \hline
+Cohérence référentielle & Nombre de références invalides & 839~077 sur les 12 relations du tableau (967~639 avec les 2 clés régionales de FAIT\_\hspace{0pt}DECES). 99,99 \% sont des clés à -1, dont 836~481 Id\_\hspace{0pt}Etablissement de FAIT\_\hspace{0pt}CONSULTATION (81,44 \%) \\ \hline
+FINESS & Nombre d'identifiants au format invalide & finess\_\hspace{0pt}site~: 33~711, tous vides (0 FINESS renseigné au mauvais format). finess\_\hspace{0pt}etablissement\_\hspace{0pt}juridique~: 209, tous des codes corses 2A/2B valides. 0 FINESS NULL \\ \hline
+Doublons & Nombre d'identifiants dupliqués & 0 dans les 10 tables (11 contrôles) \\ \hline
+\end{tableau}
+
+\noindent Bilan~: l'entrepôt est complet et sans doublon. Sa limite principale est la clé établissement dans les tables de faits, probablement liée au FINESS géographique presque toujours vide dans la source. Les analyses par établissement ne portent donc que sur environ 19 \% des consultations et 36 \% des hospitalisations.
+
+
+\section{Conclusion}
+
+\noindent Le contrôle de qualité des données constitue une étape essentielle dans la mise en place de l'entrepôt de données décisionnel du CHU.
+
+\noindent Il permet de s'assurer que les données intégrées depuis les sources sont suffisamment complètes, cohérentes et fiables pour être exploitées dans les analyses décisionnelles.
+
+\noindent Les anomalies détectées pourront être corrigées au niveau des sources, des traitements Talend ou des scripts HiveQL, selon leur origine.
+
+\noindent Les résultats obtenus permettront ainsi de justifier la fiabilité des données intégrées et de documenter les éventuelles limites de l'entrepôt de données.
