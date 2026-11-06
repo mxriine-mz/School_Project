@@ -1,0 +1,1008 @@
+% --- ETUDE DE CAS ---
+\newpage
+\section*{Étude de cas~: Raconte moi une histoire}
+\phantomsection
+\addcontentsline{toc}{section}{Étude de cas~: Raconte moi une histoire}
+
+\subsection*{AAV}
+\phantomsection
+\addcontentsline{toc}{subsection}{AAV}
+\begin{itemize}
+	\item [3] Exploiter les données récoltées dans un environnement Big Data
+	\item [4] Représenter les données au travers de graphes pour mettre en évidence les indicateurs souhaités (KPI)
+	\item [4] Proposer une visualisation des données améliorant l'expérience utilisateurs (UX)
+\end{itemize}
+
+\subsection*{Mots clés}
+\phantomsection
+\addcontentsline{toc}{subsection}{Mots clés}
+\begin{itemize}
+	\item Cube OLAP
+	\item KPI
+	\item Data visualisation
+	\item Data storytelling
+	\item UX
+	\item Power BI
+	\item DAX
+	\item Filtres et interactivité
+	\item Quick win
+\end{itemize}
+
+\subsection*{Contexte}
+\phantomsection
+\addcontentsline{toc}{subsection}{Contexte}
+\noindent C'est la dernière ligne droite. La maquette est fonctionnelle et exploite les données de l'entrepôt. L'équipe doit maintenant produire une version \og quick win\fg{} pour les métiers~: montrer vite la valeur du nouvel outil pour gagner l'adhésion des utilisateurs, car la première impression compte dans l'accompagnement au changement. Les équipes doivent constater que les données sont disponibles, interrogeables, structurées et lisibles en un minimum de temps, et identifier en temps réel les KPI disponibles selon leurs priorités.
+
+\vspace{0.2cm}
+
+\noindent Pour une consultation durable, les indicateurs sont construits dans une démarche de \textbf{data storytelling}~: une visualisation dynamique qui suit le scénario d'usage réel. Il faut penser en amont au message à faire passer et aux graphiques qui le portent. Les informations doivent répondre exactement aux besoins, sans interprétation ni manipulation supplémentaire. Le brainstorming a donné beaucoup d'idées de types de graphes, mais pas de consensus sur la logique de présentation et sur l'interactivité, l'équipe n'étant pas du domaine. La proposition retenue est celle de \textbf{graphes génériques paramétrables} avec un \textbf{système de filtres} pour personnaliser la vue. L'équipe craint de devoir générer plusieurs vues indépendantes au préalable, par manque de temps, et parce que cela ne répondrait pas à tous les besoins.
+
+\subsection*{Problématique}
+\phantomsection
+\addcontentsline{toc}{subsection}{Problématique}
+\noindent Comment construire, à partir de l'entrepôt Hive, un tableau de bord Power BI interactif et lisible, qui raconte une histoire utile aux métiers du CHU, sans pré-calculer une vue par besoin~?
+
+\subsection*{Contraintes}
+\phantomsection
+\addcontentsline{toc}{subsection}{Contraintes}
+\begin{itemize}
+	\item Version \og quick win\fg{}~: valeur visible en un minimum de temps
+	\item Données déjà disponibles dans l'entrepôt (modèle dimensionnel du projet, Hive sur HDFS)
+	\item Message et graphiques choisis en amont, sans interprétation supplémentaire des données
+	\item Équipe qui ne connaît pas le domaine hospitalier~: pas de consensus sur la présentation
+	\item Peu de temps~: pas de vues indépendantes générées à l'avance pour chaque besoin
+	\item Outil de BI imposé par l'architecture~: Power BI
+	\item Données de santé~: accès limité selon le profil de l'utilisateur
+\end{itemize}
+
+\subsection*{Généralisation}
+\phantomsection
+\addcontentsline{toc}{subsection}{Généralisation}
+\begin{itemize}
+	\item Exploitation des données d'un entrepôt par des utilisateurs métier
+	\item Choix des indicateurs et des visualisations
+	\item Expérience utilisateur et conduite du changement
+\end{itemize}
+
+\subsection*{Livrables}
+\phantomsection
+\addcontentsline{toc}{subsection}{Livrables}
+\begin{itemize}
+	\item Tableau de bord \og quick win\fg{} connecté à l'entrepôt, avec KPI, graphes génériques et filtres
+	\item Choix argumentés des indicateurs, des types de graphes et de la logique de présentation
+	\item Scénario d'usage (histoire racontée) et maquette du tableau de bord
+\end{itemize}
+
+\subsection*{Pistes de solutions}
+\phantomsection
+\addcontentsline{toc}{subsection}{Pistes de solutions}
+\begin{itemize}
+	\item Partir des besoins métier pour choisir les KPI, puis le graphique qui porte chaque message.
+	\item Construire un seul modèle de données dans Power BI et le rendre paramétrable avec des filtres, des segments, des paramètres de champ et des mesures DAX.
+	\item Écrire les pages comme une histoire~: un message clé par page, du plus général au plus détaillé.
+	\item Livrer d'abord une page d'accueil lisible en quelques secondes, puis l'enrichir avec les retours des utilisateurs.
+	\item Limiter l'accès aux données par profil avec la sécurité par ligne.
+\end{itemize}
+
+\subsection*{Plan d'actions}
+\phantomsection
+\addcontentsline{toc}{subsection}{Plan d'actions}
+\begin{itemize}
+	\item Définir les mots clés et étudier les ressources du prosit.
+	\item Comprendre le cube OLAP et son lien avec le modèle en étoile du projet.
+	\item Choisir les KPI à partir des huit besoins du CHU.
+	\item Choisir le bon type de graphique pour chaque KPI.
+	\item Définir le message et le scénario d'usage (data storytelling, UX).
+	\item Étudier l'interactivité de Power BI et la connexion à Hive.
+	\item Proposer la maquette du tableau de bord et la démarche d'adoption.
+\end{itemize}
+
+% --- DEFINITIONS ---
+\newpage
+\section{Définitions des mots clés}
+
+\needspace{8\baselineskip}
+\noindent \textbf{Cube OLAP}:
+\noindent \textit{On-Line Analytical Processing}. Structure de données qui organise des mesures (nombres à analyser) selon plusieurs axes d'analyse, les dimensions. On l'appelle \og cube\fg{} par image, même quand il a plus de trois axes. Il permet de croiser et de regrouper les mesures très vite, par exemple le nombre de séjours par mois, par établissement et par diagnostic (partie~\ref{sec:cube}).
+
+\separateur
+
+\needspace{8\baselineskip}
+\noindent \textbf{Dimension, mesure, hiérarchie}:
+\begin{itemize}
+	\item \textbf{dimension}~: un axe d'analyse (le temps, l'établissement, le diagnostic)~;
+	\item \textbf{mesure}~: une valeur numérique que l'on agrège (nombre de consultations, durée de séjour)~;
+	\item \textbf{hiérarchie}~: les niveaux d'une dimension, du plus général au plus fin (année, trimestre, mois, jour).
+\end{itemize}
+
+\separateur
+
+\needspace{8\baselineskip}
+\noindent \textbf{KPI}:
+\noindent \textit{Key Performance Indicator}, indicateur clé de performance. Un indicateur choisi parce qu'il mesure l'atteinte d'un objectif, avec une cible et un seuil d'alerte. Tous les indicateurs ne sont pas des KPI (partie~\ref{sec:kpi}).
+
+\separateur
+
+\needspace{8\baselineskip}
+\noindent \textbf{Data visualisation}:
+\noindent Représentation de données par des éléments visuels (graphiques, cartes, tableaux) pour faire apparaître des tendances, des écarts et des relations qu'un tableau de chiffres montre mal (partie~\ref{sec:graphiques}).
+
+\separateur
+
+\needspace{8\baselineskip}
+\noindent \textbf{Data storytelling}:
+\noindent Façon de communiquer des données en réunissant trois éléments~: les \textbf{données}, les \textbf{visuels} et le \textbf{récit}. Le but est de conduire le lecteur d'un constat vers une décision (partie~\ref{sec:storytelling}).
+
+\separateur
+
+\needspace{8\baselineskip}
+\noindent \textbf{UX}:
+\noindent \textit{User eXperience}, expérience utilisateur. Ensemble de ce que ressent et fait une personne en utilisant un produit~: facilité de prise en main, lisibilité, utilité, plaisir. Pour un tableau de bord, c'est la rapidité avec laquelle on trouve la réponse à sa question (partie~\ref{sec:ux}).
+
+\separateur
+
+\needspace{8\baselineskip}
+\noindent \textbf{Persona et scénario d'usage}:
+\noindent Un \textbf{persona} est un utilisateur type fictif, décrit avec ses objectifs et ses contraintes. Un \textbf{scénario d'usage} raconte comment ce persona utilise l'outil pour atteindre un objectif, étape par étape.
+
+\separateur
+
+\needspace{8\baselineskip}
+\noindent \textbf{Power BI}:
+\noindent Outil de BI de Microsoft. Power BI Desktop sert à se connecter aux données, à modéliser et à construire les rapports~; le service Power BI les publie et les partage sur le web et sur mobile (partie~\ref{sec:interactivite}).
+
+\separateur
+
+\needspace{8\baselineskip}
+\noindent \textbf{DAX}:
+\noindent \textit{Data Analysis Expressions}. Langage de formules de Power BI pour définir des calculs sur le modèle de données~: mesures, colonnes calculées, règles de sécurité. Ses résultats dépendent du \textbf{contexte de filtre}, c'est-à-dire des filtres actifs au moment du calcul.
+
+\separateur
+
+\needspace{8\baselineskip}
+\noindent \textbf{Segment (slicer), filtrage croisé, drill-down, drill-through}:
+\begin{itemize}
+	\item \textbf{segment}~: un filtre posé directement sur la page, avec des boutons, une liste ou une plage de dates~;
+	\item \textbf{filtrage croisé}~: un clic sur un élément d'un graphique filtre les autres graphiques de la page~;
+	\item \textbf{drill-down}~: descendre d'un niveau dans une hiérarchie (de l'année au trimestre)~;
+	\item \textbf{drill-through}~: aller vers une page de détail déjà filtrée sur l'élément choisi.
+\end{itemize}
+
+\separateur
+
+\needspace{8\baselineskip}
+\noindent \textbf{Import et DirectQuery}:
+\noindent Les deux principaux modes de connexion de Power BI à une source. En \textbf{import}, les données sont copiées dans le modèle de Power BI et les requêtes s'exécutent en mémoire. En \textbf{DirectQuery}, les données restent dans la source et chaque action de l'utilisateur envoie une requête à la source (partie~\ref{sec:hive-powerbi}).
+
+\separateur
+
+\needspace{8\baselineskip}
+\noindent \textbf{ODBC}:
+\noindent \textit{Open Database Connectivity}. Interface standard qui permet à une application, ici Power BI, de se connecter à une base grâce à un pilote (\textit{driver}). Pour Hive, on installe un pilote ODBC Hive.
+
+\separateur
+
+\needspace{8\baselineskip}
+\noindent \textbf{RLS}:
+\noindent \textit{Row-Level Security}, sécurité au niveau des lignes. Des règles de filtre, attachées à des rôles, qui restreignent les lignes visibles par chaque utilisateur d'un modèle Power BI.
+
+\separateur
+
+\needspace{8\baselineskip}
+\noindent \textbf{Quick win}:
+\noindent Résultat visible obtenu rapidement et avec peu d'effort, qui prouve la valeur d'un projet et aide à convaincre les utilisateurs. Ici, une première page de tableau de bord lisible, branchée sur les vraies données.
+
+% --- CUBE OLAP ---
+\section{Le cube OLAP}\label{sec:cube}
+
+\subsection{Dimensions, mesures et hiérarchies}
+
+\noindent Le terme OLAP (\textit{On-Line Analytical Processing}) a été introduit en 1993 par Edgar F.~Codd. Il désigne une façon d'interroger des données pour les analyser, par opposition à l'OLTP, qui sert à enregistrer des transactions. Un \textbf{cube OLAP} réunit trois notions~:
+\begin{itemize}
+	\item les \textbf{mesures}~: des valeurs numériques que l'on additionne ou que l'on compte (nombre de séjours, durée de séjour)~;
+	\item les \textbf{dimensions}~: les axes qui servent à regrouper les mesures (temps, établissement, diagnostic)~;
+	\item les \textbf{hiérarchies}~: les niveaux d'une dimension. Le temps va du jour à l'année, la géographie de la commune à la région.
+\end{itemize}
+
+\noindent Chaque case du cube contient la valeur de la mesure pour une combinaison de membres des dimensions. Le schéma ci-dessous montre un cube à trois dimensions, avec des valeurs fictives pour les noms.
+
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize,x=1cm,y=1cm,
+  ax/.style={-{Latex},thick,title1},
+  lab/.style={font=\scriptsize\bfseries,text=title1}]
+  \def\W{1.3}\def\H{0.9}\def\DX{0.55}\def\DY{0.42}
+  % face droite
+  \foreach \j in {0,1,2}{\foreach \k in {0,1,2}{
+    \draw[gray,fill=gray!8] ({4*\W+\k*\DX},{\j*\H+\k*\DY}) -- ({4*\W+(\k+1)*\DX},{\j*\H+(\k+1)*\DY}) -- ({4*\W+(\k+1)*\DX},{(\j+1)*\H+(\k+1)*\DY}) -- ({4*\W+\k*\DX},{(\j+1)*\H+\k*\DY}) -- cycle;}}
+  % face du dessus
+  \foreach \i in {0,1,2,3}{\foreach \k in {0,1,2}{
+    \draw[gray,fill=gray!4] ({\i*\W+\k*\DX},{3*\H+\k*\DY}) -- ({(\i+1)*\W+\k*\DX},{3*\H+\k*\DY}) -- ({(\i+1)*\W+(\k+1)*\DX},{3*\H+(\k+1)*\DY}) -- ({\i*\W+(\k+1)*\DX},{3*\H+(\k+1)*\DY}) -- cycle;}}
+  % face avant : tranche (slice) Diagnostic = Diabète
+  \foreach \i in {0,1,2,3}{\foreach \j in {0,1,2}{
+    \draw[gray,fill=title2!28] ({\i*\W},{\j*\H}) rectangle ++(\W,\H);}}
+  \node at ({1.5*\W},{1.5*\H}) [fill=white,draw=title1,rounded corners,inner sep=2pt] {\textbf{cellule = mesure}};
+  % axes
+  \foreach \i/\t in {0/2017,1/2018,2/2019,3/2020}{\node[below] at ({(\i+0.5)*\W},-0.05) {\t};}
+  \foreach \j/\t in {0/Étab.~C,1/Étab.~B,2/Étab.~A}{\node[left] at (-0.05,{(\j+0.5)*\H}) {\t};}
+  \foreach \k/\t in {0/Diabète,1/Fracture,2/Grippe}{\node[right] at ({4*\W+(\k+0.5)*\DX+0.05},{0.5*\H+(\k+0.5)*\DY-0.15}) {\t};}
+  \draw[ax] (0,-0.75) -- node[below=1pt,lab]{Temps (année)} (4*\W,-0.75);
+  \draw[ax] (-1.55,0) -- node[above,rotate=90,lab]{Établissement} (-1.55,3*\H);
+  \draw[ax] ({4*\W+2.3},0.1) -- node[above,sloped,lab]{Diagnostic} ({4*\W+2.3+3*\DX},{0.1+3*\DY});
+  \node[lab,align=left,anchor=west] at (9.4,3.9) {Mesure~: nombre de séjours};
+  \node[align=left,anchor=west,text width=3.3cm] at (9.4,2.9) {Zone bleue~: \textbf{tranche} (slice) du diagnostic \og Diabète\fg{}, toutes années et tous établissements.};
+\end{tikzpicture}
+\end{center}
+\source{schéma réalisé pour ce CER, noms de diagnostics et d'établissements fictifs}
+
+\subsection{Les opérations sur un cube}
+
+\noindent Cinq opérations permettent de naviguer dans un cube sans écrire de nouvelle requête à chaque fois. Ce sont celles que l'utilisateur d'un tableau de bord déclenche avec des clics.
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\bfseries\raggedright\arraybackslash}p{2.2cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+\toprule
+Opération & Effet sur le cube & Exemple CHU & Équivalent Power BI \\
+\midrule
+Roll-up & Remonter d'un niveau de hiérarchie, on regroupe & Consultations par mois puis par année~; par commune puis par région & Remonter d'un niveau dans un graphique à hiérarchie \\
+Drill-down & Descendre d'un niveau, on détaille & Décès par région puis par département puis par commune & Drill-down sur un visuel, ou développer dans une matrice \\
+Slice & Fixer un membre d'une dimension, on obtient une tranche & Hospitalisations de l'année 2019 uniquement & Segment (slicer) ou filtre de page \\
+Dice & Fixer plusieurs dimensions à la fois, on obtient un sous-cube & 2018 et 2019, deux établissements, un diagnostic & Plusieurs segments combinés \\
+Pivot & Permuter les axes d'affichage & Établissements en lignes et années en colonnes, puis l'inverse & Matrice, échange des champs lignes et colonnes \\
+\bottomrule
+\end{tabularx}
+\end{center}
+\source{définitions classiques de l'OLAP~; équivalences Power BI d'après la documentation Microsoft Learn}
+
+\subsection{ROLAP, MOLAP et HOLAP}
+
+\noindent Le cube est un modèle logique. Il peut être stocké de trois façons~:
+\begin{itemize}
+	\item \textbf{ROLAP} (\textit{Relational OLAP})~: les données restent dans des tables relationnelles, en étoile. Le moteur traduit chaque action en requête SQL avec jointures et regroupements~;
+	\item \textbf{MOLAP} (\textit{Multidimensional OLAP})~: les données sont copiées dans une structure multidimensionnelle, avec des agrégats précalculés. Les réponses sont très rapides, mais il faut recharger le cube après chaque mise à jour~;
+	\item \textbf{HOLAP} (\textit{Hybrid OLAP})~: un mélange, avec les agrégats en structure multidimensionnelle et le détail dans les tables relationnelles.
+\end{itemize}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\bfseries\raggedright\arraybackslash}p{2cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+\toprule
+ & ROLAP & MOLAP & HOLAP \\
+\midrule
+Stockage & Tables relationnelles & Structure multidimensionnelle & Les deux \\
+Calcul & À la demande, en SQL & Précalculé & Agrégats précalculés, détail à la demande \\
+Rapidité & Dépend de la base & Très bonne & Bonne \\
+Fraîcheur & Données à jour dans la source & Il faut recharger & Mixte \\
+Volume & Très grand & Limité par le cube & Grand \\
+Pour le projet & Hive (tables en étoile) & Mode import de Power BI (analogie) & Tables hybrides de Power BI (analogie) \\
+\bottomrule
+\end{tabularx}
+\end{center}
+\source{Wikipedia, \textit{Online analytical processing}~; Microsoft Learn, DirectQuery dans Power BI}
+
+\noindent Power BI n'emploie pas ces mots. L'analogie est la suivante~: le mode import copie les données dans un moteur en mémoire optimisé pour l'analyse, comme un MOLAP, et le mode DirectQuery envoie les requêtes à la source, comme un ROLAP. Cette correspondance est une comparaison faite pour ce CER, pas une définition de Microsoft.
+
+\subsection{Lien avec le modèle en étoile du projet}
+
+\noindent Le modèle dimensionnel du CHU est déjà la structure d'un cube~: une table de faits porte les mesures, et chaque dimension est un axe. Le tableau suivant relie les deux vocabulaires.
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\bfseries\raggedright\arraybackslash}p{3.7cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+\toprule
+Cube OLAP & Modèle du CHU & Exemple \\
+\midrule
+Mesure & Mesure d'une table de faits & Nombre\_de\_consultation, Jour\_Hospitalisation, Score \\
+Dimension & Table de dimension & DIM\_Temps, DIM\_Etablissement, DIM\_Diagnostic \\
+Hiérarchie & Niveaux d'une dimension, aplatis dans une seule table & Jour, mois, trimestre, année~; commune, département, région \\
+Cube & Une étoile (un fait et ses dimensions) & FAIT\_HOSPITALISATION avec Temps, Établissement, Diagnostic, Patient \\
+Cubes qui se croisent & Constellation, dimensions conformes & Temps et Établissement partagés par plusieurs faits \\
+\bottomrule
+\end{tabularx}
+\end{center}
+\source{rapport du livrable~1 du projet CHU}
+
+\noindent Les hiérarchies ont été aplaties dans une seule table de dimension (DIM\_Region\_INSEE, DIM\_Temps) pour éviter le schéma en flocon. C'est ce qui rend le roll-up et le drill-down simples dans Power BI~: un seul champ hiérarchique, sans jointure en plus. Les dimensions conformes permettent de comparer, sur le même axe, des mesures venant de faits différents, par exemple les consultations et les hospitalisations par établissement et par année. Le cube de la figure ci-dessus correspond à FAIT\_HOSPITALISATION, avec la dimension Temps (grain annuel après roll-up), l'établissement et le diagnostic.
+
+% --- KPI ---
+\section{Les KPI}\label{sec:kpi}
+
+\subsection{Mesure, indicateur et KPI}
+
+\noindent Les trois mots sont souvent confondus. Les définitions varient selon les auteurs~; celles-ci sont retenues pour la suite.
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\bfseries\raggedright\arraybackslash}p{2.4cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+\toprule
+Notion & Définition & Exemple CHU \\
+\midrule
+Métrique (mesure) & Valeur brute, obtenue par comptage ou somme & Nombre de consultations en 2019 \\
+Indicateur & Mesure mise en contexte~: ratio, évolution, comparaison & Consultations de 2019 par rapport à 2018 \\
+KPI & Indicateur lié à un objectif, avec une cible et un seuil d'alerte & Variation des consultations $\geq$ cible fixée par la direction, en rouge en dessous du seuil \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\noindent Un KPI se reconnaît à trois éléments~: un \textbf{objectif} (ce que l'on veut atteindre), une \textbf{cible} (la valeur attendue) et un \textbf{responsable} qui agit quand le seuil est dépassé. Sans cible, un chiffre reste une information.
+
+\subsection{Les critères SMART}
+
+\noindent Le sigle SMART, attribué à George T.~Doran (1981), sert à vérifier qu'un objectif, donc un KPI, est bien défini~:
+\begin{itemize}
+	\item \textbf{S}pécifique~: il porte sur un point précis (les consultations par établissement, pas \og l'activité\fg{})~;
+	\item \textbf{M}esurable~: on peut le calculer avec les données de l'entrepôt~;
+	\item \textbf{A}tteignable~: la cible est possible~;
+	\item \textbf{R}éaliste ou pertinent~: il répond à un besoin réel du métier~;
+	\item \textbf{T}emporel~: il a une période de calcul (mois, année) et une échéance.
+\end{itemize}
+
+\subsection{Les types de KPI}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\bfseries\raggedright\arraybackslash}p{2.6cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+\toprule
+Type & Question posée & Exemple CHU \\
+\midrule
+Pilotage & Où va-t-on par rapport à l'objectif~? Il sert la direction. & Taux global d'hospitalisation par période \\
+Performance & L'activité est-elle au niveau attendu~? & Consultations par établissement et par professionnel \\
+Qualité & Les patients et les soins sont-ils satisfaisants~? & Taux global de satisfaction par région \\
+\bottomrule
+\end{tabularx}
+\end{center}
+\source{classement proposé pour ce CER à partir des besoins du projet}
+
+\subsection{Choisir les KPI à partir des besoins}
+
+\noindent Le prosit demande que les informations répondent exactement aux besoins. La démarche suit donc l'ordre inverse du réflexe habituel, qui est de partir des graphiques disponibles~:
+\begin{enumerate}
+	\item noter la \textbf{décision} que l'utilisateur doit pouvoir prendre~;
+	\item en déduire la \textbf{question} à laquelle il faut répondre~;
+	\item choisir l'\textbf{indicateur} qui y répond, et vérifier qu'il se calcule avec une table de faits et ses dimensions~;
+	\item fixer la \textbf{cible} et le \textbf{seuil} avec les métiers, sans les inventer~;
+	\item choisir enfin le \textbf{graphique} (partie~\ref{sec:graphiques}).
+\end{enumerate}
+
+\subsection{Exemples pour le CHU}
+
+\noindent Les huit besoins du projet donnent huit indicateurs. Le tableau précise aussi à quel type de KPI chacun se rattache. Les cibles ne sont pas fixées ici~: elles doivent venir de la direction du CHU.
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{0.5cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}p{2.2cm} >{\raggedright\arraybackslash}p{2.5cm} >{\raggedright\arraybackslash}p{4.1cm}}
+\toprule
+N° & Besoin du CHU & Type & Public & Fait utilisé \\
+\midrule
+1 & Taux de consultation par établissement et par période & Performance & Direction & FAIT\_\allowbreak CONSULTATION \\
+2 & Taux de consultation par diagnostic et par période & Pilotage & Praticien, direction & FAIT\_\allowbreak CONSULTATION \\
+3 & Taux global d'hospitalisation par période & Pilotage & Direction & FAIT\_\allowbreak HOSPITALISATION \\
+4 & Taux d'hospitalisation par diagnostic et par période & Pilotage & Praticien & FAIT\_\allowbreak HOSPITALISATION \\
+5 & Taux d'hospitalisation par sexe et par âge & Pilotage & Praticien & FAIT\_\allowbreak HOSPITALISATION \\
+6 & Taux de consultation par professionnel & Performance & Direction & FAIT\_\allowbreak CONSULTATION \\
+7 & Nombre de décès par région en 2019 & Pilotage & Direction & FAIT\_\allowbreak DECES \\
+8 & Taux global de satisfaction par région en 2020 & Qualité & Direction & FAIT\_\allowbreak SATISFACTION \\
+\bottomrule
+\end{tabularx}
+\end{center}
+\source{besoins et faits du rapport du livrable~1~; types et publics proposés pour ce CER}
+
+\noindent Un \textbf{taux} est un rapport entre deux quantités. Le dénominateur (par exemple la population de référence ou le nombre de patients) doit être précisé avec les métiers avant de construire la mesure, car il change le sens du chiffre.
+
+% --- GRAPHIQUES ---
+\section{Choisir le bon graphique}\label{sec:graphiques}
+
+\subsection{Partir de la question}
+
+\noindent Le bon graphique dépend de la \textbf{question} posée aux données, pas de l'effet visuel. On distingue six familles de questions~:
+\begin{itemize}
+	\item \textbf{comparer} des valeurs entre catégories~: quel établissement a le plus de consultations~?
+	\item \textbf{suivre une évolution} dans le temps~: les hospitalisations montent-elles~?
+	\item \textbf{répartir} un total entre parties~: quelle part de chaque diagnostic~?
+	\item \textbf{relier} deux mesures~: la satisfaction dépend-elle du volume d'activité~?
+	\item \textbf{situer} sur une carte~: quelles régions sont concernées~?
+	\item \textbf{lire une valeur clé}, seule ou face à sa cible~: où en est-on~?
+\end{itemize}
+
+\subsection{Tableau de choix}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\bfseries\raggedright\arraybackslash}p{2.5cm} >{\raggedright\arraybackslash}p{3.4cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+\toprule
+Question & Visuel Power BI & Exemple CHU & À éviter \\
+\midrule
+Comparaison & Barres, colonnes & Consultations par établissement, barres triées & Camembert, 3D \\
+Évolution & Courbe, aires & Consultations par mois ou par année & Trop de barres, axe temps irrégulier \\
+Répartition & Anneau, treemap & Part de chaque diagnostic & Camembert à plus de huit parts \\
+Relation & Nuage de points, bulles & Satisfaction et activité par établissement & Deux échelles sans second axe \\
+Géographie & Carte, carte choroplèthe & Décès et satisfaction par région & Carte si la position n'apporte rien \\
+Valeur clé & Carte, visuel KPI, jauge & Nombre de séjours, écart à la cible & Jauge sans cible, trop de décimales \\
+Détail exact & Tableau, matrice & Établissements et toutes leurs mesures & Tableau comme seul visuel \\
+\bottomrule
+\end{tabularx}
+\end{center}
+\source{Microsoft Learn, \textit{Visualizations overview in Power BI} et \textit{Tips for designing a great Power BI dashboard}~; adaptation au CHU}
+
+\subsection{Les erreurs à éviter}
+
+\noindent Les conseils de Microsoft et la documentation de NN/g convergent sur quelques points~:
+\begin{itemize}
+	\item \textbf{pas de 3D}~: elle déforme la lecture des valeurs~;
+	\item \textbf{pas de camembert} pour comparer des parts proches~: on compare mieux des longueurs de barres côte à côte. Le camembert reste acceptable pour montrer un tout avec peu de catégories~;
+	\item \textbf{trier} les barres par valeur pour montrer le plus haut ou le plus bas, ou par axe pour retrouver une catégorie~;
+	\item \textbf{garder les mêmes échelles, ordres et couleurs} d'un graphique à l'autre~;
+	\item \textbf{ne pas mélanger les périodes}~: un graphique sur le dernier mois à côté de graphiques filtrés sur une autre période prête à confusion~;
+	\item \textbf{arrondir les nombres} (3,4 millions plutôt que 3\,400\,000) et ne pas varier les visuels pour le plaisir.
+\end{itemize}
+
+\noindent L'œil repère très vite la longueur, la position et la couleur (attention préattentive, décrite par NN/g pour les tableaux de bord)~: les bons graphiques s'appuient sur elles.
+
+% --- DATA STORYTELLING ---
+\section{Le data storytelling}\label{sec:storytelling}
+
+\subsection{Définition et trois piliers}
+
+\noindent Le data storytelling consiste à communiquer des données pour qu'elles soient comprises, retenues et suivies d'une action. Brent Dykes le décrit comme la réunion de trois éléments~: les \textbf{données} (ce que l'on sait), le \textbf{récit} (ce que cela signifie) et les \textbf{visuels} (ce que l'on montre). Sans récit, des graphiques restent une collection de chiffres~; sans données, le récit n'est qu'une opinion~; sans visuels, le lecteur ne voit pas le message.
+
+\begin{center}
+\begin{tikzpicture}[font=\small]
+  \fill[title1,opacity=0.22] (0,0) circle (1.25);
+  \fill[orange,opacity=0.22] (1.9,0) circle (1.25);
+  \fill[green!50!black,opacity=0.22] (0.95,1.6) circle (1.25);
+  \draw[title1] (0,0) circle (1.25);
+  \draw[orange!80!black] (1.9,0) circle (1.25);
+  \draw[green!50!black] (0.95,1.6) circle (1.25);
+  \node[align=center] at (-0.45,-0.4) {\textbf{Données}\\[-2pt]\scriptsize faits, mesures};
+  \node[align=center] at (2.35,-0.4) {\textbf{Visuels}\\[-2pt]\scriptsize graphes, cartes};
+  \node[align=center,text width=2cm] at (0.95,2.15) {\textbf{Récit}\\[-2pt]\scriptsize message};
+  \node[align=center,font=\scriptsize\bfseries,fill=white,rounded corners,inner sep=2pt] at (0.95,0.6) {Data story};
+  \node[align=left,anchor=west,text width=6cm,font=\footnotesize] at (4.1,0.8) {Chaque paire de piliers apporte quelque chose~:\\ données + récit~: l'\textbf{explication}\\ récit + visuels~: l'\textbf{engagement}\\ données + visuels~: l'\textbf{éclairage}\\ Les trois ensemble~: un changement d'avis ou de décision.};
+\end{tikzpicture}
+\end{center}
+\source{schéma réalisé pour ce CER, d'après le cadre de Brent Dykes, \textit{Effective Data Storytelling}}
+
+\subsection{Structure d'un récit}
+
+\noindent Comme tout récit, une histoire de données suit un fil en trois temps, que Cole Nussbaumer Knaflic reprend dans \textit{Storytelling with Data}~: un début qui pose le \textbf{contexte}, un milieu qui expose le \textbf{conflit} (le problème, l'écart, la surprise) et une fin qui apporte la \textbf{résolution} et dit quoi faire. Avant tout graphique, elle recommande d'écrire en une phrase le message clé (la \og grande idée\fg{}, \textit{Big Idea}), puis de préparer l'enchaînement sur un storyboard.
+
+\begin{center}
+\begin{tikzpicture}[font=\small,
+  b/.style={draw=title1,fill=title2!14,rounded corners,align=center,text width=3.4cm,minimum height=1.5cm},
+  arr/.style={-{Latex},very thick,title1}]
+  \node[b] (c) {\textbf{Contexte}\\[2pt]\footnotesize Où en est-on~? Qui est concerné~? Pourquoi regarder ces données~?};
+  \node[b,right=1.1cm of c] (k) {\textbf{Conflit}\\[2pt]\footnotesize Qu'est-ce qui surprend, qui s'écarte de la cible, qui pose problème~?};
+  \node[b,right=1.1cm of k] (r) {\textbf{Résolution}\\[2pt]\footnotesize Que retenir~? Que décider, que faire ensuite~?};
+  \draw[arr] (c) -- (k);
+  \draw[arr] (k) -- (r);
+\end{tikzpicture}
+\end{center}
+\source{schéma réalisé pour ce CER~; structure d'après K.~Nussbaumer Knaflic, \textit{Storytelling with Data}}
+
+\noindent Brent Dykes décrit la même idée avec trois piliers~: l'\textbf{accroche}, qui retient l'attention, le \textbf{moment \og aha\fg{}}, l'enseignement principal, et le \textbf{fil narratif}, qui les relie et finit par des recommandations.
+
+\noindent Dans Power BI, le récit n'est pas figé comme dans un diaporama~: l'auteur impose l'ordre des pages et le message de chacune, et l'utilisateur personnalise la vue avec les filtres (partie~\ref{sec:interactivite}).
+
+\subsection{Techniques et exemples}
+
+\noindent Cinq techniques de data storytelling, applicables à un tableau de bord~:
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\bfseries\raggedright\arraybackslash}p{3.1cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+\toprule
+Technique & Principe & Application au CHU \\
+\midrule
+Titre qui porte le message & Le titre dit la conclusion, pas seulement le sujet & \og [Établissement] concentre [part] des consultations\fg{} \\
+Un graphique, une idée & Chaque visuel répond à une seule question & Un visuel pour l'évolution, un autre pour le classement \\
+Attirer l'œil par la couleur & Tout en gris sauf l'élément à regarder, en une couleur d'accent & Barre colorée pour l'établissement filtré, autres en gris \\
+Annoter & Un court texte sur le graphique explique l'écart & Une note sur la courbe au mois où l'activité change \\
+Du général au détail & Vue d'ensemble d'abord, détail ensuite & Accueil, pages par thème, détail par drill-through \\
+\bottomrule
+\end{tabularx}
+\end{center}
+\source{techniques de \textit{Storytelling with Data}~; application proposée pour ce CER}
+
+
+% --- UX ---
+\section{UX et visualisation de données}\label{sec:ux}
+
+\subsection{Principes}
+
+\noindent Selon Don Norman et Jakob Nielsen, l'expérience utilisateur englobe tous les aspects de l'interaction de la personne avec le produit. Un bon tableau de bord répond d'abord au besoin exact de l'utilisateur, sans effort inutile.
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\bfseries\raggedright\arraybackslash}p{3cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+\toprule
+Principe & Ce que cela veut dire & Dans le tableau de bord CHU \\
+\midrule
+Hiérarchie visuelle & Ce qui est important est plus grand, plus haut, plus contrasté & Les KPI en grands chiffres en haut, les détails plus bas \\
+Règle des 5 secondes & On doit comprendre l'idée principale de la page en quelques secondes~; on le teste en montrant la page cinq secondes puis en demandant ce qu'on en retient & Un titre-message et quatre KPI visibles sans défiler \\
+Lecture en Z ou en F & L'œil part du haut à gauche, puis parcourt la page~; les éléments clés se placent sur ce trajet & Titre et KPI en haut à gauche, filtres en haut, graphique principal au centre \\
+Couleurs & Peu de couleurs, une couleur d'accent, un sens stable (le rouge ne sert qu'aux alertes) & Gris et bleu CESI, rouge et vert réservés aux écarts à la cible \\
+Accessibilité & Contraste suffisant, information jamais portée par la couleur seule, textes alternatifs, ordre de tabulation & Texte avec un contraste d'au moins 4,5 pour 1, symboles en plus des couleurs \\
+Densité & Peu d'éléments par page, de l'espace autour & Cinq à six visuels maximum par page, détail dans la page suivante \\
+Cohérence & Mêmes filtres, mêmes couleurs, mêmes échelles d'une page à l'autre & Panneau de filtres au même endroit sur toutes les pages \\
+\bottomrule
+\end{tabularx}
+\end{center}
+\source{Microsoft Learn (conseils de conception et accessibilité Power BI), NN/g (définition de l'UX, motif de lecture en F, attention préattentive), W3C WCAG~2.2 (contraste minimum)}
+
+\noindent Trois précisions sur ces principes~:
+\begin{itemize}
+	\item la règle des 5 secondes est une règle pratique, pas une norme. NN/g observe que les utilisateurs quittent souvent une page en 10 à 20 secondes si la valeur n'est pas claire dès les 10 premières~;
+	\item le motif en F décrit comment on lit une page dense de texte~; NN/g précise que ce n'est pas un modèle à viser. Mieux vaut des titres et une hiérarchie visuelle nette~; Microsoft conseille de placer les informations de plus haut niveau en haut à gauche~;
+	\item le seuil de contraste de 4,5 pour 1 est celui du critère 1.4.3 des WCAG~2.2 pour du texte courant.
+\end{itemize}
+
+\subsection{Persona et scénario d'usage}
+
+\noindent Le prosit demande une visualisation qui suive le \textbf{scénario d'usage réel}. Deux personas fictifs sont décrits à partir des profils du projet~: un praticien et un membre de la direction.
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\bfseries\raggedright\arraybackslash}p{2.6cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+\toprule
+ & Praticien (persona fictif) & Direction d'établissement (persona fictif) \\
+\midrule
+Objectif & Suivre l'activité de soins de son établissement ou de sa spécialité & Piloter l'offre et la qualité, préparer un comité \\
+Questions types & Les hospitalisations pour mon diagnostic évoluent-elles~? Quel âge, quel sexe~? & Quels établissements consultent le plus~? Où la satisfaction est-elle basse~? \\
+Contraintes & Peu de temps, pas de données nominatives & Vue nationale et régionale, besoin de chiffres présentables \\
+Usage & Consultation rapide, sur écran de bureau & Consultation hebdomadaire, parfois sur tablette \\
+\bottomrule
+\end{tabularx}
+\end{center}
+\source{profils tirés de l'énoncé du projet CHU~; personas rédigés pour ce CER, sans enquête auprès d'utilisateurs}
+
+\noindent \textbf{Scénario de la direction}~: le lundi matin, elle ouvre le rapport. En cinq secondes, la page d'accueil lui indique si l'activité va bien, grâce aux KPI et à leur écart à la cible. Elle filtre sur sa région et sa période. Un graphique lui montre un établissement qui s'écarte. Elle clique dessus et arrive sur sa page de détail. Elle note le constat pour le comité.
+
+\subsection{Disposition type d'une page}
+
+\noindent La figure suivante montre la disposition type retenue pour chaque page, avec le trajet de lecture en Z.
+
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize,
+  zn/.style={draw=title1,fill=title2!12,rounded corners,align=center},
+  n/.style={circle,fill=title1,text=white,inner sep=1.5pt,font=\scriptsize\bfseries},
+  arr/.style={-{Latex},thick,orange!85!black,dashed,opacity=0.5}]
+  \draw[rounded corners,gray] (0,0) rectangle (11,6);
+  \node[zn,minimum width=6.4cm,minimum height=1.3cm] (a) at (3.4,5.1) {\textbf{Titre-message et KPI}\\ les chiffres clés, en grand};
+  \node[zn,minimum width=3.7cm,minimum height=1.3cm] (b) at (8.8,5.1) {\textbf{Filtres}\\ période, région, établissement};
+  \node[zn,minimum width=6.4cm,minimum height=3.1cm] (c) at (3.4,2.55) {\textbf{Graphique principal}\\ évolution ou classement, avec annotation};
+  \node[zn,minimum width=3.7cm,minimum height=3.1cm] (d) at (8.8,2.55) {\textbf{Détail}\\ graphe secondaire, carte,\\ lien vers la page suivante};
+  \node[n] at (0.4,5.7) {1};
+  \node[n] at (10.6,5.7) {2};
+  \node[n] at (0.4,0.7) {3};
+  \node[n] at (10.6,0.7) {4};
+  \draw[arr] (1,5.75) -- (10.3,5.75);
+  \draw[arr] (10.3,5.75) -- (0.7,0.65);
+  \draw[arr] (0.7,0.65) -- (10.3,0.65);
+\end{tikzpicture}
+\end{center}
+\source{schéma réalisé pour ce CER~; la lecture en Z est une convention de mise en page, pas un résultat de recherche NN/g}
+
+\noindent Le panneau de filtres reste au même endroit sur toutes les pages. Il aide aussi à la découverte~: l'utilisateur voit tout de suite sur quelles dimensions il peut agir.
+
+% --- INTERACTIVITE ---
+\section{L'interactivité dans Power BI}\label{sec:interactivite}
+
+\noindent Le prosit exprime une crainte~: devoir générer plusieurs vues indépendantes à l'avance, ce qui prendrait trop de temps et ne couvrirait pas tous les besoins. Cette partie montre que Power BI évite ce travail, car \textbf{un seul modèle de données} sert toutes les vues. Chaque vue est calculée à la demande, selon les filtres choisis.
+
+\subsection{Un modèle, plusieurs vues}
+
+\noindent Power BI charge les tables du modèle en étoile et leurs relations une seule fois. Chaque visuel envoie ensuite au modèle une question du type \og la mesure X, regroupée par le champ Y, avec les filtres actifs\fg{}. Changer un filtre revient à poser une autre question au même modèle~; il n'y a pas de nouvelle table à construire. La documentation Microsoft recommande d'ailleurs le schéma en étoile pour les modèles Power BI, ce qui est le cas de l'entrepôt du CHU.
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\bfseries\raggedright\arraybackslash}p{3cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+\toprule
+ & Vues indépendantes pré-calculées & Un modèle, des filtres et des mesures \\
+\midrule
+Travail & Une vue par besoin et par combinaison de filtres & Une mesure par indicateur, réutilisée partout \\
+Nouvelle question & Nouvelle vue à construire & L'utilisateur change un filtre \\
+Cohérence & Risque d'écarts entre vues & Un seul calcul pour tout le monde \\
+Maintenance & Beaucoup d'objets à mettre à jour & Un modèle à mettre à jour \\
+Coût initial & Faible pour une vue, fort pour toutes & Il faut soigner le modèle et les mesures \\
+\bottomrule
+\end{tabularx}
+\end{center}
+\source{comparaison réalisée pour ce CER d'après la documentation Microsoft Learn (schéma en étoile, mesures DAX)}
+
+\subsection{Les outils d'interactivité}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\bfseries\raggedright\arraybackslash}p{3.2cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+\toprule
+Outil & Ce qu'il fait & Usage dans le tableau de bord \\
+\midrule
+Filtres (panneau Filtres) & Restreignent les données à trois niveaux~: un visuel, une page, tout le rapport & Filtre de rapport sur la période par défaut~; filtre de page sur le thème \\
+Segments (\textit{slicers}) & Filtres visibles sur la page, en liste, boutons, menu déroulant ou plage de dates & Période, région, établissement, diagnostic, sexe \\
+Filtrage croisé & Un clic sur un élément met en évidence ou filtre les autres visuels de la page & Cliquer sur un établissement filtre la courbe et la carte \\
+Drill-down & Descend dans la hiérarchie d'un visuel & Région, département, commune \\
+Drill-through & Ouvre une page de détail filtrée sur l'élément choisi & Fiche d'un établissement \\
+Signets et navigation & Enregistrent un état de la page (filtres, visuels visibles) et le rendent accessible par des boutons & Boutons de pages, vue \og direction\fg{} et vue \og praticien\fg{} \\
+Paramètres de champ & L'utilisateur choisit quelle mesure ou quelle dimension un visuel affiche & Un même graphique pour consultations, hospitalisations ou décès \\
+\bottomrule
+\end{tabularx}
+\end{center}
+\source{Microsoft Learn~: \textit{Filters pane}, \textit{Slicers}, \textit{Visual interactions}, \textit{Drillthrough}, \textit{Bookmarks}, \textit{Field parameters}}
+
+\noindent Les \textbf{paramètres de champ} répondent directement à l'idée de graphes génériques paramétrables retenue par l'équipe. Un seul graphique peut afficher l'une des mesures du tableau de bord, au choix de l'utilisateur, sans que l'on construise un graphique par mesure. Le prosit demande aussi un système de filtres~: les segments et les filtres de page le fournissent.
+
+\subsection{DAX~: les mesures qui portent les KPI}
+
+\noindent Le DAX définit les calculs. Il distingue deux objets~:
+\begin{itemize}
+	\item une \textbf{colonne calculée} est évaluée ligne par ligne au chargement et stockée dans le modèle~;
+	\item une \textbf{mesure} est évaluée au moment de l'affichage, dans le contexte de filtre du visuel~: son résultat change selon les filtres, les segments et les regroupements. Les KPI sont des mesures.
+\end{itemize}
+
+\noindent La fonction \texttt{CALCULATE} évalue une expression en modifiant le contexte de filtre. Les fonctions de \textbf{time intelligence} (\texttt{SAMEPERIODLASTYEAR}, \texttt{DATESYTD}) comparent des périodes à partir d'une table de dates, ici DIM\_Temps. Exemple avec les noms du modèle logique du CHU~:
+
+\begin{center}
+\begin{minipage}{0.92\textwidth}
+\begin{tcolorbox}[colback=title2!6,colframe=title1,boxsep=2pt]
+\begin{minted}[fontsize=\scriptsize]{dax}
+Nb consultations = SUM ( FAIT_CONSULTATION[Nombre_de_consultation] )
+
+Nb consultations N-1 =
+    CALCULATE ( [Nb consultations], SAMEPERIODLASTYEAR ( DIM_Temps[Date] ) )
+
+Evolution consultations =
+    DIVIDE ( [Nb consultations] - [Nb consultations N-1], [Nb consultations N-1] )
+
+Nb sejours = COUNTROWS ( FAIT_HOSPITALISATION )
+\end{minted}
+\end{tcolorbox}
+\end{minipage}
+\end{center}
+
+\noindent La mesure \texttt{Nb consultations} donne un chiffre pour l'ensemble, par année, par établissement ou par région, sans autre formule~: le contexte de filtre s'adapte au visuel. Les mesures \texttt{N-1} et \texttt{Evolution} s'appuient sur elle. Elles n'ont pas été exécutées sur le modèle réel~; leurs noms de colonnes sont ceux du dictionnaire de données et sont à vérifier à l'import.
+
+\subsection{Limites}
+
+\begin{itemize}
+	\item \textbf{Il faut concevoir le modèle} avec soin~: relations, table de dates, mesures. Un mauvais modèle donne des chiffres faux sur tous les filtres.
+	\item \textbf{Les performances dépendent du mode de connexion}~: le DirectQuery envoie une requête à la source à chaque action (partie~\ref{sec:hive-powerbi}).
+	\item \textbf{Trop de segments et de visuels} sur une page ralentissent le rapport et brouillent le message~; l'interactivité ne remplace pas la hiérarchie de l'information.
+	\item \textbf{Le dénominateur d'un taux} se règle dans la mesure~: il doit être validé avec les métiers.
+	\item \textbf{Le DAX demande un apprentissage}~: les contextes de filtre se comprennent par la pratique et le test des résultats.
+	\item \textbf{La liberté a un prix}~: avec beaucoup de filtres, l'utilisateur peut arriver à des combinaisons sans sens. Les signets et les pages guidées limitent ce risque.
+\end{itemize}
+
+% --- HIVE / POWER BI ---
+\section{Connecter Hive à Power BI}\label{sec:hive-powerbi}
+
+\subsection{La chaîne complète}
+
+\noindent Les données vont des sources jusqu'à l'utilisateur en plusieurs étapes. Les étapes avant Hive sont celles du projet~; Power BI et le service web et mobile sont l'objet de ce CER.
+
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize,node distance=0.5cm,
+  b/.style={draw=title1,fill=title2!12,rounded corners,align=center,text width=2.9cm,minimum height=1.25cm},
+  g/.style={draw=gray,fill=gray!10,rounded corners,align=center,text width=2.9cm,minimum height=1.25cm},
+  o/.style={draw=orange!80!black,fill=orange!14,rounded corners,align=center,text width=2.9cm,minimum height=1.25cm},
+  arr/.style={-{Latex},thick,title1}]
+  \node[g] (src) {\textbf{Sources}\\ PostgreSQL, CSV, FTP};
+  \node[g,right=of src] (tal) {\textbf{Talend}\\ jobs ETL};
+  \node[b,right=of tal] (hdfs) {\textbf{HDFS}\\ fichiers ORC};
+  \node[b,right=of hdfs] (hive) {\textbf{Hive}\\ HiveServer2, tables en étoile};
+  \node[o,below=1.1cm of hive] (odbc) {\textbf{Pilote ODBC}\\ Hive};
+  \node[o,left=of odbc] (desk) {\textbf{Power BI Desktop}\\ modèle, mesures DAX, rapport};
+  \node[o,left=of desk] (svc) {\textbf{Service Power BI}\\ publication, actualisation, RLS};
+  \node[o,left=of svc] (usr) {\textbf{Utilisateurs}\\ web et mobile};
+  \draw[arr] (src) -- (tal);
+  \draw[arr] (tal) -- (hdfs);
+  \draw[arr] (hdfs) -- (hive);
+  \draw[arr,<->] (hive) -- node[right,font=\tiny]{SQL} (odbc);
+  \draw[arr,<->] (odbc) -- node[above,font=\tiny]{import} (desk);
+  \draw[arr] (desk) -- node[above,font=\tiny]{publication} (svc);
+  \draw[arr] (svc) -- (usr);
+\end{tikzpicture}
+\end{center}
+\source{schéma réalisé pour ce CER d'après l'architecture du rapport du livrable~1}
+
+\subsection{La connexion par ODBC}
+
+\noindent Power BI Desktop se connecte à Hive par le connecteur générique \textbf{ODBC}. Il faut d'abord installer un pilote ODBC pour Hive sur le poste (Cloudera fournit le sien pour Apache Hive), puis créer une source de données ODBC système dans l'administrateur de sources de données de Windows, avec l'adresse de HiveServer2, le port, la base et l'authentification. Dans Power BI Desktop, on choisit ensuite \textit{Obtenir des données}, puis \textit{ODBC}, la source créée, et les tables de l'entrepôt.
+
+\vspace{0.2cm}
+
+\noindent Deux points de la documentation Microsoft sont à retenir~:
+\begin{itemize}
+	\item le connecteur ODBC de Power BI ne propose que le mode \textbf{import}, pas le DirectQuery~;
+	\item le connecteur \textbf{Hive LLAP}, qui permet le DirectQuery, est en cours d'abandon depuis avril~2026 et ne doit donc pas être choisi pour un nouveau projet.
+\end{itemize}
+
+\noindent Pour le CHU, le chemin retenu est donc \textbf{ODBC en import}. La documentation Azure HDInsight le confirme et précise que ce chemin n'est pas recommandé pour des charges de BI, car le moteur de requêtes Hive n'est pas interactif. Le coût d'une requête Hive se paie à l'actualisation, pas à chaque clic, ce qui convient à un tableau de bord actualisé une fois par jour, au même rythme que les jobs Talend.
+
+\subsection{Import ou DirectQuery}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\bfseries\raggedright\arraybackslash}p{2.6cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+\toprule
+ & Import & DirectQuery \\
+\midrule
+Données & Copiées dans le modèle Power BI & Laissées dans la source \\
+Rapidité des clics & Très bonne, moteur en mémoire & Dépend de la source, une requête par action \\
+Fraîcheur & Celle de la dernière actualisation & Proche du temps réel \\
+Volume & Limité par la taille du modèle & Celui de la source \\
+Modélisation DAX & Complète & Certaines limites \\
+Pour Hive et ODBC & Disponible & Pas proposé par le connecteur ODBC \\
+\bottomrule
+\end{tabularx}
+\end{center}
+\source{Microsoft Learn, \textit{DirectQuery in Power BI} et connecteurs Power Query ODBC et Hive LLAP}
+
+\subsection{Performances et agrégations}
+
+\noindent Pour que le rapport reste rapide, plusieurs leviers se combinent~:
+\begin{itemize}
+	\item \textbf{côté Hive}~: tables ORC partitionnées, vue matérialisée et agrégats précalculés (CER de la boucle~3)~;
+	\item \textbf{côté import}~: ne charger que les colonnes utiles. Le dictionnaire du projet prévoit que les données nominatives restent hors de l'entrepôt, ce qui réduit aussi la taille du modèle~;
+	\item \textbf{côté modèle}~: schéma en étoile, relations simples, mesures plutôt que colonnes calculées~;
+	\item \textbf{agrégations Power BI}~: sur un modèle en DirectQuery, des tables d'agrégats mises en cache en mémoire accélèrent les requêtes les plus fréquentes. Cette fonction s'applique donc surtout si l'on passe un jour en DirectQuery.
+\end{itemize}
+
+\noindent Le volume le plus important est celui de FAIT\_DECES (plus de 25~millions de lignes dans le CER de la boucle~3). Faut-il l'importer en entier~? À tester avant de décider~: une alternative est d'importer une table d'agrégats (décès par région et par année), suffisante pour le besoin~7. Aucune mesure de temps n'a été faite pour ce CER.
+
+% --- POLITIQUE BI ---
+\section{Politique BI, quick win et conduite du changement}\label{sec:politique}
+
+\subsection{Les clés d'une politique BI}
+
+\noindent Un outil de BI ne vaut que s'il est utilisé. La feuille de route d'adoption publiée par Microsoft pour Power BI et Fabric insiste sur les personnes et les processus autant que sur la technique. Elle distingue notamment~:
+\begin{itemize}
+	\item la \textbf{culture de la donnée}~: les habitudes qui poussent à décider avec des chiffres~;
+	\item le \textbf{sponsor} (un responsable crédible qui défend le projet) et l'\textbf{alignement avec les objectifs métier}~;
+	\item la \textbf{propriété des contenus}~: qui crée et maintient les rapports (BI en libre-service, en libre-service encadré, ou BI d'entreprise)~;
+	\item l'\textbf{accompagnement des utilisateurs}~: formation, aide, communauté~;
+	\item la \textbf{gouvernance}~: les règles qui disent comment les données doivent être utilisées, dans le respect des réglementations.
+\end{itemize}
+
+\subsection{Le quick win}
+
+\noindent Le quick win s'appuie sur la première impression. Il suit trois règles~:
+\begin{enumerate}
+	\item \textbf{une seule page d'abord}, avec les KPI les plus demandés, sur les vraies données~;
+	\item \textbf{lisible en quelques secondes}, avec un titre-message et des filtres qui répondent tout de suite~;
+	\item \textbf{des retours rapides}~: montrer la page aux utilisateurs, noter ce qui manque, enrichir par petites étapes.
+\end{enumerate}
+
+\noindent Le prosit précise que les équipes doivent identifier \og en temps réel\fg{} les KPI disponibles selon leurs priorités. Les segments et la liste des KPI visibles dès l'accueil y répondent~; le \og temps réel\fg{} s'entend ici comme \og sans attendre une nouvelle vue\fg{}, puisque les données de l'entrepôt sont actualisées par lots.
+
+\subsection{Adoption et gouvernance}
+
+\begin{itemize}
+	\item \textbf{Adoption}~: nommer un référent côté métiers, former à la lecture de la page d'accueil, prévoir un contact pour les questions, mesurer l'usage dans le service Power BI.
+	\item \textbf{Gouvernance des indicateurs}~: définir chaque KPI une seule fois (formule, périmètre, dénominateur, responsable) et le publier avec le rapport. C'est ce qui évite deux chiffres différents pour le même indicateur.
+	\item \textbf{Cycle de mise à jour}~: les sources évoluent tous les trimestres~; le rapport doit pouvoir suivre sans tout refaire, ce qui est un avantage du modèle unique.
+\end{itemize}
+
+\subsection{La sécurité par ligne (RLS) pour le CHU}
+
+\noindent Le plan de gouvernance du projet prévoit que la direction ait une vue globale et que le praticien ne voie que son établissement ou sa spécialité, sans données nominatives. La \textbf{sécurité au niveau des lignes} de Power BI répond à ce besoin. Selon la documentation Microsoft, elle fonctionne ainsi~:
+\begin{enumerate}
+	\item on \textbf{définit des rôles} et leurs règles dans Power BI Desktop, avec des expressions de filtre DAX~;
+	\item on publie le modèle et le rapport dans le service Power BI~;
+	\item on \textbf{ajoute les utilisateurs aux rôles} dans le service~;
+	\item on \textbf{teste} avec la fonction \textit{Test as role}.
+\end{enumerate}
+
+\noindent Exemple de règle sur DIM\_Etablissement pour le rôle \og Praticien\fg{}, qui compare l'identifiant de l'utilisateur connecté à une table de correspondance (à créer)~:
+
+\begin{center}
+\begin{minipage}{0.92\textwidth}
+\begin{tcolorbox}[colback=title2!6,colframe=title1,boxsep=2pt]
+\begin{minted}[fontsize=\scriptsize]{dax}
+[Finess_Site] IN
+    SELECTCOLUMNS (
+        FILTER ( ACCES_UTILISATEUR, ACCES_UTILISATEUR[Email] = USERPRINCIPALNAME () ),
+        "Finess", ACCES_UTILISATEUR[Finess_Site]
+    )
+\end{minted}
+\end{tcolorbox}
+\end{minipage}
+\end{center}
+
+\noindent La table ACCES\_UTILISATEUR n'existe pas dans le modèle actuel~: elle relie chaque utilisateur à ses établissements et serait maintenue par l'équipe de gouvernance. Cette règle n'a pas été testée. La RLS ne remplace pas la protection côté Hive (droits Ranger du plan de gouvernance)~: elle s'applique dans Power BI, pas dans Hive. Elle ne s'applique pas non plus à un utilisateur qui peut modifier le modèle, comme un rôle d'administrateur ou de contributeur du workspace.
+
+% --- APPLICATION CHU ---
+\section{Application au CHU~: le tableau de bord quick win}\label{sec:chu}
+
+\noindent Cette partie assemble les précédentes en une proposition de tableau de bord. Elle décrit une maquette dessinée pour ce CER~; elle ne contient pas de capture d'un rapport Power BI réel.
+
+\subsection{L'histoire et les pages}
+
+\noindent L'histoire suit le scénario de la direction. Le fil est le suivant~: \textit{où en est l'activité du CHU~?} (contexte), \textit{où est l'écart~?} (conflit), \textit{que retenir et que faire~?} (résolution).
+
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize,
+  p/.style={draw=title1,rounded corners,align=center,text width=2.7cm,minimum height=1.5cm},
+  arr/.style={-{Latex},thick,title1}]
+  \node[p,fill=title2!14] (a) {\textbf{1. Accueil}\\ KPI et tendance};
+  \node[p,fill=title2!22,right=0.45cm of a] (b) {\textbf{2. Activité}\\ consultations, établissements};
+  \node[p,fill=title2!22,right=0.45cm of b] (c) {\textbf{3. Hospitalisation}\\ diagnostics, sexe, âge};
+  \node[p,fill=title2!22,right=0.45cm of c] (d) {\textbf{4. Territoire}\\ carte, décès, satisfaction};
+  \node[p,fill=orange!14,draw=orange!80!black,below=1.0cm of $(b)!0.5!(c)$] (e) {\textbf{Détail}\\ fiche d'un établissement};
+  \draw[arr] (a) -- (b);
+  \draw[arr] (b) -- (c);
+  \draw[arr] (c) -- (d);
+  \draw[arr,dashed,orange!80!black] (b.south) |- (e.west);
+  \draw[arr,dashed,orange!80!black] (d.south) |- (e.east);
+  \node[font=\tiny,orange!60!black,anchor=south east] at ($(e.west)+(-0.1,0.05)$) {drill-through};
+  \node[font=\scriptsize\bfseries,text=title1,anchor=south] at ($(a.north)+(0,0.1)$) {Contexte};
+  \node[font=\scriptsize\bfseries,text=title1,anchor=south] at ($($(b.north)!0.5!(c.north)$)+(0,0.1)$) {Conflit};
+  \node[font=\scriptsize\bfseries,text=title1,anchor=south] at ($(d.north)+(0,0.1)$) {Résolution};
+\end{tikzpicture}
+\end{center}
+\source{schéma réalisé pour ce CER}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\bfseries\raggedright\arraybackslash}p{2.9cm} >{\raggedright\arraybackslash}p{4cm} >{\raggedright\arraybackslash}X}
+\toprule
+Page & Message et besoins & Visuels et filtres \\
+\midrule
+1. Accueil & Où en est le CHU~? Besoins 1 et 3 en résumé & Quatre cartes KPI (consultations, hospitalisations, durée moyenne de séjour, satisfaction), courbe mensuelle, segments période, région, établissement \\
+2. Activité & Qui consulte le plus, et sur quoi~? Besoins 1, 2 et 6 & Barres triées par établissement, barres par diagnostic, tableau par professionnel~; segments période et diagnostic \\
+3. Hospitalisation & Quels diagnostics, quels patients~? Besoins 3, 4 et 5 & Courbe du taux global, barres par diagnostic, histogramme par âge et sexe \\
+4. Territoire & Où sont les écarts~? Besoins 7 et 8 & Carte des décès (2019) et de la satisfaction (2020) par région \\
+Détail & Que se passe-t-il dans cet établissement~? & Page de drill-through avec les KPI de l'établissement choisi \\
+\bottomrule
+\end{tabularx}
+\end{center}
+\source{besoins du rapport du livrable~1~; pages proposées pour ce CER}
+
+\noindent Les paramètres de champ permettent de réutiliser les mêmes graphiques sur plusieurs pages en changeant la mesure affichée, ce qui réduit le nombre de visuels à construire. La carte de la page 4 dépend du code région du modèle~: DIM\_Region\_INSEE est jouée deux fois par FAIT\_DECES (lieu de décès, lieu de naissance), il faut donc choisir la relation active, ici le lieu de décès pour le besoin~7.
+
+\subsection{Maquette de la page d'accueil}
+
+\noindent La maquette suivante applique la disposition en Z (partie~\ref{sec:ux}). Les valeurs ne sont pas affichées~: les graphiques sont des formes.
+
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize,x=1cm,y=1cm,
+  card/.style={draw=title1,fill=title2!10,rounded corners,align=center,minimum width=3.1cm,minimum height=1.3cm,anchor=north west},
+  seg/.style={draw=gray,fill=white,rounded corners,align=center,minimum width=3.0cm,minimum height=0.55cm},
+  tab/.style={draw=none,fill=gray!60,text=white,rounded corners,minimum height=0.5cm,inner sep=4pt,anchor=west},
+  vis/.style={draw=gray!70,fill=white,rounded corners,anchor=north west}]
+  \draw[rounded corners,thick,gray] (0,0) rectangle (13.6,10.2);
+  \node[anchor=west,font=\small\bfseries,text=title1] at (0.3,9.75) {Titre-message de la page, rédigé d'après les données};
+  \node[tab,fill=title1] at (0.3,9.0) {Accueil};
+  \node[tab] at (1.75,9.0) {Activité};
+  \node[tab] at (3.2,9.0) {Hospitalisation};
+  \node[tab] at (5.55,9.0) {Territoire};
+  \node[seg] at (1.8,8.2) {Période \(\vee\)};
+  \node[seg] at (5.0,8.2) {Région \(\vee\)};
+  \node[seg] at (8.2,8.2) {Établissement \(\vee\)};
+  \node[seg] at (11.4,8.2) {Diagnostic \(\vee\)};
+  \node[card] at (0.3,7.7) {\textbf{Consultations}\\[1pt]\Large 000\\[-1pt]\tiny écart à la cible};
+  \node[card] at (3.55,7.7) {\textbf{Hospitalisations}\\[1pt]\Large 000\\[-1pt]\tiny écart à la cible};
+  \node[card] at (6.8,7.7) {\textbf{Durée moyenne}\\[1pt]\Large 0,0 j\\[-1pt]\tiny de séjour};
+  \node[card] at (10.05,7.7) {\textbf{Satisfaction}\\[1pt]\Large 00\\[-1pt]\tiny score global};
+  \node[vis,minimum width=6.4cm,minimum height=3.2cm] at (0.3,6.15) {};
+  \node[anchor=north west,font=\scriptsize\bfseries] at (0.45,6.1) {Évolution mensuelle des consultations};
+  \draw[title1,very thick] (0.7,3.5) -- (1.6,4.1) -- (2.5,3.8) -- (3.4,4.6) -- (4.3,4.2) -- (5.2,4.9) -- (6.1,4.7);
+  \draw[gray] (0.6,3.2) -- (6.5,3.2);
+  \node[font=\tiny,fill=orange!25,rounded corners,inner sep=2pt,anchor=south] at (3.4,4.8) {annotation};
+  \node[vis,minimum width=6.6cm,minimum height=3.2cm] at (6.7,6.15) {};
+  \node[anchor=north west,font=\scriptsize\bfseries] at (6.85,6.1) {Consultations par établissement};
+  \foreach \y/\w in {0/4.6,1/3.8,2/3.1,3/2.4,4/1.9}{
+    \fill[gray!55] (7.0,{5.3-\y*0.42}) rectangle ++(\w,0.3);}
+  \fill[title1] (7.0,5.3) rectangle ++(4.6,0.3);
+  \node[vis,minimum width=6.4cm,minimum height=2.7cm] at (0.3,2.8) {};
+  \node[anchor=north west,font=\scriptsize\bfseries] at (0.45,2.75) {Satisfaction par région};
+  \draw[gray,fill=title2!25] (1.2,0.5) -- (2.4,0.25) -- (3.9,0.5) -- (4.6,1.1) -- (4.9,1.8) -- (3.9,2.1) -- (2.5,1.8) -- (1.5,1.4) -- cycle;
+  \node[font=\tiny] at (3.1,1.2) {carte};
+  \node[vis,minimum width=6.6cm,minimum height=2.7cm] at (6.7,2.8) {};
+  \node[anchor=north west,font=\scriptsize\bfseries] at (6.85,2.75) {À retenir};
+  \node[anchor=north west,text width=6.2cm,font=\scriptsize] at (6.85,2.3) {Zone de texte, 2 à 3 phrases~: le constat principal et le lien vers la page suivante (bouton \og Voir l'activité\fg{}).};
+\end{tikzpicture}
+\end{center}
+\source{maquette dessinée pour ce CER, sans valeur réelle~; mise en page d'après les conseils de conception Microsoft Learn}
+
+\noindent La maquette respecte les principes de la partie~\ref{sec:ux}~: message en titre, quatre KPI en haut à gauche, filtres au même endroit, un seul graphique en couleur d'accent, une zone de récit en bas. Les valeurs et le titre seront remplis d'après les données réelles. Les cibles des KPI restent à définir avec la direction.
+
+\subsection{Ce qui reste à faire}
+
+\begin{itemize}
+	\item brancher Power BI Desktop sur l'entrepôt Hive par ODBC et vérifier les noms de colonnes importées~;
+	\item créer les mesures DAX de la partie~\ref{sec:interactivite} et valider les dénominateurs des taux avec les métiers~;
+	\item construire la page d'accueil, la montrer à un utilisateur, noter les retours~;
+	\item définir les rôles RLS et la table de correspondance des accès~;
+	\item mesurer le temps d'actualisation et la taille du modèle.
+\end{itemize}
+
+% --- CONCLUSION ---
+\section*{Conclusion}
+\phantomsection
+\addcontentsline{toc}{section}{Conclusion}
+
+\noindent \textbf{En réponse à la problématique}, le tableau de bord quick win repose sur un \textbf{seul modèle} Power BI alimenté par l'entrepôt Hive, et non sur des vues indépendantes. L'entrepôt du CHU est déjà un cube OLAP~: les faits portent les mesures, les dimensions sont les axes, et les hiérarchies aplaties permettent le roll-up et le drill-down. Les vues se calculent à la demande selon les filtres, les segments et les paramètres de champ, avec des mesures DAX qui s'adaptent au contexte. La crainte exprimée dans le prosit est donc levée, sous réserve de bien concevoir le modèle.
+
+\vspace{0.2cm}
+
+\noindent Le contenu se choisit à partir des besoins. Les huit besoins donnent huit indicateurs~; la cible de chaque KPI reste à fixer avec les métiers. Chaque indicateur reçoit le graphique qui répond à sa question~: barres pour comparer, courbes pour suivre, cartes pour situer, cartes KPI pour la valeur clé. Le data storytelling donne l'ordre des pages, du contexte au conflit puis à la résolution, avec un titre-message par page. L'UX impose une page d'accueil lisible en quelques secondes, une disposition stable et une accessibilité minimale.
+
+\vspace{0.2cm}
+
+\noindent Côté technique, la connexion passe par le pilote ODBC de Hive en mode import~: le connecteur ODBC de Power BI ne propose pas le DirectQuery et le connecteur Hive LLAP est en cours d'abandon. Ce choix convient à un rapport actualisé par lots, mais il n'a pas été mesuré. La sécurité par ligne limite les données par profil. Elle demande une table de correspondance des accès qui n'existe pas encore.
+
+\vspace{0.2cm}
+
+\noindent Enfin, le quick win est aussi une démarche d'adoption~: une page, sur les vraies données, montrée tôt, améliorée avec les retours. Ce CER propose la maquette et la démarche~; la construction et le test du rapport dans Power BI restent à faire.
+
+% --- CAPITALISATION ---
+\section*{Capitalisation}
+\phantomsection
+\addcontentsline{toc}{section}{Capitalisation}
+
+\begin{center}
+\small
+\setlength{\tabcolsep}{8pt}
+\renewcommand{\arraystretch}{1.15}
+
+\begin{tabular}{|>{\raggedright\arraybackslash}p{0.30\textwidth}|>{\raggedright\arraybackslash}p{0.47\textwidth}|m{0.08\textwidth}|}
+\hline
+\textbf{AAV} & \textbf{Commentaire} & \textbf{Statut} \\ \hline
+
+Exploiter les données récoltées dans un environnement Big Data &
+Chaîne HDFS, Hive, ODBC, Power BI décrite, avec import ou DirectQuery, performances et agrégations. Le connecteur n'a pas été testé sur le cluster. &
+{\color{orange}Partiel} \\ \hline
+
+Représenter les données au travers de graphes pour mettre en évidence les KPI &
+Notions de cube OLAP, de KPI et de SMART~; huit indicateurs rattachés aux besoins~; tableau de choix des graphiques. Rapport Power BI non construit dans ce CER. &
+{\color{orange}Partiel} \\ \hline
+
+Proposer une visualisation améliorant l'expérience utilisateur (UX) &
+Principes UX, personas, scénario d'usage, histoire en pages et maquette de la page d'accueil. Non testée auprès d'utilisateurs. &
+{\color{orange}Partiel} \\ \hline
+
+\end{tabular}
+\end{center}
+
+% --- RESSOURCES ---
+\section*{Ressources}
+\phantomsection
+\addcontentsline{toc}{section}{Ressources}
+
+{\small\makeatletter\@itempenalty=0
+\begin{itemize}
+	\item \textbf{Microsoft Learn, Visualizations overview in Power BI} : \url{https://learn.microsoft.com/en-us/power-bi/visuals/power-bi-visualization-types-for-reports-and-q-and-a}
+	\item \textbf{Microsoft Learn, Tips for designing a great Power BI dashboard} : \url{https://learn.microsoft.com/en-us/power-bi/create-reports/service-dashboards-design-tips}
+	\item \textbf{Microsoft Learn, Understand star schema and the importance for Power BI} : \url{https://learn.microsoft.com/en-us/power-bi/guidance/star-schema}
+	\item \textbf{Microsoft Learn, DirectQuery in Power BI} : \url{https://learn.microsoft.com/en-us/power-bi/connect-data/desktop-directquery-about}
+	\item \textbf{Microsoft Learn, User-defined aggregations} : \url{https://learn.microsoft.com/en-us/power-bi/transform-model/aggregations-advanced}
+	\item \textbf{Microsoft Learn, Slicers in Power BI} : \url{https://learn.microsoft.com/en-us/power-bi/visuals/power-bi-visualization-slicers}
+	\item \textbf{Microsoft Learn, Visual interactions (filtrage croisé)} : \url{https://learn.microsoft.com/en-us/power-bi/create-reports/service-reports-visual-interactions}
+	\item \textbf{Microsoft Learn, Use drillthrough in Power BI Desktop} : \url{https://learn.microsoft.com/en-us/power-bi/create-reports/desktop-drillthrough}
+	\item \textbf{Microsoft Learn, Use bookmarks in Power BI Desktop} : \url{https://learn.microsoft.com/en-us/power-bi/create-reports/desktop-bookmarks}
+	\item \textbf{Microsoft Learn, Field parameters} : \url{https://learn.microsoft.com/en-us/power-bi/create-reports/power-bi-field-parameters}
+	\item \textbf{Microsoft Learn, DAX overview} : \url{https://learn.microsoft.com/en-us/dax/dax-overview}
+	\item \textbf{Microsoft Learn, CALCULATE (DAX)} : \url{https://learn.microsoft.com/en-us/dax/calculate-function-dax}
+	\item \textbf{Microsoft Learn, Time intelligence functions (DAX)} : \url{https://learn.microsoft.com/en-us/dax/time-intelligence-functions-dax}
+	\item \textbf{Microsoft Learn, Create measures in Power BI Desktop} : \url{https://learn.microsoft.com/en-us/power-bi/transform-model/desktop-measures}
+	\item \textbf{Microsoft Learn, Row-level security with Power BI} : \url{https://learn.microsoft.com/en-us/fabric/security/service-admin-row-level-security}
+	\item \textbf{Microsoft Learn, Create accessible Power BI reports} : \url{https://learn.microsoft.com/en-us/power-bi/create-reports/desktop-accessibility-creating-reports}
+	\item \textbf{Microsoft Learn, Microsoft Fabric adoption roadmap} : \url{https://learn.microsoft.com/en-us/power-bi/guidance/fabric-adoption-roadmap-overview}
+	\item \textbf{Microsoft Learn, Power Query, connecteur ODBC} : \url{https://learn.microsoft.com/en-us/power-query/connectors/odbc}
+	\item \textbf{Microsoft Learn, Power Query, connecteur Hive LLAP} : \url{https://learn.microsoft.com/en-us/power-query/connectors/hive-llap}
+	\item \textbf{Microsoft Learn, Visualize Apache Hive data with Power BI using ODBC (Azure HDInsight)} : \url{https://learn.microsoft.com/en-us/azure/hdinsight/hadoop/apache-hadoop-connect-hive-power-bi}
+	\item \textbf{Cloudera, ODBC Driver for Apache Hive, guide d'installation} : \url{https://docs.cloudera.com/application-resources/latest/connectors/hive-odbc/2-6-4/Cloudera-ODBC-Driver-for-Apache-Hive-Install-Guide.pdf}
+	\item \textbf{Wikipedia, Online analytical processing} : \url{https://en.wikipedia.org/wiki/Online_analytical_processing}
+	\item \textbf{Kimball Group, Dimensional Modeling Techniques} : \url{https://www.kimballgroup.com/data-warehouse-business-intelligence-resources/kimball-techniques/dimensional-modeling-techniques/}
+	\item \textbf{Wikipedia, SMART criteria} : \url{https://en.wikipedia.org/wiki/SMART_criteria}
+	\item \textbf{Storytelling with Data (Cole Nussbaumer Knaflic)} : \url{https://www.storytellingwithdata.com/}
+	\item \textbf{Brent Dykes, Effective Data Storytelling} : \url{https://www.effectivedatastorytelling.com/}
+	\item \textbf{Brent Dykes, The Key Elements of a Good Data Story} : \url{https://www.effectivedatastorytelling.com/post/the-key-elements-of-a-good-data-story-and-why-visuals-arent-one-of-them}
+	\item \textbf{NN/g, Definition of User Experience} : \url{https://www.nngroup.com/articles/definition-user-experience/}
+	\item \textbf{NN/g, F-Shaped Pattern of Reading on the Web} : \url{https://www.nngroup.com/articles/f-shaped-pattern-reading-web-content/}
+	\item \textbf{NN/g, Dashboards: Making Charts and Graphs Easier to Understand} : \url{https://www.nngroup.com/articles/dashboards-preattentive/}
+	\item \textbf{NN/g, How Long Do Users Stay on Web Pages?} : \url{https://www.nngroup.com/articles/how-long-do-users-stay-on-web-pages/}
+	\item \textbf{W3C, WCAG~2.2, Contrast (Minimum)} : \url{https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html}
+	\item \textbf{Logo Power BI, Wikimedia Commons} : \url{https://commons.wikimedia.org/wiki/File:New_Power_BI_Logo.svg}
+\end{itemize}
+}
