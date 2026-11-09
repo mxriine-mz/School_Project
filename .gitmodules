@@ -3,6 +3,6 @@
 	url = https://github.com/DAD-G4/Breezy.git
 	branch = main
 [submodule "A4_26-27/01_Big_Data/_Project_CHU/Livrable_2"]
-	path = A4_26-27/01_Big_Data/_Project_CHU/Livrable_2
+	path = A4_26-27/01_Big_Data/_Project_CHU/Projet-CHU
 	url = https://github.com/mxriine-mz/Projet-CHU.git
 	branch = main

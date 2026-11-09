@@ -13,7 +13,7 @@ Modélisation dimensionnelle (schéma en constellation de Kimball) et première 
 | [ETL/](./Livrable_1/ETL/) | Jobs Talend J00 à J10 + job maître `PROJET_CHU`, script `entrepot.sql`, référentiel INSEE des communes. Voir `LISEZMOI.txt` pour l'installation. |
 | [Rapport/](./Livrable_1/Rapport/) | Rapport LaTeX du livrable (`main.pdf`) : architecture, modèle conceptuel, spécifications des jobs. |
 
-## [Livrable 2](./Livrable_2/) — Implémentation physique, qualité et performance
+## [Livrable 2](./Projet-CHU/) — Implémentation physique, qualité et performance
 
 Portage de l'entrepôt vers **HDFS / Hive** (tables externes puis internes en Parquet), rapport de qualité des données, partitionnement, indexation et benchmark de requêtes. Restitution prévue dans **Power BI**.
 
