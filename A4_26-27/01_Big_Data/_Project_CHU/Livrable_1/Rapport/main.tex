@@ -1,10 +1,11 @@
 \documentclass[a4paper,12pt]{article}
 
 % --- PACKAGES ---
-\input{../../../../../_Template/preambule}
+\newcommand{\templatedir}{../../../../../_Template}
+\input{\templatedir/preambule}
 
 % --- STYLES ---
-\input{../../../../../_Template/styles}
+\input{\templatedir/styles}
 
 \usetikzlibrary{arrows.meta,positioning,calc,shapes.geometric,decorations.text}
 \usepackage{fontawesome5}
@@ -92,7 +93,7 @@
 \tableofcontents
 
 % --- FOOTER ---
-\input{../../../../../_Template/footer}
+\input{\templatedir/footer}
 
 % --- CONTENT ---
 \input{contents/rapport.tex}
