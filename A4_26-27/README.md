@@ -8,7 +8,7 @@ Quatrième année du cycle ingénieur **CESI** (FISA Informatique). L'année s'a
 
 ### [01 · Big Data](./01_Big_Data/)
 Stockage et exploitation de données massives : architecture Big Data, entrepôt de données, NoSQL, OLAP et data visualisation.
-4 boucles · Projet : entrepôt de données hospitalier · 19/10/2026 – 13/11/2026.
+4 boucles · Projet : [CHU](./01_Big_Data/_Project_CHU/), entrepôt de données hospitalier · 19/10/2026 – 13/11/2026.
 
 ### [02 · IoT](./02_IoT/)
 Internet des objets : capteurs, objets connectés et chaîne de données.
