@@ -15,9 +15,14 @@ Ce module aborde les solutions permettant de dépasser les limites de stockage e
 
 Chaque boucle contiendra son CER (compte-rendu LaTeX → `main.pdf`).
 
-## Projet — Entrepôt de données hospitalier
+## Projet — [CHU](./_Project_CHU/)
 
 Conception et implémentation d'un **entrepôt de données décisionnel pour le secteur hospitalier** : chaque boucle traite une problématique du projet et fait avancer la mise en place de la solution Big Data.
+
+- [Livrable 1](./_Project_CHU/01_Referentiel_Architecture/) : modèle en constellation, alimentation PostgreSQL via Talend, rapport LaTeX.
+- [Livrable 2](./_Project_CHU/02_Implementation_Performance/) : portage HDFS / Hive (Parquet), qualité des données, partitionnement, indexation, benchmark.
+- [Livrable 3](./_Project_CHU/03_Restitution_Storytelling/) : tableau de bord et soutenance (storytelling).
+- Le dossier `_Project_CHU` est le dépôt d'équipe [mxriine-mz/Projet-CHU](https://github.com/mxriine-mz/Projet-CHU), intégré en sous-module git. Après un clone : `git submodule update --init --recursive` (dépôt privé, accès GitHub nécessaire).
 
 ## Compétences clés
 

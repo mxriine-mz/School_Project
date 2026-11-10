@@ -1,3 +1,7 @@
+% Chemin vers le dossier _Template, relatif au main.tex compilé.
+% Par défaut : rapport situé à 4 niveaux de la racine (Annee/Module/Boucle/CER).
+% Un rapport plus profond redéfinit \templatedir avant d'inclure ce fichier.
+\providecommand{\templatedir}{../../../../_Template}
 % --- FOOTER --- 
 \newpage
 \pagestyle{fancy}
@@ -12,7 +16,7 @@
 \fancyfoot[R]{%
 	\raisebox{-0.7cm}{%
 		\transparent{0.5}%
-		\includegraphics[height=1cm]{../../../../_Template/assets/img/cesi_logo.png}%
+		\includegraphics[height=1cm]{\templatedir/assets/img/cesi_logo.png}%
 	}%
 }
 

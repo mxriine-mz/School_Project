@@ -29,7 +29,7 @@ School_Project/
 
 | Module | Période | Thématique | Projet associé |
 | :--- | :--- | :--- | :--- |
-| [01 · Big Data](./A4_26-27/01_Big_Data/) | Oct. – Nov. 2026 | Architecture Big Data, entrepôt de données, NoSQL, data visualisation | Entrepôt de données hospitalier |
+| [01 · Big Data](./A4_26-27/01_Big_Data/) | Oct. – Nov. 2026 | Architecture Big Data, entrepôt de données, NoSQL, data visualisation | [Projet CHU](./A4_26-27/01_Big_Data/_Project_CHU/) — entrepôt de données hospitalier |
 | [02 · IoT](./A4_26-27/02_IoT/) | Janv. – Févr. 2027 | Objets connectés, capteurs et chaîne de données | *à venir* |
 | [03 · Artificial Intelligence](./A4_26-27/03_Artificial_Intelligence/) | Mars 2027 | Machine Learning | *à venir* |
 | [04 · Innovation Project](./A4_26-27/04_Innovation_Project/) | Avril 2027 | Projet d'innovation de fin d'année | *à venir* |
